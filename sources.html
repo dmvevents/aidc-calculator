@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sources &amp; provenance — AI-DC Calculator</title>
-<meta name="description" content="Every stated/derived/assumed default on the AI-DC calculator, with its citation and access date; font and library licenses; the no-tracking statement.">
+<meta name="description" content="Every stated/derived/assumed default on the AI-DC calculator — including the TCO model's GPU price bands, colo rates and rental anchors — with its citation and access date; font and library licenses; the no-tracking statement.">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="preload" href="assets/fonts/InterVariable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
 <link rel="preload" href="assets/fonts/JetBrainsMono-Variable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
@@ -284,11 +284,51 @@ margin-top: var(--sp-5); display: block; background: var(--inset);
 .src-item h3 { font-size: var(--fs-base); margin-bottom: var(--sp-1); }
 .src-item .src-detail { color: var(--ink-2); font-size: var(--fs-sm); max-width: 90ch; margin: 0 0 var(--sp-1); }
 .src-item .src-meta { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted); }
+.masthead-calc { padding: var(--sp-6) 0 0; }
+.masthead-calc .section-head { margin-bottom: 0; }
+.section-calc { padding-top: var(--sp-4); border-bottom: none; }
+.section-calc .panel-inputs, .section-calc .panel-outputs { min-height: 60vh; }
+.cards {
+display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+gap: var(--sp-4); margin: var(--sp-5) 0;
+}
+.card {
+display: grid; gap: var(--sp-2); align-content: start;
+background: var(--surface); border: 1px solid var(--hairline);
+border-radius: var(--r-card); box-shadow: var(--shadow-card);
+padding: var(--sp-4); scroll-margin-top: 90px;
+transition: border-color var(--t-fast);
+}
+.card:hover { border-color: var(--rule); }
+.card:target { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.card h2 { font-size: var(--fs-md); margin: 0; }
+.card h2 a { color: var(--ink); }
+.card h2 a:hover { color: var(--accent); text-decoration: none; }
+.card p { font-size: var(--fs-sm); color: var(--ink-2); margin: 0; }
+.card .card-open { font-size: var(--fs-sm); }
+.card .card-was { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted); }
+.card-teaser { grid-column: 1 / -1; }
+.card-teaser img {
+width: 100%; height: auto; max-height: 260px; object-fit: cover; object-position: center 40%;
+border: 1px solid var(--hairline); border-radius: var(--r-ctl); display: block; background: var(--inset);
+}
+details.chain > summary {
+cursor: pointer; color: var(--muted); font-size: var(--fs-xs);
+letter-spacing: var(--track-micro); text-transform: uppercase; font-weight: 500;
+list-style-position: inside;
+}
+details.chain > summary:hover { color: var(--ink); }
+details.chain[open] > summary { margin-bottom: var(--sp-2); }
+.dg-curve { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.dg-curve-rental { fill: none; stroke: var(--chip-d); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.dg-be { stroke: var(--good); stroke-width: 2; }
+.dg .dg-good { fill: var(--good); }
 @media print {
-.nav, .btn, .twin, .unitbar, details.adv summary { display: none !important; }
+.nav, .btn, .twin, .unitbar, details.adv summary, details.chain summary { display: none !important; }
 details.adv { display: block; }
 details.adv .fields { display: grid; }
-.section, .panel { break-inside: avoid; border-color: var(--hairline); box-shadow: none; }
+details.chain::details-content { content-visibility: visible; }
+.section, .panel, .card { break-inside: avoid; border-color: var(--hairline); box-shadow: none; }
 body { font-size: 10.5pt; }
 a { color: var(--ink); }
 .chip { background: none !important; }
@@ -297,20 +337,20 @@ a { color: var(--ink); }
 </head>
 <body>
 
-<nav class="nav" aria-label="Sections">
+<nav class="nav" aria-label="Pages">
   <div class="nav-inner">
-    <span class="nav-mark"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</span>
-    <a href="index.html#power">Power</a>
-    <a href="index.html#cooling">Cooling</a>
-    <a href="index.html#racks">Racks</a>
-    <a href="index.html#capex">Capex</a>
-    <a href="index.html#fiber">Fiber</a>
-    <a href="index.html#commissioning">Commissioning</a>
-    <a href="index.html#twin">3D</a>
-    <a href="sources.html" class="is-active">Sources</a>
+    <a class="nav-mark" href="index.html"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</a>
+    <a href="power.html">Power</a>
+    <a href="cooling.html">Cooling</a>
+    <a href="rack.html">Racks</a>
+    <a href="capex.html">Capex</a>
+    <a href="fiber.html">Fiber</a>
+    <a href="commissioning.html">Commissioning</a>
+    <a href="tco.html">TCO</a>
+    <a href="3d.html">3D</a>
+    <a href="sources.html" class="is-active" aria-current="page">Sources</a>
   </div>
 </nav>
-
 <header class="masthead wrap">
   <h1>Sources &amp; provenance</h1>
   <p class="lede">Every load-bearing default on the calculator carries one of three labels and
@@ -353,36 +393,45 @@ a { color: var(--ink); }
       they are not an offer, a quotation, or a design of record, and must be verified by licensed
       engineers, vendor submittals and your utility before any commitment.</p>
     </div>
+    <div class="src-item" id="tco-model">
+      <h3>The TCO model (T1–T8)</h3>
+      <p class="src-detail">The <a href="tco.html">TCO calculator</a> is one levelization
+      identity plus a monthly cash ledger:</p>
+      <p class="src-detail"><code>
+      T1 fleet &nbsp;&nbsp;&nbsp; racks = ⌈gpus ÷ gpus_per_rack⌉ · it_kw = racks × rack_kw<br>
+      T2 hours &nbsp;&nbsp;&nbsp; gpu_hours/mo = gpus × 730 × utilization<br>
+      T3 energy &nbsp;&nbsp; LF = util + (1−util) × idle_frac · kWh/mo = it_kw × PUE × 730 × LF<br>
+      T4 GPU value straight-line to salvage, or resale (1−d)^(m/12) with a floor<br>
+      T5 facility &nbsp; BUILD amortises $/W-IT over facility life; LEASE pays $/kW-month<br>
+      T6 levelized [C0 − TV·df_N + Σ cash_m·df_m] ÷ Σ hours_m·df_m, df_m = (1+i)^−m<br>
+      T7 cumulative cash out the door: C0 + running costs, NO terminal credit<br>
+      T8 break-even first month where market_rate × delivered hours ≥ T7</code></p>
+      <p class="src-detail">T6 and T7 read differently by design: the levelized number consumes
+      capital (residuals credited back), the cumulative curve is cash out the door. The
+      break-even comparison uses the conservative T7 curve. Deliberately absent: ROI, IRR and
+      payback framing — this is a cost estimator, not an investment case.</p>
+    </div>
     <div class="src-item" id="parity">
       <h3>Formula parity — <code>cli/aidc/core</code></h3>
       <p class="src-detail">Each calculator is a line-for-line port of one module of the
       toolkit's frozen reference calculation core — same input names, same output names, same
       formulas, same notes — so a number computed here matches the command-line tool to
-      floating-point precision (verified by an automated diff: 18 cases, 0 mismatches):</p>
+      floating-point precision (verified by an automated diff: 18 cases across the six original
+      calculators + 14 TCO cases, 0 mismatches):</p>
       <p class="src-detail"><code>
       1 Power — parity: cli/aidc/core/calc_power.py (incl. busway_check, F17)<br>
       2 Cooling — parity: cli/aidc/core/calc_cooling.py<br>
       3 Rack planner — parity: cli/aidc/core/calc_rack.py<br>
       4 Capex — parity: cli/aidc/core/calc_capex.py<br>
       5 Fiber — parity: cli/aidc/core/calc_fiber.py<br>
-      6 Commissioning — parity: cli/aidc/core/calc_commissioning.py</code></p>
-      <p class="src-detail">Formula IDs (F1–F18, §6.1–6.7, P0–P8) refer to the research dossiers
-      listed above. Deliberate deltas from the core: none in values or formulas; a few source
-      strings reference the public entries on this page instead of private file paths.</p>
+      6 Commissioning — parity: cli/aidc/core/calc_commissioning.py<br>
+      7 TCO — parity: cli/aidc/core/calc_tco.py</code></p>
+      <p class="src-detail">Formula IDs (F1–F18, §6.1–6.7, P0–P8, T1–T8) refer to the research
+      dossiers listed above. Deliberate deltas from the core: none in values or formulas; a few
+      source strings reference the public entries on this page instead of private file paths.</p>
     </div>
   </section>
 </main>
-
-<footer class="footer">
-  <div class="wrap">
-    <p class="disclaimer"><strong>Engineering estimator, not an offer or a design of record.</strong>
-    Verify with licensed engineers, vendor submittals and your utility.
-    Provenance legend: <span class="legend-inline"><a class="chip chip-s" href="#legend">S</a>
-    stated · <a class="chip chip-d" href="#legend">D</a> derived ·
-    <a class="chip chip-a" href="#legend">A</a> assumed</span> · <a href="index.html">back to the calculators</a>.</p>
-    <p class="micro">Static client-side estimator · no tracking, no CDN, no cookies · all access dates 2026-08-22</p>
-  </div>
-</footer>
 
 <script src="assets/js/sources.js"></script>
 <script>
@@ -427,5 +476,18 @@ a { color: var(--ink); }
   }
 })();
 </script>
+
+<footer class="footer">
+  <div class="wrap">
+    <p class="disclaimer"><strong>Engineering estimator, not an offer or a design of record.</strong>
+    Every result here is a planning-grade estimate from generic, cited defaults — verify with
+    licensed engineers, vendor submittals and your utility before committing money or metal.
+    Provenance legend: <span class="legend-inline"><a class="chip chip-s" href="sources.html#legend">S</a>
+    stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
+    <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
+    every default's citation is on the <a href="sources.html">Sources page</a>.</p>
+    <p class="micro">Static client-side estimator · no tracking, no CDN, no cookies · built from public sources accessed 2026-08-22</p>
+  </div>
+</footer>
 </body>
 </html>

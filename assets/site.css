@@ -232,12 +232,61 @@ details.adv .fields { margin-top: var(--sp-3); }
 .src-item .src-detail { color: var(--ink-2); font-size: var(--fs-sm); max-width: 90ch; margin: 0 0 var(--sp-1); }
 .src-item .src-meta { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted); }
 
+/* ---- v2: tighter above-the-fold on calculator pages -------------------------------------------- */
+.masthead-calc { padding: var(--sp-6) 0 0; }
+.masthead-calc .section-head { margin-bottom: 0; }
+.section-calc { padding-top: var(--sp-4); border-bottom: none; }
+/* reserve panel space so the engine's hydration never shifts visible layout (CLS) */
+.section-calc .panel-inputs, .section-calc .panel-outputs { min-height: 60vh; }
+
+/* ---- v2: landing cards ----------------------------------------------------------------------- */
+.cards {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: var(--sp-4); margin: var(--sp-5) 0;
+}
+.card {
+  display: grid; gap: var(--sp-2); align-content: start;
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: var(--r-card); box-shadow: var(--shadow-card);
+  padding: var(--sp-4); scroll-margin-top: 90px;
+  transition: border-color var(--t-fast);
+}
+.card:hover { border-color: var(--rule); }
+.card:target { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.card h2 { font-size: var(--fs-md); margin: 0; }
+.card h2 a { color: var(--ink); }
+.card h2 a:hover { color: var(--accent); text-decoration: none; }
+.card p { font-size: var(--fs-sm); color: var(--ink-2); margin: 0; }
+.card .card-open { font-size: var(--fs-sm); }
+.card .card-was { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted); }
+.card-teaser { grid-column: 1 / -1; }
+.card-teaser img {
+  width: 100%; height: auto; max-height: 260px; object-fit: cover; object-position: center 40%;
+  border: 1px solid var(--hairline); border-radius: var(--r-ctl); display: block; background: var(--inset);
+}
+
+/* ---- v2: collapsed derivation chains ----------------------------------------------------------- */
+details.chain > summary {
+  cursor: pointer; color: var(--muted); font-size: var(--fs-xs);
+  letter-spacing: var(--track-micro); text-transform: uppercase; font-weight: 500;
+  list-style-position: inside;
+}
+details.chain > summary:hover { color: var(--ink); }
+details.chain[open] > summary { margin-bottom: var(--sp-2); }
+
+/* ---- v2: tco cumulative-cost curve -------------------------------------------------------------- */
+.dg-curve { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.dg-curve-rental { fill: none; stroke: var(--chip-d); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.dg-be { stroke: var(--good); stroke-width: 2; }
+.dg .dg-good { fill: var(--good); }
+
 /* ---- print ---------------------------------------------------------------------------------------- */
 @media print {
-  .nav, .btn, .twin, .unitbar, details.adv summary { display: none !important; }
+  .nav, .btn, .twin, .unitbar, details.adv summary, details.chain summary { display: none !important; }
   details.adv { display: block; }
   details.adv .fields { display: grid; }
-  .section, .panel { break-inside: avoid; border-color: var(--hairline); box-shadow: none; }
+  details.chain::details-content { content-visibility: visible; }
+  .section, .panel, .card { break-inside: avoid; border-color: var(--hairline); box-shadow: none; }
   body { font-size: 10.5pt; }
   a { color: var(--ink); }
   .chip { background: none !important; }

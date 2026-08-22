@@ -3,13 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI-DC Calculator — power, cooling, racks, capex, fiber, commissioning, TCO</title>
-<meta name="description" content="Seven generic, source-cited engineering estimators for AI data centers, each on its own page: power &amp; electrical sizing, cooling feasibility, rack planning by GPU platform, capex and $/GPU-hr cost floor, fiber plant, commissioning load steps, and a build-vs-lease GPU TCO-over-time model. Every default carries a stated/derived/assumed provenance chip. Runs entirely in your browser.">
-<meta property="og:title" content="AI-DC Calculator">
-<meta property="og:description" content="Engineering estimator for AI data centers with visible math and per-value provenance. No tracking, no CDN, fully client-side.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://dmvevents.github.io/aidc-calculator/">
-<meta property="og:image" content="https://dmvevents.github.io/aidc-calculator/assets/img/og.png">
+<title>Rack planner by GPU platform — AI-DC Calculator</title>
+<meta name="description" content="Pick a platform (GB200/GB300 NVL72, HGX B200, DGX B200), enter a GPU count: racks, rows, power, floor loading and the busway check — plus the cross-platform comparison matrix from the public variant data.">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="preload" href="assets/fonts/InterVariable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
 <link rel="preload" href="assets/fonts/JetBrainsMono-Variable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
@@ -344,10 +339,10 @@ a { color: var(--ink); }
 
 <nav class="nav" aria-label="Pages">
   <div class="nav-inner">
-    <span class="nav-mark"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</span>
+    <a class="nav-mark" href="index.html"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</a>
     <a href="power.html">Power</a>
     <a href="cooling.html">Cooling</a>
-    <a href="rack.html">Racks</a>
+    <a href="rack.html" class="is-active" aria-current="page">Racks</a>
     <a href="capex.html">Capex</a>
     <a href="fiber.html">Fiber</a>
     <a href="commissioning.html">Commissioning</a>
@@ -356,116 +351,36 @@ a { color: var(--ink); }
     <a href="sources.html">Sources</a>
   </div>
 </nav>
-<header class="masthead wrap">
-  <h1>AI data-center calculator</h1>
-  <img class="masthead-visual" src="assets/img/hero-gb200-nvl72.webp" fetchpriority="high"
-       alt="Procedural 3D render of a GB200 NVL72 row group — compute racks, in-row CDUs, fabric racks, overhead busway and TCS mains — generated from the public variant data."
-       width="1600" height="800">
-  <p class="lede">Seven linked engineering estimators for GPU-era data centers, each on its own
-  page — electrical sizing, cooling feasibility, rack planning by platform, build cost, fiber
-  plant, commissioning, and a build-vs-lease GPU cost-over-time model — with the governing
-  formula shown under every headline number. Every default wears a provenance
-  chip: <span class="legend-inline"><a class="chip chip-s" href="sources.html#legend">S</a> stated
-  by a cited source · <a class="chip chip-d" href="sources.html#legend">D</a> derived, arithmetic
-  shown · <a class="chip chip-a" href="sources.html#legend">A</a> assumed — verify for your
-  project</span>. Click any chip to land on its source. Your inputs recompute instantly and live
-  in each page's URL, so a link reproduces your exact scenario. Nothing leaves your browser.</p>
+<header class="masthead masthead-calc wrap">
+  <h1>Rack planner by GPU platform</h1>
+  <p class="lede">Pick a platform, enter a GPU count, get racks, rows, power, floor loading and
+  the busway check for one row. The matrix below is the data backbone — note how flat
+  <strong>GPUs per MW is across platforms (529–606)</strong>: the real differentiators are
+  NVLink-domain size, racks per MW, fabric generation and liquid fraction, not GPUs/MW.</p>
+  <div class="section-head">
+    <span class="fid">variants · F17</span>
+    <a class="fid" href="sources.html#parity">parity: calc_rack.py</a>
+    <a class="fid" href="3d.html" id="rack-3d-link">view this platform in 3D</a>
+    <button class="btn" id="rack-copy" type="button">Copy as Markdown</button>
+  </div>
 </header>
 
 <main class="wrap">
-
-  <div class="cards">
-    <article class="card" id="power">
-      <span class="micro">1 · Power &amp; electrical</span>
-      <h2><a href="power.html">Power &amp; electrical sizing</a></h2>
-      <p>How many MW, MVA, UPS modules, gensets and litres of fuel does an IT load need — and
-      does the busway chain hold up rack by rack?</p>
-      <span class="card-open"><a href="power.html">Open the power calculator →</a></span>
-      <span class="card-was">was index.html#power — now its own page</span>
-    </article>
-
-    <article class="card" id="cooling">
-      <span class="micro">2 · Cooling</span>
-      <h2><a href="cooling.html">Cooling load &amp; heat-rejection feasibility</a></h2>
-      <p>Can this climate reject the heat — dry, wetted-assist or not at all — and what flow,
-      CDU count and pump head does the liquid loop need?</p>
-      <span class="card-open"><a href="cooling.html">Open the cooling calculator →</a></span>
-      <span class="card-was">was index.html#cooling — now its own page</span>
-    </article>
-
-    <article class="card" id="racks">
-      <span class="micro">3 · Rack planner</span>
-      <h2><a href="rack.html">Rack planner by GPU platform</a></h2>
-      <p>How many racks, rows, MW and kilograms does a GPU count become on GB200/GB300 NVL72,
-      HGX B200 or DGX B200 — with the cross-platform matrix?</p>
-      <span class="card-open"><a href="rack.html">Open the rack planner →</a></span>
-      <span class="card-was">was index.html#racks — now its own page</span>
-    </article>
-
-    <article class="card" id="capex">
-      <span class="micro">4 · Capex</span>
-      <h2><a href="capex.html">Capex &amp; $/GPU-hr cost floor</a></h2>
-      <p>What does a build cost per MW and per GPU on published benchmarks — and what static
-      cost floor per billable GPU-hour does that imply?</p>
-      <span class="card-open"><a href="capex.html">Open the capex calculator →</a></span>
-      <span class="card-was">was index.html#capex — now its own page</span>
-    </article>
-
-    <article class="card" id="fiber">
-      <span class="micro">5 · Fiber</span>
-      <h2><a href="fiber.html">Fiber plant &amp; latency</a></h2>
-      <p>How many links, transceivers, strands and trunks does the fabric need — and does the
-      channel clear its insertion-loss budget?</p>
-      <span class="card-open"><a href="fiber.html">Open the fiber calculator →</a></span>
-      <span class="card-was">was index.html#fiber — now its own page</span>
-    </article>
-
-    <article class="card" id="commissioning">
-      <span class="micro">6 · Commissioning</span>
-      <h2><a href="commissioning.html">Commissioning — load steps, energy, timeline</a></h2>
-      <p>When does the site need how many MW of test load — house → mechanical → UPS load-banks
-      → IST → GPU burn-in — and what does that energy cost?</p>
-      <span class="card-open"><a href="commissioning.html">Open the commissioning calculator →</a></span>
-      <span class="card-was">was index.html#commissioning — now its own page</span>
-    </article>
-
-    <article class="card" id="tco">
-      <span class="micro">7 · TCO — new</span>
-      <h2><a href="tco.html">Colo + GPUs: total cost per GPU over time</a></h2>
-      <p>Build a hall or lease colo space, buy a GPU fleet, run it 1–6 years: levelized and
-      by-year $/GPU-hour, the cumulative cash curve, and break-even against a market rental
-      rate you enter.</p>
-      <span class="card-open"><a href="tco.html">Open the TCO calculator →</a></span>
-      <span class="card-was">new in v2 — no v1 anchor</span>
-    </article>
-
-    <article class="card card-teaser" id="twin">
-      <span class="micro">3D · Row geometry</span>
-      <h2><a href="3d.html">One row group of each platform, in 3D</a></h2>
-      <a href="3d.html"><img src="assets/img/hero-gb200-nvl72.webp" loading="lazy"
-           alt="Procedural 3D render of a GB200 NVL72 row group: eight compute racks, three in-row CDUs and two fabric racks across a cold and hot aisle."
-           width="1600" height="800"></a>
-      <p>Compute racks at real dimensions, in-row CDUs on liquid variants, fabric racks and
-      aisle pitch — generated deterministically from the same public variant data the rack
-      planner uses. Static render first; the interactive viewer loads only if you ask.</p>
-      <span class="card-open"><a href="3d.html">Open the 3D viewer →</a></span>
-      <span class="card-was">was index.html#twin — now its own page</span>
-    </article>
-  </div>
-
-  <section class="section" id="promise" aria-labelledby="promise-h">
-    <h2 id="promise-h">The provenance promise</h2>
-    <p>Every load-bearing default carries a <span class="legend-inline"><a class="chip chip-s"
-    href="sources.html#legend">S</a> stated · <a class="chip chip-d"
-    href="sources.html#legend">D</a> derived · <a class="chip chip-a"
-    href="sources.html#legend">A</a> assumed</span> chip that deep-links to its citation on the
-    <a href="sources.html">Sources page</a>, and every headline number shows the governing
-    formula with your actual values substituted. The calculators are line-for-line ports of a
-    frozen reference core, verified by an automated parity diff
-    (<a href="sources.html#parity">details</a>). The site is static and fully client-side —
-    no tracking, no CDN, no cookies; external links are citations, not loads.</p>
+  <section class="section section-calc" id="racks" aria-label="Rack planner">
+    <div class="calc-grid">
+      <div class="panel panel-inputs" id="rack-inputs" aria-label="Rack planner inputs"></div>
+      <div class="panel panel-outputs">
+        <div class="hero-tile" id="rack-hero"></div>
+        <details class="chain">
+          <summary>Derivation chain — the governing formulas with your numbers</summary>
+          <div class="derive" id="rack-derive" aria-label="Derivation chain"></div>
+        </details>
+        <div class="matrix-scroll"><table class="out-table" aria-label="Rack outputs"><tbody id="rack-out"></tbody></table></div>
+        <ul class="notes" id="rack-notes"></ul>
+      </div>
+    </div>
+    <div class="matrix-scroll" id="rack-matrix" aria-label="Rack variant comparison matrix" style="margin-top: var(--sp-5)"></div>
   </section>
-
 </main>
 
 <footer class="footer">
@@ -477,8 +392,13 @@ a { color: var(--ink); }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · no tracking, no CDN, no cookies · built from public sources accessed 2026-08-22</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22</p>
   </div>
 </footer>
+<script>
+// progressive boot: the page is readable static HTML first; the calculator
+// engine loads at DOMContentLoaded (sequential, order-preserving).
+(function(){function go(){["assets/js/result.js","assets/js/app.js","assets/js/rackdata.js","assets/js/calc_power.js","assets/js/calc_rack.js","assets/js/page_rack.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+</script>
 </body>
 </html>

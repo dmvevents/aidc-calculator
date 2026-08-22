@@ -448,6 +448,20 @@
     for (const sec of sections) renderSection(sec);
     navHighlight();
   };
+  // v2 multi-page: each page's page_*.js pushes its section(s) then calls boot.
+  A.boot = function () {
+    A.registerSections(A.SECTIONS || []);
+  };
+  // print: expand collapsed derivation chains for the paper copy, restore after
+  let printOpened = null;
+  window.addEventListener("beforeprint", () => {
+    printOpened = Array.from(document.querySelectorAll("details:not([open])"));
+    for (const d of printOpened) d.open = true;
+  });
+  window.addEventListener("afterprint", () => {
+    for (const d of printOpened || []) d.open = false;
+    printOpened = null;
+  });
   A.rerender = function (id) {
     const sec = state.sections.find((s) => s.id === id);
     if (sec) { renderSection(sec); scheduleHash(); }
