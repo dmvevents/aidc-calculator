@@ -3,13 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI-DC Calculator — power, cooling, racks, capex, fiber, commissioning</title>
-<meta name="description" content="A generic, source-cited engineering estimator for AI data centers: power &amp; electrical sizing, cooling feasibility, rack planning by GPU platform, capex and $/GPU-hr cost floor, fiber plant and commissioning load steps. Every default carries a stated/derived/assumed provenance chip. Runs entirely in your browser.">
-<meta property="og:title" content="AI-DC Calculator">
-<meta property="og:description" content="Engineering estimator for AI data centers with visible math and per-value provenance. No tracking, no CDN, fully client-side.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://dmvevents.github.io/aidc-calculator/">
-<meta property="og:image" content="https://dmvevents.github.io/aidc-calculator/assets/img/og.png">
+<title>Sources &amp; provenance — AI-DC Calculator</title>
+<meta name="description" content="Every stated/derived/assumed default on the AI-DC calculator, with its citation and access date; font and library licenses; the no-tracking statement.">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="preload" href="assets/fonts/InterVariable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
 <link rel="preload" href="assets/fonts/JetBrainsMono-Variable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
@@ -305,220 +300,132 @@ a { color: var(--ink); }
 <nav class="nav" aria-label="Sections">
   <div class="nav-inner">
     <span class="nav-mark"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</span>
-    <a href="#power">Power</a>
-    <a href="#cooling">Cooling</a>
-    <a href="#racks">Racks</a>
-    <a href="#capex">Capex</a>
-    <a href="#fiber">Fiber</a>
-    <a href="#commissioning">Commissioning</a>
-    <a href="#twin">3D</a>
-    <a href="sources.html">Sources</a>
+    <a href="index.html#power">Power</a>
+    <a href="index.html#cooling">Cooling</a>
+    <a href="index.html#racks">Racks</a>
+    <a href="index.html#capex">Capex</a>
+    <a href="index.html#fiber">Fiber</a>
+    <a href="index.html#commissioning">Commissioning</a>
+    <a href="index.html#twin">3D</a>
+    <a href="sources.html" class="is-active">Sources</a>
   </div>
 </nav>
 
 <header class="masthead wrap">
-  <h1>AI data-center calculator</h1>
-  <img class="masthead-visual" src="assets/img/hero-gb200-nvl72.webp" fetchpriority="high"
-       alt="Procedural 3D render of a GB200 NVL72 row group — compute racks, in-row CDUs, fabric racks, overhead busway and TCS mains — generated from the public variant data."
-       width="1600" height="800">
-  <p class="lede">Six linked engineering estimators for GPU-era data centers — electrical sizing,
-  cooling feasibility, rack planning by platform, build cost, fiber plant and commissioning —
-  with the governing formula shown under every headline number. Every default wears a provenance
-  chip: <span class="legend-inline"><a class="chip chip-s" href="sources.html#legend">S</a> stated
-  by a cited source · <a class="chip chip-d" href="sources.html#legend">D</a> derived, arithmetic
-  shown · <a class="chip chip-a" href="sources.html#legend">A</a> assumed — verify for your
-  project</span>. Click any chip to land on its source. Your inputs recompute instantly and live
-  in the URL, so a link reproduces your exact scenario. Nothing leaves your browser.</p>
+  <h1>Sources &amp; provenance</h1>
+  <p class="lede">Every load-bearing default on the calculator carries one of three labels and
+  resolves to an entry on this page. External links are citations for you to follow — the site
+  itself loads nothing from the network.</p>
 </header>
 
 <main class="wrap">
-
-  <section class="section" id="power" aria-labelledby="power-h">
-    <div class="section-head">
-      <h2 id="power-h">1 · Power &amp; electrical sizing</h2>
-      <span class="fid">F10 · F12–F18</span>
-      <a class="fid" href="sources.html#parity">parity: calc_power.py</a>
-      <button class="btn" id="power-copy" type="button">Copy as Markdown</button>
+  <section class="src-group" id="legend">
+    <h2>The [S] / [D] / [A] discipline</h2>
+    <div class="src-item">
+      <h3><span class="chip chip-s">S</span>&nbsp; Stated</h3>
+      <p class="src-detail">The value appears in a citable public source — an NVIDIA reference
+      architecture, a vendor datasheet, a standard, a paper, a filing. The entry below names it
+      and the access date.</p>
     </div>
-    <p>IT load → facility load at PUE → utility service, transformers, UPS (core-only branch),
-    gensets and fuel — plus tariff mechanics, the optics line most budgets miss, GB200-class power
-    smoothing (MPF), and the busway/whip ampacity chain when you give it a rack.</p>
-    <div class="calc-grid">
-      <div class="panel panel-inputs" id="power-inputs" aria-label="Power inputs"></div>
-      <div class="panel panel-outputs">
-        <div class="hero-tile" id="power-hero"></div>
-        <div class="derive" id="power-derive" aria-label="Derivation chain"></div>
-        <div id="power-oneline" aria-label="One-line diagram"></div>
-        <div class="matrix-scroll"><table class="out-table" aria-label="Power outputs"><tbody id="power-out"></tbody></table></div>
-        <ul class="notes" id="power-notes"></ul>
-      </div>
+    <div class="src-item">
+      <h3><span class="chip chip-d">D</span>&nbsp; Derived</h3>
+      <p class="src-detail">Computed from stated values with the arithmetic shown — in the
+      derivation chain under each headline number and in the per-row formula text.</p>
     </div>
-  </section>
-
-  <section class="section" id="cooling" aria-labelledby="cool-h">
-    <div class="section-head">
-      <h2 id="cool-h">2 · Cooling load &amp; heat-rejection feasibility</h2>
-      <span class="fid">F1–F9 · F11</span>
-      <a class="fid" href="sources.html#parity">parity: calc_cooling.py</a>
-      <button class="btn" id="cool-copy" type="button">Copy as Markdown</button>
-    </div>
-    <p>Flow and pump-head math, CDU count, residual air — and the wet-bulb feasibility check:
-    enter your site's design dry-bulb and wet-bulb and get the three-way verdict
-    <em>dry-only / wetted-assist / infeasible</em> from the approach-temperature stack, against
-    the ASHRAE W-class ladder. The warm-inlet penalty (×2.5 flow, ×5 pump head at 45 °C on the
-    sourced NVL72-class curves) is priced in the notes.</p>
-    <div class="calc-grid">
-      <div class="panel panel-inputs" id="cool-inputs" aria-label="Cooling inputs"></div>
-      <div class="panel panel-outputs">
-        <div class="hero-tile" id="cool-hero"></div>
-        <div class="derive" id="cool-derive" aria-label="Derivation chain"></div>
-        <div id="cool-ladder" aria-label="Cooling approach ladder"></div>
-        <div class="matrix-scroll"><table class="out-table" aria-label="Cooling outputs"><tbody id="cool-out"></tbody></table></div>
-        <ul class="notes" id="cool-notes"></ul>
-      </div>
+    <div class="src-item">
+      <h3><span class="chip chip-a">A</span>&nbsp; Assumed</h3>
+      <p class="src-detail">A planning assumption you should treat as an <em>override-me</em>
+      default: engineering bands, project-specific unknowns, or values that genuinely have no
+      public benchmark (those say so explicitly). Chips that link here mark inputs that are
+      yours to set — target GPU counts, your tariff, your site climate.</p>
     </div>
   </section>
 
-  <section class="section" id="racks" aria-labelledby="rack-h">
-    <div class="section-head">
-      <h2 id="rack-h">3 · Rack planner by GPU platform</h2>
-      <span class="fid">variants · F17</span>
-      <a class="fid" href="sources.html#parity">parity: calc_rack.py</a>
-      <button class="btn" id="rack-copy" type="button">Copy as Markdown</button>
+  <div id="src-mount"></div>
+
+  <section class="src-group" id="method">
+    <h2>Method &amp; scope</h2>
+    <div class="src-item" id="scope">
+      <h3>What this calculator is — and is not</h3>
+      <p class="src-detail">A generic, client-side engineering <strong>estimator</strong>. It
+      contains no project data, no customer data and no site data: defaults come from the public
+      sources above, and everything project-specific is a user input. Results are planning-grade;
+      they are not an offer, a quotation, or a design of record, and must be verified by licensed
+      engineers, vendor submittals and your utility before any commitment.</p>
     </div>
-    <p>Pick a platform, enter a GPU count, get racks, rows, power, floor loading and the busway
-    check for one row. The matrix below is the data backbone — note how flat
-    <strong>GPUs per MW is across platforms (529–606)</strong>: the real differentiators are
-    NVLink-domain size, racks per MW, fabric generation and liquid fraction, not GPUs/MW.</p>
-    <div class="matrix-scroll" id="rack-matrix" aria-label="Rack variant comparison matrix"></div>
-    <div class="calc-grid" style="margin-top: var(--sp-5)">
-      <div class="panel panel-inputs" id="rack-inputs" aria-label="Rack planner inputs"></div>
-      <div class="panel panel-outputs">
-        <div class="hero-tile" id="rack-hero"></div>
-        <div class="derive" id="rack-derive" aria-label="Derivation chain"></div>
-        <div class="matrix-scroll"><table class="out-table" aria-label="Rack outputs"><tbody id="rack-out"></tbody></table></div>
-        <ul class="notes" id="rack-notes"></ul>
-      </div>
+    <div class="src-item" id="parity">
+      <h3>Formula parity — <code>cli/aidc/core</code></h3>
+      <p class="src-detail">Each calculator is a line-for-line port of one module of the
+      toolkit's frozen reference calculation core — same input names, same output names, same
+      formulas, same notes — so a number computed here matches the command-line tool to
+      floating-point precision (verified by an automated diff: 18 cases, 0 mismatches):</p>
+      <p class="src-detail"><code>
+      1 Power — parity: cli/aidc/core/calc_power.py (incl. busway_check, F17)<br>
+      2 Cooling — parity: cli/aidc/core/calc_cooling.py<br>
+      3 Rack planner — parity: cli/aidc/core/calc_rack.py<br>
+      4 Capex — parity: cli/aidc/core/calc_capex.py<br>
+      5 Fiber — parity: cli/aidc/core/calc_fiber.py<br>
+      6 Commissioning — parity: cli/aidc/core/calc_commissioning.py</code></p>
+      <p class="src-detail">Formula IDs (F1–F18, §6.1–6.7, P0–P8) refer to the research dossiers
+      listed above. Deliberate deltas from the core: none in values or formulas; a few source
+      strings reference the public entries on this page instead of private file paths.</p>
     </div>
   </section>
-
-  <section class="section" id="twin" aria-labelledby="twin-h">
-    <div class="section-head">
-      <h2 id="twin-h">3b · Row geometry — 3D</h2>
-      <span class="fid">generated from the variant data</span>
-    </div>
-    <p>One row group of the selected platform — compute racks at real dimensions, in-row CDUs on
-    liquid variants, fabric racks and aisle pitch — generated deterministically from the same
-    variant data the planner uses. The static render loads first; the interactive viewer
-    (self-hosted, ~1 MB) loads only if you ask.</p>
-    <div class="twin">
-      <div class="twin-bar">
-        <label class="micro" for="twin-variant">platform&nbsp;
-          <select id="twin-variant">
-            <option value="gb200-nvl72">GB200 NVL72</option>
-            <option value="gb300-nvl72">GB300 NVL72</option>
-            <option value="b200-liquid">HGX B200 DLC</option>
-            <option value="dgx-b200-aircooled-2su">DGX B200 (air)</option>
-          </select>
-        </label>
-        <button class="btn" id="load3d" type="button">Load interactive 3D</button>
-      </div>
-      <div class="twin-stage" id="twin-stage">
-        <img id="twin-hero-img" src="assets/img/hero-gb200-nvl72.webp"
-             alt="Procedural 3D render of a GB200 NVL72 row group: eight compute racks, three in-row CDUs and two fabric racks across a cold and hot aisle."
-             loading="lazy" width="1600" height="800">
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="capex" aria-labelledby="capex-h">
-    <div class="section-head">
-      <h2 id="capex-h">4 · Capex &amp; $/GPU-hr cost floor</h2>
-      <span class="fid">published benchmarks only</span>
-      <a class="fid" href="sources.html#parity">parity: calc_capex.py</a>
-      <button class="btn" id="capex-copy" type="button">Copy as Markdown</button>
-    </div>
-    <p>Generic published build-cost bands (JLL shell-and-core, SEC-disclosed IT capex actuals) and
-    your power price → a <strong>cost floor</strong> per billable GPU-hour: amortisation + cash
-    opex + energy, before financing, tax or margin. GPU street prices are deliberately your input,
-    not a default.</p>
-    <div class="calc-grid">
-      <div class="panel panel-inputs" id="capex-inputs" aria-label="Capex inputs"></div>
-      <div class="panel panel-outputs">
-        <div class="hero-tile" id="capex-hero"></div>
-        <div class="derive" id="capex-derive" aria-label="Derivation chain"></div>
-        <div id="capex-sens" aria-label="Sensitivity grid"></div>
-        <div class="matrix-scroll"><table class="out-table" aria-label="Capex outputs"><tbody id="capex-out"></tbody></table></div>
-        <ul class="notes" id="capex-notes"></ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="fiber" aria-labelledby="fiber-h">
-    <div class="section-head">
-      <h2 id="fiber-h">5 · Fiber plant &amp; latency</h2>
-      <span class="fid">§6.1–6.7</span>
-      <a class="fid" href="sources.html#parity">parity: calc_fiber.py</a>
-      <button class="btn" id="fiber-copy" type="button">Copy as Markdown</button>
-    </div>
-    <p>Link and transceiver counts by fabric shape, Manhattan cable lengths with routing factor,
-    fiber strands and trunks, optics power (typically 2.1–2.6% of IT — a line most power budgets
-    omit), one-way latency at 5 ns/m, and the insertion-loss budget check against the DR 3.0 dB /
-    FR4 4.0 dB budgets.</p>
-    <div class="calc-grid">
-      <div class="panel panel-inputs" id="fiber-inputs" aria-label="Fiber inputs"></div>
-      <div class="panel panel-outputs">
-        <div class="hero-tile" id="fiber-hero"></div>
-        <div class="derive" id="fiber-derive" aria-label="Derivation chain"></div>
-        <div class="matrix-scroll"><table class="out-table" aria-label="Fiber outputs"><tbody id="fiber-out"></tbody></table></div>
-        <ul class="notes" id="fiber-notes"></ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="commissioning" aria-labelledby="cx-h">
-    <div class="section-head">
-      <h2 id="cx-h">6 · Commissioning — load steps, energy, timeline</h2>
-      <span class="fid">P0–P8</span>
-      <a class="fid" href="sources.html#parity">parity: calc_commissioning.py</a>
-      <button class="btn" id="cx-copy" type="button">Copy as Markdown</button>
-    </div>
-    <p>The question a utility, genset vendor and load-bank supplier all ask: <em>when do you need
-    how many MW?</em> House (~2–3%) → mechanical plant (~15%) → UPS load-bank per path (~92%,
-    weeks before any GPU) → IST at 100% → staged GPU burn-in. Plus the commissioning-energy
-    pro-forma band and the site-ready → accepted timeline band.</p>
-    <div class="calc-grid">
-      <div class="panel panel-inputs" id="cx-inputs" aria-label="Commissioning inputs"></div>
-      <div class="panel panel-outputs">
-        <div class="hero-tile" id="cx-hero"></div>
-        <div class="derive" id="cx-derive" aria-label="Derivation chain"></div>
-        <div id="cx-steps" aria-label="Load-step ladder"></div>
-        <div class="matrix-scroll"><table class="out-table" aria-label="Commissioning outputs"><tbody id="cx-out"></tbody></table></div>
-        <div class="matrix-scroll" id="cx-levels" style="margin-top: var(--sp-3)"></div>
-        <ul class="notes" id="cx-notes"></ul>
-      </div>
-    </div>
-  </section>
-
 </main>
 
 <footer class="footer">
   <div class="wrap">
     <p class="disclaimer"><strong>Engineering estimator, not an offer or a design of record.</strong>
-    Every result here is a planning-grade estimate from generic, cited defaults — verify with
-    licensed engineers, vendor submittals and your utility before committing money or metal.
-    Provenance legend: <span class="legend-inline"><a class="chip chip-s" href="sources.html#legend">S</a>
-    stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
-    <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
-    every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro" id="footer-note"></p>
+    Verify with licensed engineers, vendor submittals and your utility.
+    Provenance legend: <span class="legend-inline"><a class="chip chip-s" href="#legend">S</a>
+    stated · <a class="chip chip-d" href="#legend">D</a> derived ·
+    <a class="chip chip-a" href="#legend">A</a> assumed</span> · <a href="index.html">back to the calculators</a>.</p>
+    <p class="micro">Static client-side estimator · no tracking, no CDN, no cookies · all access dates 2026-08-22</p>
   </div>
 </footer>
 
+<script src="assets/js/sources.js"></script>
 <script>
-// progressive boot: the page is readable static HTML first; the calculator
-// engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/result.js","assets/js/rackdata.js","assets/js/calc_power.js","assets/js/calc_cooling.js","assets/js/calc_rack.js","assets/js/calc_capex.js","assets/js/calc_fiber.js","assets/js/calc_commissioning.js","assets/js/diagrams.js","assets/js/app.js","assets/js/sections_core.js","assets/js/sections_more.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+"use strict";
+(function () {
+  const S = globalThis.SOURCES;
+  const mount = document.getElementById("src-mount");
+  for (const [gid, gname] of S.groups) {
+    const sec = document.createElement("section");
+    sec.className = "src-group";
+    const h = document.createElement("h2");
+    h.textContent = gname;
+    sec.appendChild(h);
+    for (const [id, it] of Object.entries(S.items)) {
+      if (it.g !== gid) continue;
+      const d = document.createElement("div");
+      d.className = "src-item";
+      d.id = id;
+      const h3 = document.createElement("h3");
+      h3.textContent = it.t;
+      const p = document.createElement("p");
+      p.className = "src-detail";
+      p.textContent = it.d;
+      const meta = document.createElement("p");
+      meta.className = "src-meta";
+      if (it.u) {
+        const a = document.createElement("a");
+        a.href = it.u;
+        a.rel = "noopener";
+        a.textContent = it.u;
+        meta.appendChild(a);
+        meta.append(" · accessed " + it.a);
+      } else {
+        meta.textContent = it.a === "identifier"
+          ? "cited by standard identifier (text is paywalled)"
+          : "compiled " + it.a;
+      }
+      d.append(h3, p, meta);
+      sec.appendChild(d);
+    }
+    mount.appendChild(sec);
+  }
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,107 @@
+/* ============================================================================
+   tokens.css — canonical design tokens for the AI-DC calculator
+   Engineering/control-room dark theme. See DESIGN.md for rationale and the
+   WCAG-AA contrast table; chip trio CVD-validated (evidence/design/).
+   Fonts: Inter Variable v4.1 + JetBrains Mono Variable v2.304, self-hosted,
+   both SIL-OFL (licenses in assets/fonts/, entries on the Sources page).
+   ========================================================================== */
+
+@font-face {
+  font-family: "Inter Var";
+  src: url("fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: optional;
+}
+@font-face {
+  font-family: "JetBrains Mono Var";
+  src: url("fonts/JetBrainsMono-Variable.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: optional;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* -- surfaces (deep graphite / navy) ------------------------------------ */
+  --bg:        #0b111c;   /* page plane */
+  --surface:   #101725;   /* cards */
+  --raised:    #16202f;   /* raised controls, table header */
+  --inset:     #0d1420;   /* input wells, derivation blocks */
+
+  /* -- ink ----------------------------------------------------------------- */
+  --ink:       #eef3fa;   /* 16.1:1 on card */
+  --ink-2:     #a9b6c8;   /*  8.7:1 */
+  --muted:     #8391a6;   /*  5.6:1 — micro-labels, still AA */
+
+  /* -- rules --------------------------------------------------------------- */
+  --hairline:  rgba(148, 163, 184, 0.14);
+  --rule:      rgba(148, 163, 184, 0.26);
+  --grid:      #2a3547;   /* diagram inactive strokes */
+
+  /* -- provenance chips (THE brand element; CVD-validated trio) ------------ */
+  --chip-s:    #3a96f5;   /* [S] stated  — 5.9:1 */
+  --chip-d:    #cfa9ff;   /* [D] derived — 9.2:1 */
+  --chip-a:    #e8b13c;   /* [A] assumed — 9.2:1 */
+
+  /* -- accents + status (verdicts always icon + word, never color alone) --- */
+  --accent:    #38bdf8;   /* interactive: links, focus, active path — 8.4:1 */
+  --good:      #3ecf8e;   /* 9.0:1 */
+  --warn:      #e8b13c;   /* shares the [A] amber family by design */
+  --bad:       #ff7676;   /* 6.9:1 */
+
+  /* -- typography ----------------------------------------------------------- */
+  --font-ui:   "Inter Var", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Var", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* fluid scale, 360->1280px viewport */
+  --fs-xs:   0.6875rem;                                  /* 11px fixed — micro-labels */
+  --fs-sm:   clamp(0.8125rem, 0.79rem + 0.11vw, 0.875rem);
+  --fs-base: clamp(0.9375rem, 0.915rem + 0.11vw, 1rem);
+  --fs-md:   clamp(1.0625rem, 1.02rem + 0.22vw, 1.1875rem);
+  --fs-lg:   clamp(1.25rem, 1.16rem + 0.43vw, 1.5rem);
+  --fs-xl:   clamp(1.625rem, 1.44rem + 0.87vw, 2.125rem);
+  --fs-hero: clamp(1.875rem, 1.56rem + 1.52vw, 2.75rem);
+
+  --lh-tight: 1.2;
+  --lh-body:  1.55;
+  --track-micro: 0.08em;   /* uppercase micro-label letter-spacing */
+
+  /* -- spacing (4/8px scale) ------------------------------------------------ */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+
+  /* -- geometry -------------------------------------------------------------- */
+  --r-card: 4px;
+  --r-ctl:  3px;
+  --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --w-content: 1240px;
+
+  /* -- motion ----------------------------------------------------------------- */
+  --t-fast: 120ms ease-out;
+}
+
+/* Light print theme: token swap only — component rules stay identical. */
+@media print {
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;  --surface: #ffffff;  --raised: #f3f4f6;  --inset: #f6f7f9;
+    --ink: #111418; --ink-2: #333a44;    --muted: #5a6472;
+    --hairline: rgba(17, 20, 24, 0.22);  --rule: rgba(17, 20, 24, 0.38);
+    --grid: #c3c9d4;
+    --chip-s: #1d63c4; --chip-d: #6d3fc7; --chip-a: #9a6a00;
+    --accent: #0f6aa8; --good: #0c7a4d;   --warn: #9a6a00;   --bad: #b42323;
+    --shadow-card: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-fast: 0ms; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
