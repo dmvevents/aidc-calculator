@@ -24,7 +24,7 @@
       { key: "mech_frac", label: "P2 mech frac", src: "dossiers", step: 0.01, min: 0, advanced: true },
       { key: "mech_on_ups_frac", label: "mech-on-UPS / IT", src: "refdesign", step: 0.005, min: 0, advanced: true },
       { key: "ups_loss_frac", label: "UPS loss frac", src: "refdesign", step: 0.005, min: 0, advanced: true },
-      { key: "rack_idle_frac_of_it", label: "idle fleet / IT", src: "aif-template", step: 0.005, min: 0, advanced: true },
+      { key: "rack_idle_frac_of_it", label: "idle fleet / total IT (n.b. tco's idle frac is of nameplate)", src: "aif-template", step: 0.005, min: 0, advanced: true },
       { key: "support_it_frac_of_it", label: "support IT / IT", src: "refdesign", step: 0.005, min: 0, advanced: true },
       { key: "liquid_frac", label: "liquid bank share", src: "aif-template", step: 0.01, min: 0, max: 1, advanced: true },
       { key: "cx_hours_low", label: "test window low (h)", src: "dossiers", step: 10, min: 0, advanced: true },

@@ -28,9 +28,12 @@
     liquid_premium_pct: q(10.0, "%", "[S]",
                           "JLL liquid-cooled premium on shell-and-core; Mordor's equipment " +
                           "delta is US$200-400/kW = 0.2-0.4M/MW — state which basis"),
-    it_m_per_mw_it: q(28.5, "US$M/MW-IT", "[S]",
-                      "Blackwell NCP capex 28-29M/MW-IT: IREN/Dell 8-K actual 29.0M and a " +
-                      "bottoms-up GB200 model 28.6M converge to 1.4%"),
+    it_m_per_mw_it: q(28.5, "US$M/MW-IT", "[D]",
+                      "Blackwell NCP capex band: IREN/Dell 8-K actual 29.0 and a bottoms-up " +
+                      "GB200 model 28.6 converge to 1.4%; the 28.5 default sits just under " +
+                      "that anchor pair and is HELD at the audited golden this release " +
+                      "(v3.1 A-06) — set your quote; the tco engine's cross-check uses the " +
+                      "8-K 29.0"),
     substation_m: q(null, "US$M", "[A]",
                     "substation + interconnection: NO benchmark could be sourced. Carry as " +
                     "a FEED-priced placeholder, never a point estimate"),
@@ -64,7 +67,9 @@
                          "REPLACE with the site's tariff"),
     pue: q(1.15, "", "[S]", "NVIDIA DSX facility KPI band 1.15-1.20, low end"),
     load_factor: q(0.85, "frac", "[A]", "IT load factor (average / peak)"),
-    utilisation: q(0.85, "frac", "[A]", "billable share of GPU-hours"),
+    utilisation: q(0.85, "frac", "[A]",
+                   "billable share of GPU-hours — BUILD-context amortisation basis; the tco " +
+                   "calculator plans at 0.70 (conservative). See the notes (v3.1 CX-M9/C2)"),
     life_years: q(5.0, "yr", "[A]", "GPU-fleet economic life for straight-line amortisation"),
     facility_life_years: q(20.0, "yr", "[A]", "shell + MEP economic life"),
   };
@@ -76,7 +81,9 @@
     for (const k of Object.keys(kw)) if (kw[k] !== null && kw[k] !== undefined) p[k] = kw[k];
 
     const it = Number(p.it_mw);
-    const gpus = p.gpus ? Math.trunc(p.gpus) : Math.round(it * 1000.0 / Number(p.kw_per_gpu));
+    // half-up rounding matched to the Python core's int(x+0.5) — bankers'
+    // rounding diverged from JS at .5 ties (v3.1 antagonist A-05)
+    const gpus = p.gpus ? Math.trunc(p.gpus) : Math.floor(it * 1000.0 / Number(p.kw_per_gpu) + 0.5);
 
     const colo = it * Number(p.colo_m_per_mw);
     const liquid_adder = colo * Number(p.liquid_premium_pct) / 100.0;
@@ -113,8 +120,10 @@
                              "(colo + liquid + substation) x contingency_pct_of_facility — " +
                              "named-risk sum, not a flat allowance (table on the input row)"),
       capex_total_m: q(total, "US$M", "[D]", "sum of the capex lines"),
-      capex_per_mw_it_m: q(total / it, "US$M/MW-IT", "[D]", "capex_total_m / it_mw"),
-      capex_per_gpu_usd: q(total * 1e6 / gpus, "US$/GPU", "[D]", "capex_total_m / gpus"),
+      capex_per_mw_it_m: q(it ? total / it : null, "US$M/MW-IT", "[D]",
+                           "capex_total_m / it_mw"),
+      capex_per_gpu_usd: q(gpus ? total * 1e6 / gpus : null, "US$/GPU", "[D]",
+                           "capex_total_m / gpus"),
       opex_ex_power_m_yr: q(opex_yr, "US$M/yr", "[D]", "it_mw x opex_k_per_mw_it_yr"),
       energy_kwh_yr: q(energy_kwh_yr, "kWh/yr", "[D]",
                        "it_mw x pue x 8760 x load_factor"),
@@ -137,6 +146,12 @@
     };
 
     const notes = [
+      "UTILISATION BASIS (v3.1 CX-M9/C2): this page amortises at utilisation " +
+      Number(p.utilisation).toFixed(2) + " (build-context billable share); the TCO " +
+      "calculator's planning default is 0.70, deliberately conservative. At 0.70 this " +
+      "cost floor would be ~$" +
+      ((per_h(amort_yr + opex_yr + energy_yr) || 0.0) * Number(p.utilisation) / 0.70).toFixed(2) +
+      "/GPU-h (x" + (Number(p.utilisation) / 0.70).toFixed(2) + ") — quote the basis with the number.",
       "These are GENERIC published benchmarks. JLL's 11.3M/MW is shell-and-core EXCLUDING " +
       "land and IT; the SEC-disclosed project actuals (Galaxy ~13M/MW, APLD 10-13M/MW) are " +
       "per MW of critical IT delivered — the denominators differ, so cross-read them " +

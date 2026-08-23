@@ -333,14 +333,21 @@
       for (const f of sec.fields) {
         const ctl = document.getElementById(sec.id + "." + f.key);
         if (!ctl) continue;
+        // scenario-bar-seeded fields are NOT explicit user state: the s.*
+        // namespace carries them, so a restored link re-derives them as
+        // bar-owned instead of freezing them as user values (antagonist A-02)
+        if (ctl.dataset && ctl.dataset.scen === "1") continue;
         if (f.type === "checkbox") {
           const dflt = sec.defaults[f.key];
           if (!!ctl.checked !== !!(dflt && dflt.value)) ps.set(ctl.id, ctl.checked ? "1" : "0");
         } else if (f.type === "select") {
           const dflt = sec.defaults[f.key];
           const dv = dflt && dflt.value !== null && dflt.value !== undefined ? String(dflt.value) : "";
-          if (ctl.value !== dv && ctl.value !== "" && !(f.key === "variant")) ps.set(ctl.id, ctl.value);
-          if (f.key === "variant" && ctl.value !== f.value) ps.set(ctl.id, ctl.value);
+          // fields whose default comes from the field config (f.value), not the
+          // engine defaults — the rack platform select (C1: was `variant`)
+          const cfgDefault = f.value !== undefined;
+          if (ctl.value !== dv && ctl.value !== "" && !cfgDefault) ps.set(ctl.id, ctl.value);
+          if (cfgDefault && ctl.value !== String(f.value)) ps.set(ctl.id, ctl.value);
         } else if (ctl.value.trim() !== "") {
           ps.set(ctl.id, ctl.value.trim());
         }
@@ -348,6 +355,9 @@
       for (const g of sec.unitToggles || []) {
         if (state.units[sec.id + "." + g]) ps.set("u." + sec.id + "." + g, "1");
       }
+    }
+    if (A.scenario) {
+      for (const [k, v] of A.scenario.hashPairs()) ps.set(k, v);
     }
     return ps.toString();
   }
@@ -364,7 +374,10 @@
     if (!location.hash || location.hash.length < 2) return;
     state.restoring = true;
     const ps = new URLSearchParams(location.hash.slice(1));
+    // scenario first-pass: reads s.* (and migrates legacy keys inside ps)
+    if (A.scenario) A.scenario.restoreFromHash(ps);
     for (const [k, v] of ps.entries()) {
+      if (k.startsWith("s.")) continue;    // scenario namespace, handled above
       if (k.startsWith("u.")) {
         const parts = k.slice(2);
         state.units[parts] = v === "1";
@@ -471,7 +484,12 @@
       if (btn) btn.addEventListener("click", () => copyMarkdown(sec));
       if (sec.init) sec.init();
     }
+    // shared scenario bar (v3.1): built before restoreHash so the s.* pass can
+    // sync it; bootApply pre-populates DEFAULT fields after explicit hash
+    // values landed (they win), without writing the hash
+    if (A.scenario) A.scenario.buildScenarioBar();
     restoreHash();
+    if (A.scenario) A.scenario.bootApply();
     for (const sec of sections) renderSection(sec);
     navHighlight();
   };
@@ -493,6 +511,7 @@
     const sec = state.sections.find((s) => s.id === id);
     if (sec) { renderSection(sec); scheduleHash(); }
   };
+  A.scheduleHash = scheduleHash;
   A.chipEl = chipEl;
   A.stateHash = buildHashString;
   A.appState = state;

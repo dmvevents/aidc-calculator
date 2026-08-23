@@ -15,7 +15,11 @@
   const RHO_CP_WATER = 0.996 * 4.18;  // kJ/L.K — facility/TES side is water, not PG25
 
   // ASHRAE 2021 (5th ed. Thermal Guidelines) liquid classes: max facility supply C.
-  const W_CLASSES = [["W17", 17], ["W27", 27], ["W32", 32], ["W40", 40], ["W45", 45]];
+  // W40 removed v3.1 (C-M4): no public source names it. NVIDIA CDU Requirements
+  // DA-11933-001_v04 names only W17/W27/W32/W45 (non-exhaustive "including"
+  // wording — cannot alone prove absence) and prior ASHRAE editions enumerate
+  // exactly these four. Restore only from the 5th ed. itself (v3.1 A-08).
+  const W_CLASSES = [["W17", 17], ["W27", 27], ["W32", 32], ["W45", 45]];
 
   const REJECTORS = ["dry", "tower", "adiabatic"];
   const FLOW_BASES = ["formula", "vendor"];
@@ -30,7 +34,10 @@
   const DEFAULTS = {
     it_kw: q(1000.0, "kW-IT", "[A]", "generic 1 MW-IT block — set to your project"),
     liquid_frac: q(0.87, "frac", "[S]",
-                   "NVL72-class heat-capture ratio 87% (aif-pipeline-samples gb300_rack template)"),
+                   "NVL72-class heat-capture HEADLINE ratio 87% (aif-pipeline-samples " +
+                   "gb300_rack template). The template's own kW split is 116/(116+19.3) = " +
+                   "85.7% — 1.3pp lower; the rack matrix carries the reconciled 85.7 and a " +
+                   "platform pick seeds it here (v3.1 A-12)"),
     coolant: q("pg25", "", "[A]", "water | pg25 (research/10 §1.2 property table)"),
     dt_k: q(15.0, "K", "[A]",
             "design TCS delta-T for F1; NVL72 racks are return-temp-limited, prefer F2 (research/10 §1.2)"),
@@ -44,8 +51,9 @@
     dp_b_kpa_lpm: q(0.0617, "kPa/LPM", "[S]", "F3 linear term of the same sourced rack PQ curve"),
     dp_loop_extra_kpa: q(95.0, "kPa", "[A]",
                          "rest of the F3 head stack: hoses/valves 25 + manifold/riser 30 + CDU HX 40 (reference cooling design §3)"),
-    cdu_kw: q(1368.0, "kW", "[S]",
-              "Vertiv XDU1350 nominal capacity (aif-pipeline-samples vendor preset)"),
+    cdu_kw: q(1350.0, "kW", "[S]",
+              "Vertiv CoolChip CDU 1350 catalog nominal; the AIF-template metadata carries " +
+              "1368 for the same XDU1350-class unit [A] (v3.1 C-M1)"),
     cdu_redundancy: q("N+1", "", "[A]", "N | N+1 CDU units per loop"),
     cdu_approach_rated_k: q(4.0, "K", "[S]",
                             "approach the CDU is RATED at, 4-5 C market standard — F4 derate reference (research/10 §1.3)"),
@@ -61,7 +69,7 @@
     a_cdu: q(4.0, "K", "[S]", "CDU heat-exchanger approach 3-5 C (research/10 §1.3)"),
     eps_adb: q(0.8, "frac", "[A]", "adiabatic pre-cool effectiveness, band 0.6-0.9 (research/10 §2.2)"),
     w_class_target: q(null, "", "[A]",
-                      "optional ASHRAE 2021 liquid class the plant must hold (W17|W27|W32|W40|W45); " +
+                      "optional ASHRAE 2021 liquid class the plant must hold (W17|W27|W32|W45); " +
                       "the F5 verdict then also reports whether it makes that class (research/10 §2.1)"),
     t_db_rating_c: q(35.0, "C", "[A]",
                      "ambient the rejector was SELECTED at — F6 reference leg (research/10 §2.3)"),
@@ -196,11 +204,16 @@
     else if (min_wet <= inlet) verdict = "wetted-assist";
     else verdict = "infeasible";
 
-    // --- F6 dry-cooler derate vs ambient -----------------------------------
+    // --- F6 dry-cooler derate vs ambient (DRY mode only, v3.1 C-M2) --------
+    // For tower/adiabatic the site reference is wet-bulb-based while the rating
+    // reference is dry-bulb — the ratio is meaningless, so F6 nulls out.
     const water_in = p.rejector_water_in_c !== null && p.rejector_water_in_c !== undefined
       ? Number(p.rejector_water_in_c) : return_c;
-    const itd_site = water_in - t_ref, itd_ref = water_in - Number(p.t_db_rating_c);
-    const dry_derate = (itd_ref > 0 && itd_site > 0) ? itd_site / itd_ref : null;
+    let dry_derate = null;
+    if (p.rejector === "dry") {
+      const itd_site = water_in - t_ref, itd_ref = water_in - Number(p.t_db_rating_c);
+      dry_derate = (itd_ref > 0 && itd_site > 0) ? itd_site / itd_ref : null;
+    }
     const rejector_mult = dry_derate ? 1.0 / dry_derate : null;
 
     // --- F7 water ----------------------------------------------------------
@@ -221,14 +234,16 @@
     if (p.loop_volume_l && q_liq > 0) {
       ride_s = Number(p.loop_volume_l) * rho * cp * Number(p.dt_allow_k) / q_liq;
     }
-    const tes_m3 = q_liq * Number(p.tes_bridge_min) * 60.0 / (RHO_CP_WATER * dt_eff) / 1000.0;
+    const tes_m3 = q_liq * Number(p.tes_bridge_min) * 60.0
+      / (RHO_CP_WATER * Number(p.dt_allow_k)) / 1000.0;
 
     // --- F11 design-hour COP + mechanical trim -----------------------------
     const t_evap_k = Number(p.fws_supply_c) - Number(p.a_evap) + 273.15;
     const t_cond_k = t_ref + Number(p.a_cond) + 273.15;
     const cop = t_cond_k > t_evap_k ? Number(p.eta_ii) * t_evap_k / (t_cond_k - t_evap_k) : null;
     const x_mech = feasible ? 0.0 : 1.0;
-    const l_cool = Number(p.pump_fan_frac) + (cop ? x_mech / cop : 0.0);
+    const l_cool = Number(p.pump_fan_frac)
+      + (cop ? x_mech * Number(p.liquid_frac) / cop : 0.0);
 
     const out = {
       liquid_load_kw: q(q_liq, "kW", "[D]", "it_kw x liquid_frac"),
@@ -285,7 +300,8 @@
       ashrae_class_of_plant: q(w_class_of(min_tcs), "", "[D]",
                                "class the plant can actually deliver at design"),
       dry_cooler_derate: q(dry_derate, "", "[D]",
-                           "F6: ITD_site / ITD_ref = (water_in - t_ref) / (water_in - t_db_rating_c)"),
+                           "F6 (dry mode only): ITD_site / ITD_ref = (water_in - t_ref) / " +
+                           "(water_in - t_db_rating_c); null for tower/adiabatic (v3.1 C-M2)"),
       rejector_count_multiplier: q(rejector_mult, "x", "[D]",
                                    "F6: 1 / dry_cooler_derate — units vs the rating-ambient selection"),
       water_makeup_l_per_kwh_th: q(makeup_l_kwh, "L/kWh", "[D]",
@@ -298,13 +314,16 @@
       loop_ride_through_s: q(ride_s, "s", "[D]",
                              "F8: loop_volume_l x rho x cp x dt_allow_k / liquid_load_kw"),
       tes_volume_m3: q(tes_m3, "m3", "[D]",
-                       "F8: Q x tes_bridge_min / (rho.cp_water x dt_effective_k)"),
+                       "F8: Q x tes_bridge_min / (rho.cp_water x dt_allow_k) — the allowable " +
+                       "ride-through rise, same basis as loop_ride_through_s (v3.1 C-H1)"),
       chiller_cop_design: q(cop, "", "[D]",
                             "F11: eta_ii x T_evap / (T_cond - T_evap) at the design hour"),
       x_mech_design_hour: q(x_mech, "frac", "[D]",
                             "F11: 1.0 when F5 fails (chiller carries the lift), else 0"),
       pue_l_cool_design_hour: q(l_cool, "", "[D]",
-                                "F11 -> F10: pump_fan_frac + x_mech / chiller_cop_design"),
+                                "F11 -> F10: pump_fan_frac + x_mech x liquid_frac / " +
+                                "chiller_cop_design — the chiller lifts only the liquid " +
+                                "loop (v3.1 C-H2)"),
       pue_l_cool_parasitic: q(Number(p.pump_fan_frac), "", "[A]",
                               "pump + fan parasitic share of IT, before any mechanical-lift term"),
     };
@@ -385,6 +404,29 @@
         "The SELECTED rejector fails but a passive mode exists: " + min_passive.toFixed(1) + " C is reachable " +
         "(vs " + min_tcs.toFixed(1) + " C on rejector=" + p.rejector + "). Switch mode before pricing a chiller " +
         "(research/10 §2.2).");
+    }
+    if (p.rejector !== "dry" && water_m3 && Number(p.liquid_frac) < 1.0) {
+      notes.push(
+        "F7 charges the FULL IT load to the wet rejector — the conservative " +
+        "single-wet-plant reading. If only the LIQUID loop rejects through the " +
+        "tower (q_liq " + q_liq.toFixed(0) + " kW), scale by liquid_frac " +
+        Number(p.liquid_frac).toFixed(2) + " (about " +
+        (100.0 * (1.0 - Number(p.liquid_frac))).toFixed(0) + "% less water) (v3.1 C-M3).");
+    }
+    if (32.0 < Math.max(inlet, min_tcs) && Math.max(inlet, min_tcs) <= 45.0) {
+      notes.push(
+        "W-class ladder (v3.1): no public source names a W40 class — NVIDIA CDU " +
+        "Requirements DA-11933-001 names only W17/W27/W32/W45 (non-exhaustive " +
+        "'including' wording) and prior ASHRAE editions enumerate exactly those " +
+        "four — so supplies above 32 C classify as W45 here.");
+    }
+    if (Number(p.liquid_frac) < 1.0) {
+      notes.push(
+        "pue_l_cool_design_hour prices the LIQUID loop's mechanical lift only; the " +
+        "residual-AIR loop's chilled-water lift is NOT modelled (pump_fan_frac is " +
+        "fans/pumps parasitics). For air-heavy platforms the PUE-closure cross-check " +
+        "understates cooling overhead by roughly the air fraction's lift " +
+        "(v3.1 antagonist A-11).");
     }
     if (p.rejector === "adiabatic" && water_m3) {
       notes.push(

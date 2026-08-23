@@ -21,8 +21,11 @@
     const name = k2.platform || A.calcTco.DEFAULTS.platform.value;
     k2.platform = name;
     const v = globalThis.RACKDB[name];
-    if (k2.gpus_per_rack === undefined) k2.gpus_per_rack = v.gpus_per_rack;
-    if (k2.rack_kw === undefined) k2.rack_kw = v.nameplate_kw;
+    // == null (not === undefined): a blanked advanced field arrives as null and
+    // must fall back to the PLATFORM value, not the GB200 engine basis (v3.1 MED)
+    if (k2.gpus_per_rack == null) k2.gpus_per_rack = v.gpus_per_rack;
+    if (k2.rack_kw == null) k2.rack_kw = v.nameplate_kw;
+    if (k2.pue == null) k2.pue = v.pue_target;   // TCO-H1 (v3.1): PUE follows the platform
     return k2;
   }
 
@@ -244,7 +247,7 @@
       { key: "lease_usd_per_kw_month", label: "colo rate $/kW-mo", src: "cbre-colo",
         step: 5, min: 0, advanced: true, placeholder: "tier band" },
       { key: "pue", label: "PUE", src: "dsx-kpi", step: 0.01, min: 1, advanced: true },
-      { key: "idle_power_frac", label: "idle power frac", src: "aif-template",
+      { key: "idle_power_frac", label: "idle power frac (of nameplate)", src: "aif-template",
         step: 0.05, min: 0, max: 1, advanced: true },
       { key: "gpus_per_rack", label: "GPUs per rack (override)", src: "variants",
         step: 1, min: 1, advanced: true },
@@ -326,6 +329,7 @@
       const v = globalThis.RACKDB[p.platform];
       holder("gpus_per_rack", v.gpus_per_rack);
       holder("rack_kw", v.nameplate_kw);
+      holder("pue", v.pue_target);
       holder("gpu_price_usd", A.calcTco.GPU_PRICE_USD[p.platform].value);
       holder("lease_usd_per_kw_month", A.calcTco.LEASE_DEFAULT[p.lease_tier].value);
       holder("opex_usd_per_kw_yr", A.calcTco.OPEX_DEFAULT[p.mode].value);

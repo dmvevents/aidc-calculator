@@ -6,16 +6,38 @@
   const d = (v) => A.res.disp(v);
   A.SECTIONS = A.SECTIONS || [];
 
+  function resolvePlatform(kw) {
+    const k2 = Object.assign({}, kw);
+    const name = k2.platform;
+    delete k2.platform;
+    const v = name && globalThis.RACKDB ? globalThis.RACKDB[name] : null;
+    if (v) {
+      if (k2.kw_per_gpu == null) k2.kw_per_gpu = v.nameplate_kw / v.gpus_per_rack;
+      if (k2.pue == null) k2.pue = v.pue_target;
+    }
+    return k2;
+  }
+
   // ---------------------------------------------------------------- CAPEX ----
   A.SECTIONS.push({
     id: "capex",
     defaults: A.calcCapex.DEFAULTS,
-    compute: (kw) => A.calcCapex.costs(kw),
+    // CX-H7 (v3.1): optional platform pick — kw_per_gpu = nameplate/gpus_per_rack
+    // and PUE follow it unless the user typed overrides. "" = no platform,
+    // page defaults (the 1.889 GB200 nameplate basis) apply. EVERY consumer of
+    // the kwargs (compute, sensitivity grid, density table) resolves through
+    // THIS function so the hero and the tables can never diverge (antagonist
+    // A-04: raw-kw sensitivity contradicted the platform-resolved hero).
+    compute: (kw) => A.calcCapex.costs(resolvePlatform(kw)),
     hero: "cost_floor_per_gpu_hr", heroLabel: "cost floor (not a price)", heroSrc: "jll",
     fields: [
+      { key: "platform", label: "GPU platform (sets kW/GPU + PUE)", src: "variants", type: "select", value: "",
+        options: [["", "(none — set kW/GPU directly)"]].concat(
+          ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"]
+            .map((n) => [n, globalThis.RACKDB[n].platform])) },
       { key: "it_mw", label: "critical IT", src: "legend", step: 0.5, min: 0.1 },
       { key: "power_usd_per_kwh", label: "power price", src: "eia", step: 0.005, min: 0 },
-      { key: "utilisation", label: "billable utilisation", src: "legend", step: 0.05, min: 0.05, max: 1 },
+      { key: "utilisation", label: "billable utilisation (build basis — tco plans at 0.70)", src: "legend", step: 0.05, min: 0.05, max: 1 },
       { key: "gpus", label: "GPU count (else derived)", src: "legend", step: 8, min: 1, placeholder: "derived" },
       { key: "it_m_per_mw_it", label: "IT capex $M/MW-IT", src: "iren-8k", step: 0.5, min: 0 },
       { key: "spares_pct_of_it", label: "spares/DOA float % of IT", src: "fm-spares", step: 0.5, min: 0 },
@@ -35,8 +57,10 @@
       return [
         (o.gpus.label === "[D]"
           ? "GPUs = IT×1000 ÷ kW/GPU = " + d(i.it_mw.value) + "×1000 ÷ " + d(i.kw_per_gpu.value) +
-            " = " + d(o.gpus.value) + " — rack-nameplate basis (136 ÷ 72 = 1.89 kW/GPU · " +
-            "529 GPUs/MW on the rack page); support IT + optics excluded"
+            " = " + d(o.gpus.value) + " — at " + d(i.kw_per_gpu.value) + " kW/GPU that is " +
+            d(1000 / i.kw_per_gpu.value) + " GPUs/MW" +
+            (Math.abs(i.kw_per_gpu.value - 1.889) < 1e-9 ? " (the 136 ÷ 72 rack-nameplate basis)" : "") +
+            "; support IT + optics excluded"
           : "GPUs = " + d(o.gpus.value) + " (user-supplied — kW/GPU not used)"),
         "capex = shell(" + d(o.capex_colo_m.value) + ") + liquid(" + d(o.capex_liquid_adder_m.value) +
           ") + IT(" + d(o.capex_it_m.value) + ")" +
@@ -60,6 +84,8 @@
     after: (r, kw) => {
       const host = document.getElementById("capex-sens");
       if (!host) return;
+      const platformName = kw.platform;
+      kw = resolvePlatform(kw);   // A-04: same resolution as compute
       const s = A.calcCapex.sensitivity(kw, 20, 0.10);
       const tbl = document.createElement("table");
       tbl.className = "matrix";
@@ -106,7 +132,11 @@
         ["120 kW public quote ÷ 72 [A] — assumption-verify (no NVIDIA doc)", 1.667],
         ["1.2 MW SU TDP ÷ 576 [D] — SU basis, fabric+mgmt folded in", 1.2 * 1000 / 576],
       ];
-      if (!bases.some((b) => Math.abs(b[1] - cur) < 5e-4)) bases.push(["your kW/GPU input", cur]);
+      if (!bases.some((b) => Math.abs(b[1] - cur) < 5e-4)) {
+        bases.push([platformName
+          ? platformName + " nameplate basis (platform pick)"
+          : "your kW/GPU input", cur]);
+      }
       const dtbl = document.createElement("table");
       dtbl.className = "matrix";
       const dcap = document.createElement("caption");

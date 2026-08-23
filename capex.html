@@ -506,6 +506,35 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
 @media print {
 .dg-grid, .dg-leader, .hp-dim { stroke: var(--muted); }
 }
+.scenariobar {
+border: 1px solid var(--rule); border-radius: var(--r-ctl);
+background: var(--surface); padding: var(--sp-2) var(--sp-3);
+margin: 0 0 var(--sp-4);
+}
+.scenariobar.scen-active { border-color: var(--accent); }
+.scen-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+.scen-title {
+font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 600;
+letter-spacing: var(--track-micro); color: var(--muted); text-transform: uppercase;
+cursor: help;
+}
+.scen-platform, .scen-target {
+background: var(--inset); color: var(--ink); border: 1px solid var(--hairline);
+border-radius: var(--r-ctl); padding: 6px 8px; font-size: var(--fs-sm);
+min-height: 32px;
+}
+.scen-target { width: 7ch; font-family: var(--font-mono); }
+.scen-derived { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink-2); }
+.scenariobar.scen-active .scen-derived { color: var(--accent); }
+.scen-notes {
+margin: var(--sp-2) 0 0; padding-left: 1.2em;
+font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
+}
+.scen-notes li { margin: 2px 0; }
+@media (max-width: 640px) {
+.scen-row { gap: var(--sp-2); }
+.scen-derived { flex-basis: 100%; }
+}
 </style>
 </head>
 <body>
@@ -589,7 +618,7 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
 // engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/result.js","assets/js/app.js","assets/js/calc_capex.js","assets/js/page_capex.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+(function(){function go(){["assets/js/result.js","assets/js/app.js","assets/js/rackdata.js","assets/js/calc_capex.js","assets/js/scenario.js","assets/js/page_capex.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
 </script>
 </body>
 </html>

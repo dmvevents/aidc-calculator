@@ -96,7 +96,7 @@
       { key: "t_db_c", label: "design dry-bulb", src: "legend", step: 0.5 },
       { key: "t_wb_c", label: "design wet-bulb", src: "legend", step: 0.5 },
       { key: "w_class_target", label: "W-class target", src: "ashrae2021", type: "select",
-        options: [["", "(none)"], ["W17", "W17"], ["W27", "W27"], ["W32", "W32"], ["W40", "W40"], ["W45", "W45"]], advanced: true },
+        options: [["", "(none)"], ["W17", "W17"], ["W27", "W27"], ["W32", "W32"], ["W45", "W45"]], advanced: true },
       { key: "flow_basis", label: "flow basis", src: "aif-template", type: "select",
         options: [["formula", "F1 formula (fixed ΔT)"], ["vendor", "F2 vendor rack curve"]], advanced: true },
       { key: "coolant", label: "coolant", src: "dossiers", type: "select",

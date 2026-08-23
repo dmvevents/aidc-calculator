@@ -220,7 +220,7 @@
     const svg = el("svg", { viewBox: "0 0 " + W + " 700", "class": "dg", role: "img",
       "aria-label": "Annotated electrical one-line: utility service " + d(o.utility_service_mva.value) +
         " MVA, transformers " + d(o.transformer_installed_mva.value) + " MVA installed, UPS core-only " +
-        d(o.ups_backed_mw.value) + " MW, standby generation " + o.genset_units_installed.value +
+        d(o.ups_backed_site_mw.value) + " MW site, standby generation " + o.genset_units_installed.value +
         " units, busway to racks, with sizing formulas F13 to F18; legend and units included." });
     svg.appendChild(txt(20, 26, "ELECTRICAL ONE-LINE — SIZED LIVE BY F13 · F14 · F15 · F17 · F18", "dg-name", "start"));
 
@@ -254,7 +254,7 @@
     svg.appendChild(edge(txc, by + 10, txc + 30, by + 10, "dg-edge-branch"));
     svg.appendChild(arrow(txc + 22, by + 10, 0, "dg-arr-mut"));
     svg.appendChild(node(txc + 32, by - 18, 210, h, "UPS · CORE-ONLY BRANCH",
-      d(o.ups_backed_mw.value) + " MW · " + o.ups_modules_installed_per_path.value + " modules/path", null, "ups"));
+      d(o.ups_backed_site_mw.value) + " MW · " + o.ups_modules_installed_per_path.value + " modules/path", null, "ups"));
     svg.appendChild(txt(txc + 32 + 105, by - 18 + h + 14,
       "battery " + d(o.ups_battery_installed_kwh.value) + " kWh · " + d(i.ride_through_min.value) + " min", "dg-name"));
     const gxc = xs[0] + xw / 2;
@@ -285,16 +285,18 @@
         " MVA · " + i.redundancy.value + " → " + o.transformer_units.value + " transformers, N-1 holds peak",
     ]) + 14;
     ay = annot(svg, 20, ay, colw, "F14 · UPS (CORE-ONLY) & BATTERY", [
-      "UPS-backed = IT × (1 + mech " + d(i.mech_on_ups_frac.value) + ") = " + d(o.ups_backed_mw.value) +
-        " MW → ⌈÷ " + d(i.ups_module_mw.value) + " MW module⌉ + 1 = " + o.ups_modules_installed_per_path.value + "/path",
-      "battery = backed × " + d(i.ride_through_min.value) + " min ÷ (DoD " + d(i.batt_dod.value) +
-        " × η " + d(i.batt_eff.value) + ") = " + d(o.ups_battery_installed_kwh.value) + " kWh installed",
+      "UPS-backed = IT × (1 + mech " + d(i.mech_on_ups_frac.value) + ") = " + d(o.ups_backed_site_mw.value) +
+        " MW site → ÷ " + o.distribution_paths.value + " = " + d(o.ups_backed_per_path_mw.value) +
+        " MW/path · modules ⌈peak/path ÷ " + d(i.ups_module_mw.value) + " MW⌉ + 1 = " +
+        o.ups_modules_installed_per_path.value + "/path",
+      "battery = backed/path × " + d(i.ride_through_min.value) + " min ÷ (DoD " + d(i.batt_dod.value) +
+        " × η " + d(i.batt_eff.value) + ") = " + d(o.ups_battery_installed_kwh.value) + " kWh installed/path",
     ]) + 14;
     ay = annot(svg, 20, ay, colw, "F15 · STANDBY GENERATION & FUEL", [
       "units = ⌈peak " + d(o.peak_demand_mva.value) + " MVA ÷ " + d(i.genset_unit_mva.value) + " MVA⌉ + 1 = " +
         o.genset_units_installed.value + " · block-load step ≤ " + d(i.gen_step_frac.value) + " × unit",
-      "fuel = facility × " + d(i.fuel_hours.value) + " h × SFC " + d(i.fuel_l_per_kwh.value) + " L/kWh = " +
-        d(o.genset_fuel_m3.value) + " m³ on site",
+      "fuel = facility " + d(o.facility_mw.value * 1000) + " kW × " + d(i.fuel_hours.value) + " h × SFC " +
+        d(i.fuel_l_per_kwh.value) + " L/kWh ÷ 1000 = " + d(o.genset_fuel_m3.value) + " m³ on site",
     ]) + 14;
     if (haveRack) {
       ay = annot(svg, 20, ay, colw, "F17 · BUSWAY AMPACITY CHAIN" + (bwOk ? " — ✓ PASS" : " — ✕ FAIL"), [
@@ -400,7 +402,7 @@
     svg.appendChild(txt(clampX(X(inlet), estW(labI, "dg-name") / 2, W), yb + 56, labI, "dg-name"));
 
     // W-class ladder
-    const classes = [["W17", 17], ["W27", 27], ["W32", 32], ["W40", 40], ["W45", 45], ["W+", 99]];
+    const classes = [["W17", 17], ["W27", 27], ["W32", 32], ["W45", 45], ["W+", 99]];  // W40 removed v3.1 (C-M4, DA-11933-001 ladder)
     const cw = 64, cy = 346;
     svg.appendChild(txt(x0, cy - 10, "ASHRAE W-CLASS LADDER — required (rack inlet) ■ vs plant-deliverable □", "dg-name", "start"));
     classes.forEach((c, k) => {

@@ -8,14 +8,17 @@
 
   // ----------------------------------------------------------------- RACK ----
   const VARIANT_ORDER = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
+  // R-H1/R-H2 (v3.1): pue_target + distribution_voltage_v now travel with the
+  // platform pick instead of silently inheriting the GB200/calc_power defaults.
   const rackOf = (name) => {
     const v = globalThis.RACKDB[name];
     return { gpus_per_rack: v.gpus_per_rack, nameplate_kw: v.nameplate_kw,
              liquid_kw: v.liquid_kw || 0, air_kw: v.air_kw || 0, weight_kg: v.weight_kg,
-             footprint_m2: v.footprint_m2, racks_per_su: v.racks_per_su, rails: v.rails };
+             footprint_m2: v.footprint_m2, racks_per_su: v.racks_per_su, rails: v.rails,
+             pue_target: v.pue_target, distribution_voltage_v: v.distribution_voltage_v };
   };
   A.currentVariant = () => {
-    const sel = document.getElementById("rack.variant");
+    const sel = document.getElementById("rack.platform");
     return (sel && sel.value) || "gb200-nvl72";
   };
 
@@ -23,15 +26,19 @@
     id: "rack",
     defaults: A.calcRack.DEFAULTS,
     compute: (kw) => {
-      const name = kw.variant || "gb200-nvl72";
+      const name = kw.platform || "gb200-nvl72";
       const k2 = Object.assign({}, kw);
-      delete k2.variant;
-      return A.calcRack.plan(rackOf(name), k2);
+      delete k2.platform;
+      const v = rackOf(name);
+      // platform values seed the calc unless the user typed an override
+      if (k2.pue == null && v.pue_target != null) k2.pue = v.pue_target;
+      if (k2.dist_v == null && v.distribution_voltage_v != null) k2.dist_v = v.distribution_voltage_v;
+      return A.calcRack.plan(v, k2);
     },
     hero: "it_total_mw", heroLabel: "total IT load", heroSrc: "variants",
     unitToggles: ["area"],
     fields: [
-      { key: "variant", label: "rack platform", src: "variants", type: "select", value: "gb200-nvl72",
+      { key: "platform", label: "rack platform", src: "variants", type: "select", value: "gb200-nvl72",
         options: VARIANT_ORDER.map((n) => [n, globalThis.RACKDB[n].platform]) },
       { key: "gpus", label: "target GPU count", src: "legend", step: 8, min: 1 },
       { key: "support_frac", label: "support-IT frac", src: "refdesign", step: 0.005, min: 0, advanced: true },
@@ -49,8 +56,8 @@
       const i = r.inputs, o = r.outputs;
       return [
         "racks = ⌈GPUs ÷ GPUs/rack⌉ = ⌈" + d(i.gpus.value) + " ÷ " + d(i["rack.gpus_per_rack"].value) + "⌉ = " + o.racks.value,
-        "IT = racks × kW + support = " + o.racks.value + " × " + d(i["rack.nameplate_kw"].value) + " × " +
-          d(1 + i.support_frac.value) + " = " + d(o.it_total_mw.value) + " MW-IT → facility " + d(o.facility_mw.value) + " MW",
+        "IT = racks × kW × support ÷ 1000 = " + o.racks.value + " × " + d(i["rack.nameplate_kw"].value) + " × " +
+          d(1 + i.support_frac.value) + " ÷ 1000 = " + d(o.it_total_mw.value) + " MW-IT → facility " + d(o.facility_mw.value) + " MW",
         "density = " + d(o.gpus_per_mw.value) + " GPUs/MW · " + d(o.racks_per_mw.value) + " racks/MW · " +
           d(o.kw_per_gpu.value) + " kW/GPU",
         "F17 · I_rack = " + d(i["rack.nameplate_kw"].value) + "×1000 ÷ (1.732×" + d(i.dist_v.value) + "×" +

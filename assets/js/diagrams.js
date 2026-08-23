@@ -136,7 +136,7 @@
                             "aria-label": "One-line diagram: utility service " +
                               disp()(o.utility_service_mva.value) + " MVA to transformers " +
                               disp()(o.transformer_installed_mva.value) + " MVA installed, UPS core-only branch " +
-                              disp()(o.ups_backed_mw.value) + " MW, busway to racks; legend and units included." });
+                              disp()(o.ups_backed_site_mw.value) + " MW site, busway to racks; legend and units included." });
     const bw_ok = !o.busway_rating_ok || o.busway_rating_ok.value !== false;
     const nodes = [
       ["UTILITY", disp()(o.utility_service_mva.value) + " MVA svc", null, "src"],
@@ -167,7 +167,7 @@
     svg.appendChild(arrow(ux - 12, uy + 12, 0, "dg-arr-mut"));
     svg.appendChild(node(ux, uy - 16, 190, h,
                          "UPS · CORE-ONLY",
-                         disp()(o.ups_backed_mw.value) + " MW · " + o.ups_modules_installed_per_path.value + "/path", null, "ups"));
+                         disp()(o.ups_backed_site_mw.value) + " MW · " + o.ups_modules_installed_per_path.value + "/path", null, "ups"));
     // genset standby, dashed (open tie — no flow arrow)
     const gx = xs[0] + xw / 2;
     svg.appendChild(el("line", { x1: gx, y1: y + h, x2: gx, y2: uy + 12, "class": "dg-edge-standby" }));
@@ -227,7 +227,7 @@
     const labI = "RACK INLET " + disp()(inlet) + " C";
     svg.appendChild(txt(clampX(X(inlet), estW(labI, "dg-name") / 2, W), yb - 32, labI, "dg-name"));
     // W-class ladder cells
-    const classes = [["W17", 17], ["W27", 27], ["W32", 32], ["W40", 40], ["W45", 45], ["W+", 99]];
+    const classes = [["W17", 17], ["W27", 27], ["W32", 32], ["W45", 45], ["W+", 99]];  // W40 removed v3.1 (C-M4, DA-11933-001 ladder)
     const cw = 62, cy = 178;
     svg.appendChild(txt(x0, cy - 10, "ASHRAE W-CLASS — required (rack inlet) vs plant-deliverable", "dg-name", "start"));
     classes.forEach((c, i) => {

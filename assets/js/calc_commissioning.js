@@ -84,7 +84,8 @@
     const p2 = facility * Number(p.mech_frac);
     const p4 = it * (1 + Number(p.mech_on_ups_frac)) * (1 + Number(p.ups_loss_frac));
     const p5 = facility;
-    const p6 = it * (Number(p.rack_idle_frac_of_it) + Number(p.support_it_frac_of_it));
+    const p6_it = it * (Number(p.rack_idle_frac_of_it) + Number(p.support_it_frac_of_it));
+    const p6 = p6_it + facility * Number(p.mech_frac);
     const p8 = facility;
 
     const pct = (x) => facility ? 100.0 * x / facility : null;
@@ -106,7 +107,13 @@
       p5_ist_mw: q(p5, "MW", "[D]", "whole facility at design load (pull-the-plug scripts, dossier §3.2)"),
       p5_pct_of_facility: q(100.0, "%", "[D]", "by definition"),
       p6_gpu_install_mw: q(p6, "MW", "[D]",
-                           "it_mw x (rack_idle_frac_of_it + support_it_frac_of_it) + pro-rata mech"),
+                           "it_mw x (rack_idle_frac_of_it + support_it_frac_of_it) + " +
+                           "facility_mw x mech_frac — idle-booted racks + support IT + the " +
+                           "mech plant carrying them (v3.1 CX-H1: the label said pro-rata " +
+                           "mech, the code now includes it)"),
+      p6_it_only_mw: q(p6_it, "MW", "[D]",
+                       "the IT-side share of P6 alone: it_mw x (rack_idle_frac_of_it + " +
+                       "support_it_frac_of_it)"),
       p6_pct_of_facility: q(pct(p6), "%", "[D]", "p6_gpu_install_mw / facility_mw"),
       p8_soak_mw: q(p8, "MW", "[D]", "acceptance soak at 100% — the ramp/EDPP witness window"),
       load_bank_total_mw: q(p4, "MW", "[D]",
@@ -157,6 +164,10 @@
                               "accept_months_high x 4.345 — the schedule figure to hand a GC");
 
     const notes = [
+      "cx_energy band mixes bases deliberately: LOW = p4 (UPS-bank draw, pre-IST " +
+      "exit) x cx_hours_low, MID/HIGH = p5 (full IST load) x their hours — a " +
+      "cheapest-credible vs full-load-anchor band, not a single-power sweep " +
+      "(v3.1 CX-M1 documentation).",
       "The accept_months_* band is [A] and quoted for a " + Math.trunc(p.accept_basis_su) +
       "-SU hall with an experienced " +
       "integrator (dossier §8 A8.13). It is NOT scaled to this it_mw: facility Cx P1-P5 is " +

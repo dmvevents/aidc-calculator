@@ -83,8 +83,9 @@
     let ay = y + h + 72;
     ay = d.annot(svg, 20, ay, W - 40, "§6.1/§6.4 · WHAT THE FABRIC COSTS TO LIGHT", [
       "fabric links " + f(o.links_fabric_total.value) + " → port-ends " + f(o.port_ends.value) +
-        " → pluggables " + f(o.pluggables_total.value) + " (" + f(o.switch_twin_modules.value) +
-        " twin-port switch + " + f(o.nic_modules.value) + " NIC) + spares " + f(o.spares_per_length_class.value),
+        " → pluggables " + f(o.pluggables_total.value) + " (" + f(o.switch_modules.value) +
+        (r.inputs.ib_twin_modules && r.inputs.ib_twin_modules.value ? " twin-port" : " single-port") +
+        " switch + " + f(o.nic_modules.value) + " NIC) + spares " + f(o.spares_per_length_class.value),
       "optics power = " + f(o.port_ends.value) + " ends × " + f(i.w_per_end.value) + " W = " +
         f(o.optics_power_kw.value) + " kW = " + f(o.optics_share_of_it_pct.value) +
         "% of IT — a real load AND heat line",

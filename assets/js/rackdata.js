@@ -12,7 +12,7 @@ globalThis.RACKDB = {
       2069
     ],
     "cdu_model": "Vertiv XDU1350",
-    "cdu_nominal_kw": 1368,
+    "cdu_nominal_kw": 1350,
     "cdus_per_su": 2,
     "cooling": "DLC + air, 70% liquid",
     "depth_mm": 1200,
@@ -74,6 +74,8 @@ globalThis.RACKDB = {
       "Supermicro SYS-422GA-NBRT-LCC product page",
       "NVIDIA DGX SuperPOD RA B200 (RA-11334-001 V08)"
     ],
+    "trays_label": "[D]",
+    "trays_per_rack": 8,
     "u_class": "48U-class [A]",
     "variant": "b200-liquid",
     "weight_kg": 1015,
@@ -141,6 +143,8 @@ globalThis.RACKDB = {
     "sources": [
       "NVIDIA DGX SuperPOD RA B200 (RA-11334-001 V08)"
     ],
+    "trays_label": "[D]",
+    "trays_per_rack": 2,
     "u_class": "48U-class [A]",
     "variant": "dgx-b200-aircooled-2su",
     "weight_kg": 700,
@@ -156,9 +160,9 @@ globalThis.RACKDB = {
       2069
     ],
     "cdu_model": "Vertiv XDU1350",
-    "cdu_nominal_kw": 1368,
+    "cdu_nominal_kw": 1350,
     "cdus_per_su": 2,
-    "cooling": "DLC + air, 87% liquid",
+    "cooling": "DLC + air, 85.7% liquid",
     "depth_mm": 1200,
     "design_inlet_c": 35,
     "distribution_voltage_v": 480,
@@ -171,17 +175,17 @@ globalThis.RACKDB = {
     "height_mm": 2300,
     "idle_kw": 40.8,
     "labels": {
-      "air_kw": "[S]",
-      "edpp2_kw": "[S]",
+      "air_kw": "[A]",
+      "edpp2_kw": "[A]",
       "gpus_per_rack": "[S]",
       "height_mm": "[S]",
-      "liquid_kw": "[S]",
-      "liquid_pct": "[S]",
-      "nameplate_kw": "[S]",
+      "liquid_kw": "[A]",
+      "liquid_pct": "[D]",
+      "nameplate_kw": "[A]",
       "racks_per_su": "[S]",
       "rails": "[S]",
       "scale_out": "[A]",
-      "weight_kg": "[S]"
+      "weight_kg": "[A]"
     },
     "liquid_flow_curve": [
       [
@@ -211,15 +215,19 @@ globalThis.RACKDB = {
       ]
     ],
     "liquid_kw": 116,
-    "liquid_pct": 87,
+    "liquid_pct": 85.7,
     "matrix_notes": [
       [
         "nameplate_kw",
-        "136 kW is the GB300-template envelope value [S]; GB200 actuals are [A] <= it \u2014 public 120-132 kW GB200 quotes lack an NVIDIA document (assumption \u2014 verify). The liquid/air split and the EDPP ceilings inherit the same envelope basis."
+        "136 kW is the GB300-template envelope value, carried [A] for GB200 \u2014 public 120-132 kW GB200 quotes lack an NVIDIA document (assumption \u2014 verify). The liquid/air split and the EDPP ceilings inherit the same envelope basis."
       ],
       [
         "weight_kg",
-        "1,500 kg is the sourced template value; press reports quote ~1.36 t for GB200 NVL72 [A] \u2014 the heavier figure is kept, conservative for structural design."
+        "1,500 kg is the GB300-template value carried [A] for GB200; press reports quote ~1.36 t \u2014 the heavier figure is kept, conservative for structural design."
+      ],
+      [
+        "liquid_pct",
+        "85.7% is the template's own 116/19.3 kW split [D]; the template's headline 87% overstated that split by 1.3pp (reconciled, v3.1 audit)."
       ],
       [
         "scale_out",
@@ -248,6 +256,8 @@ globalThis.RACKDB = {
       "nvidia.com GB200 NVL72 product page",
       "NVIDIA-Omniverse/aif-pipeline-samples@4103896 gb300_rack template (envelope) + Vertiv XDU1350 metadata"
     ],
+    "trays_label": "[S]",
+    "trays_per_rack": 18,
     "u_class": null,
     "variant": "gb200-nvl72",
     "weight_kg": 1500,
@@ -263,9 +273,9 @@ globalThis.RACKDB = {
       2069
     ],
     "cdu_model": "Vertiv XDU1350",
-    "cdu_nominal_kw": 1368,
+    "cdu_nominal_kw": 1350,
     "cdus_per_su": 2,
-    "cooling": "DLC + air, 87% liquid",
+    "cooling": "DLC + air, 85.7% liquid",
     "depth_mm": 1200,
     "design_inlet_c": 35,
     "distribution_voltage_v": 480,
@@ -283,7 +293,7 @@ globalThis.RACKDB = {
       "gpus_per_rack": "[S]",
       "height_mm": "[S]",
       "liquid_kw": "[S]",
-      "liquid_pct": "[S]",
+      "liquid_pct": "[A]",
       "nameplate_kw": "[S]",
       "racks_per_su": "[S]",
       "rails": "[S]",
@@ -318,7 +328,7 @@ globalThis.RACKDB = {
       ]
     ],
     "liquid_kw": 116,
-    "liquid_pct": 87,
+    "liquid_pct": 85.7,
     "matrix_notes": [
       [
         "nameplate_kw",
@@ -326,7 +336,7 @@ globalThis.RACKDB = {
       ],
       [
         "liquid_pct",
-        "The GB300 product page markets fully liquid-cooled; the engineering split stays 87/13 per the template \u2014 assumption-verify against a GB300 site-prep guide when published."
+        "The GB300 product page markets fully liquid-cooled; the engineering split is the template carry-over [A], reconciled to its own 116/19.3 kW figures (85.7/14.3) \u2014 assumption-verify against a GB300 site-prep guide when published."
       ]
     ],
     "nameplate_kw": 136,
@@ -351,6 +361,8 @@ globalThis.RACKDB = {
       "nvidia.com GB300 NVL72 product page",
       "NVIDIA-Omniverse/aif-pipeline-samples@4103896 gb300_rack template (direct) + Vertiv XDU1350 metadata"
     ],
+    "trays_label": "[S]",
+    "trays_per_rack": 18,
     "u_class": null,
     "variant": "gb300-nvl72",
     "weight_kg": 1500,

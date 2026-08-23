@@ -47,9 +47,10 @@
                         "F15 largest SINGLE load step the gens must accept (UPS walk-in block, mech group). " +
                         "Absent, the block-load check falls back to the whole essential load — conservative"),
     fuel_hours: q(48.0, "h", "[A]", "on-site fuel autonomy"),
-    fuel_l_per_kwh: q(0.22, "L/kWh", "[A]",
-                      "reference genset SFC. research/10 §5.4 sources ~0.27 — " +
-                      "single source, flagged, NOT applied: set 0.27 to test it"),
+    fuel_l_per_kwh: q(0.27, "L/kWh", "[S]",
+                      "MW-class diesel SFC, generatorsource.com chart (2,000 kW: 141.9 gal/h " +
+                      "full load = 0.269 L/kWh; research/10 §5.4). The earlier reference 0.22 [A] " +
+                      "is the optimistic-engine case: set 0.22 to reproduce it"),
     rack_kw: q(null, "kW", "[A]",
                "optional nameplate kW/rack — unlocks rack count, F17 busway and F18 whips"),
     rack_edpp_kw: q(null, "kW", "[A]",
@@ -78,9 +79,10 @@
                "F17 rack power factor: 0.99 DC-busbar, 0.95 AC-fed (NVIDIA B200/B300 decks)"),
     racks_per_path: q(8, "", "[A]",
                       "F17 racks on one busway run/path — one NVL72-class row (research/10 §6.1)"),
-    busway_rating_a: q(1600.0, "A", "[A]",
-                       "F17 busway rating to check; data-centre track busway families run 250-1,250 A " +
-                       "(Starline T5 [S]), higher-power families above"),
+    busway_rating_a: q(1250.0, "A", "[S]",
+                       "F17 busway rating to check — default = the 1,250 A top of the data-centre " +
+                       "track-busway product band (Starline T5). Enter a higher rating (e.g. 1600) " +
+                       "as a what-if for higher-power busway families (v3.1 P-M4)"),
     busway_product_ceiling_a: q(1250.0, "A", "[S]",
                                 "F17 top of the data-centre track-busway product band (Starline T5, " +
                                 "research/10 §6.1) — above this you are buying multiple runs, an RPP, " +
@@ -111,7 +113,7 @@
     dist_v = dist_v === undefined ? 480.0 : dist_v;
     pf_rack = pf_rack === undefined ? 0.99 : pf_rack;
     breaker_factor = breaker_factor === undefined ? 0.8 : breaker_factor;
-    busway_rating_a = busway_rating_a === undefined ? 1600.0 : busway_rating_a;
+    busway_rating_a = busway_rating_a === undefined ? 1250.0 : busway_rating_a;  // matches DEFAULTS (v3.1 A-17)
     product_ceiling_a = product_ceiling_a === undefined ? 1250.0 : product_ceiling_a;
     const i_rack = rack_kw * 1000.0 / (SQRT3 * dist_v * pf_rack);
     const i_cont = i_rack * Math.trunc(racks_per_path);
@@ -155,14 +157,19 @@
     const n_minus_1_ok = n_minus_1_mva >= peak_mva;
 
     // --- F14 UPS + battery + mechanical peak -------------------------------
+    // Per-path figures carry each path's NORMAL-OPERATION share (site / paths):
+    // dual-cord loads split A/B, both paths ride an outage together. The
+    // stricter full-load-per-path basis is stated in the notes (v3.1 P-H1).
     const mech_frac = Number(p.mech_on_ups_frac);
     const ups_backed = it * (1 + mech_frac);
     const mech_avg = it * mech_frac;
     const mech_peak = mech_avg * Number(p.mech_peak_ratio);
     const ups_backed_peak = it + mech_peak;
-    const mod_n = Math.ceil(ups_backed / Number(p.ups_module_mw));
+    const ups_backed_per_path = ups_backed / paths;
+    const ups_backed_peak_per_path = ups_backed_peak / paths;
+    const mod_n = Math.ceil(ups_backed_peak_per_path / Number(p.ups_module_mw));
     const mod_installed = mod_n + (p.redundancy !== "N" ? 1 : 0);
-    const battery_kwh = ups_backed * 1000.0 * Number(p.ride_through_min) / 60.0;
+    const battery_kwh = ups_backed_per_path * 1000.0 * Number(p.ride_through_min) / 60.0;
     const battery_installed_kwh = battery_kwh / (Number(p.batt_dod) * Number(p.batt_eff));
 
     // --- F15 gensets + fuel -------------------------------------------------
@@ -212,15 +219,23 @@
                                 "F13: (transformer_units - 1) x transformer_unit_mva"),
       n_minus_1_ok: q(n_minus_1_ok, "", "[D]",
                       "F13: essential bus still carries peak_demand_mva with one unit out"),
-      ups_backed_mw: q(ups_backed, "MW", "[D]", "F14: it_mw x (1 + mech_on_ups_frac)"),
+      ups_backed_site_mw: q(ups_backed, "MW", "[D]",
+                            "F14: it_mw x (1 + mech_on_ups_frac) — site aggregate across paths"),
+      ups_backed_per_path_mw: q(ups_backed_per_path, "MW", "[D]",
+                                "F14: ups_backed_site_mw / distribution_paths — one path's " +
+                                "normal-operation share"),
       mech_on_ups_avg_mw: q(mech_avg, "MW", "[D]", "F14: it_mw x mech_on_ups_frac"),
       mech_on_ups_peak_mw: q(mech_peak, "MW", "[D]",
                              "F14: mech_on_ups_avg_mw x mech_peak_ratio — size the path on THIS"),
-      ups_backed_peak_mw: q(ups_backed_peak, "MW", "[D]", "F14: it_mw + mech_on_ups_peak_mw"),
-      ups_modules_n: q(mod_n, "", "[D]", "F14: ceil(ups_backed_mw / ups_module_mw)"),
+      ups_backed_peak_mw: q(ups_backed_peak, "MW", "[D]",
+                            "F14: it_mw + mech_on_ups_peak_mw (site)"),
+      ups_modules_n: q(mod_n, "", "[D]",
+                       "F14: ceil(ups_backed_peak_mw / distribution_paths / ups_module_mw) " +
+                       "— sized on the PEAK share, per path (v3.1 P-H2)"),
       ups_modules_installed_per_path: q(mod_installed, "", "[D]", "N+1 within each path"),
       ups_battery_kwh_per_path: q(battery_kwh, "kWh", "[D]",
-                                  "F14 delivered energy: ups_backed_mw x ride_through_min"),
+                                  "F14 delivered energy per path: ups_backed_per_path_mw x " +
+                                  "ride_through_min"),
       ups_battery_installed_kwh: q(battery_installed_kwh, "kWh", "[D]",
                                    "F14 installed capacity per path: delivered / (batt_dod x batt_eff) " +
                                    "— what you actually buy"),
@@ -264,11 +279,21 @@
       "optics_load_kw is routinely missing from power budgets — research/09 §7 " +
       "flags adding a network.optics_kw line. If your it_mw came from a rack-TDP roll-up it is " +
       "understated by about this much.",
-      "F15 fuel uses the reference SFC 0.22 L/kWh [A]. research/10 §5.4 sources ~0.27 " +
-      "L/kWh from one vendor chart (48 h would need ~" +
-      (fuel_m3 * 0.27 / Number(p.fuel_l_per_kwh)).toFixed(0) + " m3, +23%) — a single-sourced " +
-      "correction candidate, deliberately NOT applied here.",
+      "F15 fuel uses SFC " + Number(p.fuel_l_per_kwh).toFixed(2) + " L/kWh (default 0.27 " +
+      "[S, generatorsource.com MW-class chart via research/10 §5.4]). The earlier reference " +
+      "0.22 L/kWh [A] is the optimistic-engine case — at 0.22 the same autonomy needs ~" +
+      (fuel_m3 * 0.22 / Number(p.fuel_l_per_kwh)).toFixed(1) + " m3 (" +
+      (100.0 * 0.22 / Number(p.fuel_l_per_kwh)).toFixed(0) + "% of the current basis); a tank " +
+      "sized at 0.22 runs short against the vendor chart (v3.1 P-M2).",
     ];
+    if (paths === 2) {
+      notes.push(
+        "F14 2N basis: per-path UPS/battery figures carry the NORMAL-OPERATION share " +
+        "(dual-cord loads split A/B; both paths ride an outage together). The stricter " +
+        "basis sizes each path for the FULL load so one path rides an outage alone " +
+        "during the other path's maintenance window — double the per-path figures for " +
+        "that convention (v3.1 P-H1).");
+    }
     if (l_rest <= 0) {
       notes.push("WARNING: the entered PUE cannot even cover electrical losses " +
                  "(pue_l_cool_plus_misc_implied <= 0) — PUE input is not physical.");

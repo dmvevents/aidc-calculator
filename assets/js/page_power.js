@@ -62,11 +62,13 @@
         "F13 · utility service = facility ÷ PF × (1 + margin) = " + d(o.facility_mw.value) + " ÷ " + d(i.pf.value) +
           " × " + d(1 + i.growth_margin.value) + " = " + d(o.utility_service_mva.value) + " MVA",
         "F14 · UPS-backed = IT × (1 + mech) = " + d(i.it_mw.value) + " × " + d(1 + i.mech_on_ups_frac.value) +
-          " = " + d(o.ups_backed_mw.value) + " MW → ⌈÷ " + d(i.ups_module_mw.value) + " MW⌉ = " +
-          o.ups_modules_n.value + " modules (+1/path)",
+          " = " + d(o.ups_backed_site_mw.value) + " MW site → ÷ " + o.distribution_paths.value +
+          " = " + d(o.ups_backed_per_path_mw.value) + " MW/path → modules ⌈peak/path " +
+          d(o.ups_backed_peak_mw.value / o.distribution_paths.value) + " ÷ " + d(i.ups_module_mw.value) +
+          " MW⌉ = " + o.ups_modules_n.value + " (+1/path)",
         "F15 · gensets = ⌈" + d(o.peak_demand_mva.value) + " MVA ÷ " + d(i.genset_unit_mva.value) + "⌉ = " +
-          o.genset_units_n.value + " (+1) · fuel = " + d(o.facility_mw.value) + " MW × " + d(i.fuel_hours.value) +
-          " h × " + d(i.fuel_l_per_kwh.value) + " L/kWh = " + d(o.genset_fuel_m3.value) + " m³",
+          o.genset_units_n.value + " (+1) · fuel = " + d(o.facility_mw.value * 1000) + " kW × " + d(i.fuel_hours.value) +
+          " h × " + d(i.fuel_l_per_kwh.value) + " L/kWh ÷ 1000 = " + d(o.genset_fuel_m3.value) + " m³",
       ];
       if (o.rack_current_a) {
         L.push("F17 · I_rack = kW×1000 ÷ (√3×V×PF) = " + d(i.rack_kw.value) + "×1000 ÷ (1.732×" +

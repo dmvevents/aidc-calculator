@@ -17,7 +17,7 @@
       { key: "tiers", label: "fabric tiers", src: "dossiers", type: "select", numeric: true,
         options: [[3, "3 (leaf/spine/core)"], [2, "2 (leaf/spine)"]] },
       { key: "rails", label: "rails", src: "gb200-ra", step: 1, min: 1 },
-      { key: "w_per_end", label: "optic W per end", src: "cpo-blog", step: 0.5, min: 0 },
+      { key: "w_per_end", label: "optic W per end (errs high)", src: "cabling-guide", step: 0.5, min: 0 },
       { key: "it_mw", label: "compute IT (share note)", src: "legend", step: 0.1, min: 0.1 },
       { key: "mated_pairs", label: "mated MPO pairs", src: "tia568", step: 1, min: 0 },
       { key: "il_conn_db", label: "IL per mated pair", src: "tia568", step: 0.05, min: 0 },
@@ -29,6 +29,7 @@
       { key: "cores_per_rail", label: "cores / rail", src: "dossiers", step: 1, min: 0, advanced: true },
       { key: "links_spine_core", label: "links spine→core", src: "dossiers", step: 1, min: 0, advanced: true },
       { key: "storage_ports_per_tray", label: "storage ports / tray", src: "gb200-ra", step: 1, min: 0, advanced: true },
+      { key: "ib_twin_modules", label: "twin-port switch optics (IB)", src: "gb200-ra", type: "checkbox", advanced: true },
       { key: "dx_m", label: "Manhattan Δx", src: "dossiers", step: 1, min: 0, advanced: true },
       { key: "dy_m", label: "Manhattan Δy", src: "dossiers", step: 1, min: 0, advanced: true },
       { key: "clear_height_m", label: "hall clear height", src: "refdesign", step: 0.1, min: 2, advanced: true },
@@ -57,10 +58,11 @@
           " → " + d(o.links_fabric_total.value) + " links",
         "§6.4 · optics = 2×links × W/end = " + d(o.port_ends.value) + " × " + d(i.w_per_end.value) + " W = " +
           d(o.optics_power_kw.value) + " kW = " + d(o.optics_share_of_it_pct.value) + "% of IT",
-        "§6.2 · length = (Δx+Δy+2×drop)×rf + slack = (" + d(i.dx_m.value) + "+" + d(i.dy_m.value) + "+2×" +
-          d(o.rack_to_tray_drop_m.value) + ")×" + d(i.routing_factor.value) + "+2 = " + d(o.link_length_m.value) +
-          " m → " + o.link_media_class.value,
-        "§6.6 · IL = 0.4×km + pairs×" + d(i.il_conn_db.value) + " = " + d(0.4 * o.link_length_m.value / 1000) +
+        "§6.2 · length = (Δx+Δy+2×drop)×rf + 2×slack = (" + d(i.dx_m.value) + "+" + d(i.dy_m.value) + "+2×" +
+          d(o.rack_to_tray_drop_m.value) + ")×" + d(i.routing_factor.value) + "+2×" + d(i.service_slack_m.value) +
+          " = " + d(o.link_length_m.value) + " m → " + o.link_media_class.value,
+        "§6.6 · IL = " + d(i.attn_db_per_km.value) + "×km + pairs×" + d(i.il_conn_db.value) + " = " +
+          d(i.attn_db_per_km.value * o.link_length_m.value / 1000) +
           " + " + i.mated_pairs.value + "×" + d(i.il_conn_db.value) + " = " + d(o.channel_il_db.value) +
           " dB vs " + d(o.channel_il_budget_db.value) + " dB " + (o.channel_il_pass.value ? "✓" : "✕"),
         "§6.5 · latency = 5 ns/m × " + d(i.path_fiber_m.value) + " + " + i.hops.value + "×" +

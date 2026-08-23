@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Digital twin in 3D — site, building, hall, rack — AI-DC Calculator</title>
-<meta name="description" content="A generic single-hall AI facility generated deterministically from public manifest and variant data: contained rack rows, mechanical gallery, electrical rooms, gensets and dry-cooler pad. Seven camera presets, five layer toggles, provenance-chipped hotspots that deep-link into the calculators — plus one row group per GPU platform. Static renders first; the interactive viewer loads only on request.">
+<meta name="description" content="A generic single-hall AI facility generated deterministically from public manifest and variant data: contained rack rows, mechanical gallery, electrical rooms, gensets and dry-cooler pad. Seven camera presets, five layer toggles, provenance-chipped hotspots that deep-link into the calculators — plus one row group per GPU platform and a rack detail studio with exploded view, coolant-flow and panel-reveal animations. Static renders first; the interactive viewers load only on request.">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="preload" href="assets/fonts/InterVariable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
 <link rel="preload" href="assets/fonts/JetBrainsMono-Variable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
@@ -506,6 +506,35 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
 @media print {
 .dg-grid, .dg-leader, .hp-dim { stroke: var(--muted); }
 }
+.scenariobar {
+border: 1px solid var(--rule); border-radius: var(--r-ctl);
+background: var(--surface); padding: var(--sp-2) var(--sp-3);
+margin: 0 0 var(--sp-4);
+}
+.scenariobar.scen-active { border-color: var(--accent); }
+.scen-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+.scen-title {
+font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 600;
+letter-spacing: var(--track-micro); color: var(--muted); text-transform: uppercase;
+cursor: help;
+}
+.scen-platform, .scen-target {
+background: var(--inset); color: var(--ink); border: 1px solid var(--hairline);
+border-radius: var(--r-ctl); padding: 6px 8px; font-size: var(--fs-sm);
+min-height: 32px;
+}
+.scen-target { width: 7ch; font-family: var(--font-mono); }
+.scen-derived { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink-2); }
+.scenariobar.scen-active .scen-derived { color: var(--accent); }
+.scen-notes {
+margin: var(--sp-2) 0 0; padding-left: 1.2em;
+font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
+}
+.scen-notes li { margin: 2px 0; }
+@media (max-width: 640px) {
+.scen-row { gap: var(--sp-2); }
+.scen-derived { flex-basis: 100%; }
+}
 </style>
 </head>
 <body>
@@ -533,8 +562,9 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
   public manifest and variant data the calculators use: contained rack rows, mechanical gallery
   (CRAH + CDU positions), electrical rooms, MV yard, gensets and the dry-cooler pad. Seven view
   presets, five layer toggles, and provenance-chipped hotspots that deep-link into the
-  calculators. Static renders load first; the interactive viewer (self-hosted, ~1&nbsp;MB) loads
-  only if you ask.</p>
+  calculators — plus a rack detail studio with exploded-view, coolant-flow and panel-reveal
+  animations per GPU platform. Static renders load first; each interactive viewer
+  (self-hosted) loads only if you ask.</p>
 </header>
 
 <main class="wrap">
@@ -569,7 +599,9 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
       <p class="scene-note">the scene is massing-grade and generic — hall geometry from the public
       air-cooled DGX B200 manifest, CDU class from the public XDU1350 metadata, conventions from
       NVIDIA's public design guides and the DSX facilities reference-design overview; generated
-      byte-identically on every run (<a href="sources.html#scene3d-method">method</a>). Viewer is
+      byte-identically on every run (<a href="sources.html#scene3d-method">method</a>). It is a
+      DISCLOSED COMPOSITE: an air-cooled hall envelope carrying the liquid-loop overlay for
+      illustration — one facility would pick one cooling topology. Viewer is
       self-hosted model-viewer, Apache-2.0
       (<a href="sources.html#lic-modelviewer">license</a>). The fiber/tray layer's plan-view
       counterpart — with live trunk and strand counts — is the
@@ -606,6 +638,57 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
       <p class="micro">one row group of the selected platform — compute racks at real dimensions,
       in-row CDUs on liquid variants, fabric racks and aisle pitch — from the same public variant
       data the <a href="rack.html">rack planner</a> uses; byte-identical on every regeneration</p>
+    </div>
+  </section>
+
+  <script type="importmap">
+  {"imports": {"three": "./assets/vendor/three-0.185.1/three.module.min.js",
+               "three/addons/": "./assets/vendor/three-0.185.1/addons/"}}
+  </script>
+  <section class="section section-calc" id="detail" aria-label="Rack detail studio">
+    <h2 class="hs-head">Rack detail studio — exploded view, coolant flow, panel reveal</h2>
+    <div class="twin">
+      <div class="twin-bar" role="group" aria-label="Detail platform and animations">
+        <label class="micro" for="detail-variant">platform&nbsp;
+          <select id="detail-variant">
+            <option value="gb200-nvl72">GB200 NVL72</option>
+            <option value="gb300-nvl72">GB300 NVL72</option>
+            <option value="b200-liquid">HGX B200 DLC</option>
+            <option value="dgx-b200-aircooled-2su">DGX B200 (air)</option>
+          </select>
+        </label>
+        <span id="detail-anims" class="anim-set" role="group" aria-label="Animation toggles">
+          <button class="btn anim-btn" type="button" data-anim="dx" aria-pressed="false">Exploded view</button>
+          <button class="btn anim-btn" type="button" data-anim="fl" aria-pressed="false">Coolant flow</button>
+          <button class="btn anim-btn" type="button" data-anim="pn" aria-pressed="false">Open panel</button>
+          <button class="btn anim-btn" type="button" data-anim="lb" aria-pressed="true">Labels</button>
+        </span>
+        <button class="btn" id="load-detail" type="button">Load detail studio</button>
+        <button class="btn" id="detail-reset" type="button" hidden>Reset view</button>
+        <span class="micro" id="detail-lockhint" role="status" hidden>panel stays open
+        while the exploded view or coolant flow is on</span>
+      </div>
+      <div class="twin-stage detail-stage" id="detail-stage">
+        <img id="detail-hero-img" src="assets/img/poster-detail-gb200-nvl72.webp"
+             alt="Rendered detail model of a GB200 NVL72-class rack: 18 compute trays split 10 over the 9 NVLink-switch trays and 8 below, 4+4 power shelves, management switches at top, rear manifolds with quick disconnects and the blind-mate NVLink cartridge."
+             loading="lazy" width="1600" height="900">
+      </div>
+      <div id="detail-keyarea">
+        <p id="detail-legend-note" class="micro" role="status" hidden>camera moving — numbered
+        markers key to this list</p>
+        <ol id="detail-legend" class="d3-legend" hidden aria-label="Model labels (keys the numbered markers)"></ol>
+      </div>
+      <div id="detail-specs" class="detail-specs" aria-label="Platform anchor values"></div>
+      <p class="scene-note" id="detail-loadnote">detail geometry is our own, generated
+      deterministically from the public variant ledger — tray, switch and shelf COUNTS and the
+      NVL72/DGX band ORDER are stated [S] values from the public reference-architecture
+      elevations; tray pitch, quick-disconnect drops and service routing remain assumptions [A],
+      and the HGX DLC rack composition is a derived [D] design point
+      (<a href="sources.html#detail3d-method">method</a>).
+      The studio viewer is self-hosted three.js, MIT
+      (<a href="sources.html#lic-threejs">license</a>), with KTX2/Basis-compressed textures; it
+      honors reduced-motion (animations become instant state changes). Loads only on request
+      (<span title="measured at build over the exact first-click set: vendored three.js modules + Basis transcoder, the studio viewer module, the GB200 detail model, the shared KTX2 textures and the platform poster (24 files; gzip level 6; list in the build evidence)">≈2.2&nbsp;MB — ≈0.7&nbsp;MB compressed as served</span>).</p>
     </div>
   </section>
 </main>
@@ -649,6 +732,58 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
   font-size: var(--fs-xs); color: var(--accent); background: var(--raised);
   border: 1px solid var(--accent); display: grid; place-items: center; padding: 0; }
 .hs-dot:hover { background: var(--inset); }
+/* rack detail studio (v3.1) */
+.anim-set { display: inline-flex; flex-wrap: wrap; gap: var(--sp-2); }
+.anim-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent); }
+.detail-stage { position: relative; overflow: hidden; }
+.d3-labels { position: absolute; inset: 0; pointer-events: none; }
+.d3-label { position: absolute; display: flex; gap: var(--sp-2);
+  align-items: center; max-width: 260px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--hairline); border-left: 2px solid var(--accent);
+  border-radius: var(--r-ctl); padding: 3px var(--sp-2);
+  font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.25;
+  opacity: 0; transition: opacity .15s linear; }
+.d3-label.d3-in { opacity: 1; }
+.d3-label .chip { pointer-events: auto; }
+.d3-label::before { content: ""; position: absolute; left: -7px; top: 50%;
+  width: 6px; height: 6px; margin-top: -3px; border-radius: 999px;
+  background: var(--accent); }
+.d3-label.d3-left::before { left: auto; right: -7px; }
+@media (min-width: 1280px) { .d3-label { font-size: 12px; } }
+.d3-dot { position: absolute; transform: translate(-50%, -50%);
+  min-width: 18px; height: 18px; border-radius: 999px; display: grid;
+  place-items: center; background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1px solid var(--accent); color: var(--accent);
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: var(--fs-xs); pointer-events: none;
+  white-space: nowrap; }   /* R5-01: shrink-to-fit near an edge must never wrap */
+.d3-dot-multi { padding: 0 5px; }
+.d3-legend { margin: var(--sp-3) 0 0; padding: 0 0 0 var(--sp-5);
+  font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.5; }
+.d3-legend li { margin: 0 0 var(--sp-1); }
+.d3-legend li::marker { color: var(--accent);
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.d3-stagekey { position: absolute; top: var(--sp-2); left: var(--sp-2);
+  margin: 0; padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-5);
+  max-width: 220px; max-height: calc(100% - 16px); overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  border: 1px solid var(--hairline); border-radius: var(--r-card);
+  font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.45;
+  pointer-events: none; list-style-position: outside; }
+.d3-stagekey li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d3-stagekey li::marker { color: var(--accent);
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.d3-stagekey.d3-compact { max-width: 150px; padding-left: var(--sp-4); }
+.detail-specs { margin-top: var(--sp-3); }
+.detail-specs .hs-rows { display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, auto)) ;
+  grid-auto-flow: column; grid-template-rows: repeat(4, auto);
+  gap: var(--sp-1) var(--sp-4); font-size: var(--fs-sm); }
+@media (max-width: 720px) {
+  .detail-specs .hs-rows { grid-auto-flow: row; grid-template-rows: none;
+    grid-template-columns: auto 1fr; } }
 @media print { .hs-item { break-inside: avoid; } }
 </style>
 
@@ -667,7 +802,7 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
 // engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/scene3d.js","assets/js/viewer3d.js","assets/js/page_3d.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+(function(){function go(){["assets/js/scene3d.js","assets/js/viewer3d.js","assets/js/page_3d.js","assets/js/detailracks.js","assets/js/page_detail3d.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
 </script>
 </body>
 </html>

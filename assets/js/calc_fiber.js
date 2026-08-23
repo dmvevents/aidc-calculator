@@ -32,6 +32,10 @@
     links_spine_core: q(2, "", "[S]", "2 links spine->core (reference fabric design)"),
     storage_ports_per_tray: q(4, "", "[S]",
                               "BlueField-3 storage/in-band ports per tray (GB200; GB300 = 2)"),
+    ib_twin_modules: q(true, "", "[S]",
+                       "switch-end cages are twin-port OSFP (2 switch ports per module) — true " +
+                       "for NDR/XDR InfiniBand (QM9700/Q3400 class); set false for single-port " +
+                       "QSFP-DD/OSFP Ethernet (Spectrum-X SN5000 class) (v3.1 F-H1)"),
     // --- lengths (§6.2) ------------------------------------------------------
     dx_m: q(30.0, "m", "[A]",
             "representative Manhattan x span rack->switch; from the layout in a real design"),
@@ -47,7 +51,9 @@
     trunk_size_f: q(144, "F", "[S]", "MPO-144 base trunk"),
     // --- optics (§6.4) -------------------------------------------------------
     w_per_end: q(9.0, "W", "[A]",
-                 "400G-class DR pluggable, band 8-10 W (research/09 §8 A-1; HDR <=6 W [S], 1.6T ~30 W [S])"),
+                 "400G-class DR pluggable planning band 8-10 W — ERRS HIGH vs the 6 W HDR " +
+                 "anchor (DU-10438 [S]); at 6 W the optics load is ~1/3 lower. 1.6T-class " +
+                 "~30 W [S] (research/09 §8 A-1; v3.1 F-M1)"),
     spares_per_endpoints: q(200, "", "[S]", "1 spare per 200 endpoints per length class"),
     // --- latency (§6.5) ------------------------------------------------------
     hops: q(5, "", "[A]", "switch hops on the worst in-hall path"),
@@ -67,10 +73,13 @@
   };
 
   function media_for(length_m, ib_family) {
+    // IB derated bound is exclusive (< 0.9 x rated, v3.1 F-M3); product-rated
+    // bounds (DAC/LACC, non-IB) stay inclusive.
     if (ib_family === undefined) ib_family = true;
     for (const [name, rated] of MEDIA_THRESHOLDS) {
-      const usable = rated * (ib_family && name.startsWith("SMF") ? IB_DERATE : 1.0);
-      if (length_m <= usable) return name;
+      const derated = ib_family && name.startsWith("SMF");
+      const usable = rated * (derated ? IB_DERATE : 1.0);
+      if (derated ? length_m < usable : length_m <= usable) return name;
     }
     return "OUT-OF-REACH";
   }
@@ -101,13 +110,21 @@
     const core_n = tiers >= 3 ? rails * cores_per_rail : 0;
     const leaf_ports = trays + spines * lls;
     const spine_ports = leaves * lls + (tiers >= 3 ? cores_per_rail * lsc : 0);
-    const core_ports = su * spines * lsc;
+    const core_ports = tiers >= 3 ? su * spines * lsc : 0;  // no core tier -> no ports (v3.1 A-10)
 
-    const twin_modules = leaf_n * Math.ceil(leaf_ports / 2)
-                       + spine_n * Math.ceil(spine_ports / 2)
-                       + (core_n ? core_n * Math.ceil(core_ports / 2) : 0);
+    let switch_modules, switch_modules_note;
+    if (p.ib_twin_modules) {
+      switch_modules = leaf_n * Math.ceil(leaf_ports / 2)
+                     + spine_n * Math.ceil(spine_ports / 2)
+                     + (core_n ? core_n * Math.ceil(core_ports / 2) : 0);
+      switch_modules_note = "sum over switches of ceil(ports_used / 2) twin-port OSFP (IB)";
+    } else {
+      switch_modules = leaf_n * leaf_ports + spine_n * spine_ports + core_n * core_ports;
+      switch_modules_note = "one module per switch port — single-port Ethernet cage " +
+                            "(v3.1 F-H1)";
+    }
     const nic_modules = n_nic_leaf;
-    const pluggables = twin_modules + nic_modules;
+    const pluggables = switch_modules + nic_modules;
     const port_ends = 2 * n_fabric;
     const optics_kw = port_ends * Number(p.w_per_end) / 1000.0;
     const optics_share = p.it_mw ? 100.0 * optics_kw / (Number(p.it_mw) * 1000.0) : null;
@@ -158,12 +175,14 @@
       switches_core: q(core_n, "", "[D]", "rails x cores_per_rail"),
       ports_per_leaf: q(leaf_ports, "", "[D]", "trays down + spines x links_leaf_spine up"),
       ports_per_spine: q(spine_ports, "", "[D]", "leaves x links down + cores x links up"),
-      ports_per_core: q(core_ports, "", "[D]", "su x spines x links_spine_core"),
+      ports_per_core: q(tiers >= 3 ? core_ports : null, "", "[D]",
+                        "su x spines x links_spine_core (tiers=3 only)"),
       port_ends: q(port_ends, "", "[D]", "2 x links_fabric_total"),
-      switch_twin_modules: q(twin_modules, "", "[D]",
-                             "sum over switches of ceil(ports_used / 2) twin-port OSFP"),
+      switch_modules: q(switch_modules, "", "[D]", switch_modules_note),
       nic_modules: q(nic_modules, "", "[D]", "= links_nic_leaf, flat OSFP"),
-      pluggables_total: q(pluggables, "", "[D]", "switch twin modules + NIC modules"),
+      pluggables_total: q(pluggables, "", "[D]",
+                          "switch modules + NIC modules (twin-OSFP halves the switch-end " +
+                          "count on IB; Ethernet is one per port — v3.1 F-H1)"),
       spares_per_length_class: q(spares, "", "[D]", "ceil(port_ends / spares_per_endpoints)"),
       optics_power_kw: q(optics_kw, "kW", "[D]", "port_ends x w_per_end"),
       optics_share_of_it_pct: q(optics_share, "%", "[D]",

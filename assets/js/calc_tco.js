@@ -32,8 +32,8 @@
     "gb200-nvl72": q(
       47700.0, "US$/GPU", "[D]",
       "GB200 NVL72 rack ~$3.0M widely reported (original not retrieved) / 72 " +
-      "+ $6,000 fabric+storage share; cross-checks a disclosed 8-K actual 28.5 $M/MW-IT " +
-      "x 1.667 kW/GPU = $47.5k (see the Sources page)"),
+      "+ $6,000 fabric+storage share; cross-checks the IREN/Dell 8-K actual 29.0 $M/MW-IT " +
+      "($5.8bn/200MW) x 1.667 kW/GPU = $48.3k, ~1.3% above (see the Sources page; v3.1 TCO-H2)"),
     "gb300-nvl72": q(
       47700.0, "US$/GPU", "[A]",
       "NO public GB300 NVL72 price estimate exists — " +
@@ -545,7 +545,9 @@
     ];
     for (const [key, u2, r2, what] of sens) {
       out[key] = q(ledger(p, u2, r2).levelized, "US$/GPU-h", "[D]",
-                   "levelized at " + what);
+                   "levelized at " + what +
+                   (p.wacc_pct ? " (UNDISCOUNTED basis — the headline uses WACC "
+                    + Number(p.wacc_pct).toFixed(1) + "%; compare like with like)" : ""));
     }
 
     let inputs = {};
