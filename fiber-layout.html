@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Colo + GPUs: total cost per GPU over time — AI-DC Calculator</title>
-<meta name="description" content="Build a hall or lease colo space, buy a GPU fleet: levelized and by-year $/GPU-hour, cumulative cash curve, capex/opex/power/GPU split and break-even against a market rental rate you enter. Conservative, provenance-chipped defaults; an estimator, not an offer.">
+<title>Fiber layout — logical fabric &amp; physical pathways — AI-DC Calculator</title>
+<meta name="description" content="The fiber plant visualized two ways: the rail-optimized leaf/spine topology with link, switch and pluggable counts computed live from the fiber engine, and tray/pathway routing overlaid on the generic hall plan — including the NVL72 rear copper-cartridge vs front-fiber distinction. Shares URL-hash state with the fiber calculator.">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="preload" href="assets/fonts/InterVariable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
 <link rel="preload" href="assets/fonts/JetBrainsMono-Variable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
@@ -519,48 +519,63 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
     <a href="capex.html">Capex</a>
     <a href="fiber.html">Fiber</a>
     <a href="commissioning.html">Commissioning</a>
-    <a href="tco.html" class="is-active" aria-current="page">TCO</a>
+    <a href="tco.html">TCO</a>
     <a href="designs.html">Designs</a>
-    <a href="fiber-layout.html">Fiber layout</a>
+    <a href="fiber-layout.html" class="is-active" aria-current="page">Fiber layout</a>
     <a href="risks.html">Risks</a>
     <a href="3d.html">3D</a>
     <a href="sources.html">Sources</a>
   </div>
 </nav>
 <header class="masthead masthead-calc wrap">
-  <h1>Colo + GPUs — total cost per GPU over time</h1>
-  <p class="lede">BUILD a hall (own the facility at $/W-IT) or LEASE colo space ($/kW-month),
-  buy a GPU fleet, run it 1–6 years: the levelized and by-year <strong>cost</strong> per
-  delivered GPU-hour, the cumulative cash curve, the capex/opex/power/GPU split — and, if you
-  enter a market rental rate, the break-even month. Two failure-economics options (both OFF by
-  default, derivations on their chips): a <strong>maintenance-consumables anchor</strong>
-  (optics replacement + break-fix, ~30–60 $/kW-yr band) and a <strong>delivered-availability
-  haircut</strong> (expected-downtime band 0.5–1.5% of fleet-hours from published failure
-  floors). A cost estimator with deliberately
-  conservative defaults; not an investment case — no ROI, no IRR, no payback promises.</p>
+  <h1>Fiber layout — the plant, visualized</h1>
+  <p class="lede">Two linked views of the scale-out fiber plant. <strong>Logical:</strong>
+  the rail-optimized leaf/spine(/core) topology with link, switch and pluggable counts
+  computed live by the same engine as the <a href="fiber.html">fiber calculator</a> —
+  change the fabric shape and both views react; your inputs travel in the URL, so a
+  link opened on either page reproduces the same fabric. <strong>Physical:</strong>
+  tray and pathway routing on the generic hall plan, with the NVL72 rear-copper vs
+  front-fiber distinction that decides where the plant actually lands.</p>
   <div class="section-head">
-    <span class="fid">T1–T8</span>
-    <a class="fid" href="sources.html#parity">parity: calc_tco.py</a>
-    <a class="fid" href="sources.html#tco-model">model &amp; defaults</a>
-    <button class="btn" id="tco-copy" type="button">Copy as Markdown</button>
+    <span class="fid">§6.1–6.7</span>
+    <a class="fid" href="sources.html#parity">parity: calc_fiber.py</a>
+    <a class="fid" id="fl-open-fiber" href="fiber.html">full fiber calculator →</a>
+    <a class="fid" href="3d.html#view=row&amp;layers=racks,fiber">3D fiber layer →</a>
   </div>
 </header>
 
-<main class="wrap">
-  <section class="section section-calc" id="tco" aria-label="TCO calculator">
+<main class="wrap eng-page">
+  <section class="section section-calc" id="fiber" aria-label="Fiber layout views">
     <div class="calc-grid">
-      <div class="panel panel-inputs" id="tco-inputs" aria-label="TCO inputs"></div>
+      <div class="panel panel-inputs" id="fiber-inputs" aria-label="Fabric shape inputs"></div>
       <div class="panel panel-outputs">
-        <div class="hero-tile" id="tco-hero"></div>
+        <div class="hero-tile" id="fiber-hero"></div>
         <details class="chain">
-          <summary>Derivation chain (T1–T8) — the model with your numbers</summary>
-          <div class="derive" id="tco-derive" aria-label="Derivation chain"></div>
+          <summary>Derivation chain — the governing formulas with your numbers</summary>
+          <div class="derive" id="fiber-derive" aria-label="Derivation chain"></div>
         </details>
-        <div id="tco-curve" aria-label="Cumulative cash curve"></div>
-        <div id="tco-split" aria-label="Cost split over the horizon"></div>
-        <div id="tco-sens" class="matrix-scroll" aria-label="Sensitivity strip"></div>
-        <div class="matrix-scroll"><table class="out-table" aria-label="TCO outputs"><tbody id="tco-out"></tbody></table></div>
-        <ul class="notes" id="tco-notes"></ul>
+
+        <div class="section-head"><h2>Logical — the fabric graph</h2></div>
+        <div id="fl-logical" aria-label="Logical spine-leaf topology"></div>
+        <div class="dl-row">
+          <button class="btn" id="fl-dl-logical" type="button">Download SVG</button>
+        </div>
+
+        <div class="section-head"><h2>Physical — trays, trunks, pathways</h2></div>
+        <p>The hall plan below is generated from the same public manifest as
+        <a href="designs.html#plan">the designs page</a> and the
+        <a href="3d.html#view=row&amp;layers=racks,fiber">3D scene's fiber layer</a>;
+        trunk runs ride the row trays to the cross tray and land at the leaf/spine
+        row. Counts on the drawing recompute with your inputs.</p>
+        <div id="fl-physical" class="plan-stage" aria-label="Physical tray and pathway routing on the hall plan"></div>
+        <div class="dl-row">
+          <button class="btn" id="fl-dl-physical" type="button">Download SVG</button>
+        </div>
+        <div id="fl-inset" aria-label="NVL72 cabling zones: rear copper cartridges versus front fiber"></div>
+
+        <ul class="notes" id="fiber-notes"></ul>
+        <p class="micro">full output table (strands, trunks, latency, loss budget) on the
+        <a href="fiber.html">fiber calculator page</a> — same engine, same URL state</p>
       </div>
     </div>
   </section>
@@ -581,7 +596,7 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
 // engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/result.js","assets/js/app.js","assets/js/rackdata.js","assets/js/calc_tco.js","assets/js/page_tco.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+(function(){function go(){["assets/js/result.js","assets/js/app.js","assets/js/calc_fiber.js","assets/js/hallplan.js","assets/js/designs.js","assets/js/fiberviews.js","assets/js/page_fiberlayout.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
 </script>
 </body>
 </html>

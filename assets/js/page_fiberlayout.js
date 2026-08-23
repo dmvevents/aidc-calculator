@@ -1,12 +1,14 @@
-// Page config: fiber calculator — section extracted 1:1 from the v1 single-page bundle
-// (sections_more.js); formulas untouched, engine unchanged. Ends with A.boot().
+// Page config: fiber-layout.html — the fiber plant visualized. Registers the
+// SAME fiber section as fiber.html (identical id + field keys, so URL-hash
+// state round-trips between the two pages; only the primary/advanced split
+// differs) and renders the LOGICAL topology + PHYSICAL pathway views from
+// fiberviews.js. Counts recompute live from the parity-tested calc_fiber
+// engine. Ends with A.boot().
 "use strict";
 (function () {
   const A = globalThis.AIDC;
-  const d = (v) => A.res.disp(v);
   A.SECTIONS = A.SECTIONS || [];
 
-  // ---------------------------------------------------------------- FIBER ----
   A.SECTIONS.push({
     id: "fiber",
     defaults: A.calcFiber.DEFAULTS,
@@ -17,12 +19,12 @@
       { key: "tiers", label: "fabric tiers", src: "dossiers", type: "select", numeric: true,
         options: [[3, "3 (leaf/spine/core)"], [2, "2 (leaf/spine)"]] },
       { key: "rails", label: "rails", src: "gb200-ra", step: 1, min: 1 },
+      { key: "racks_per_su", label: "racks per SU", src: "gb200-ra", step: 1, min: 1 },
+      { key: "trays_per_rack", label: "compute trays / rack", src: "gb200-ra", step: 1, min: 1 },
       { key: "w_per_end", label: "optic W per end", src: "cpo-blog", step: 0.5, min: 0 },
-      { key: "it_mw", label: "compute IT (share note)", src: "legend", step: 0.1, min: 0.1 },
-      { key: "mated_pairs", label: "mated MPO pairs", src: "tia568", step: 1, min: 0 },
-      { key: "il_conn_db", label: "IL per mated pair", src: "tia568", step: 0.05, min: 0 },
-      { key: "racks_per_su", label: "racks per SU", src: "gb200-ra", step: 1, min: 1, advanced: true },
-      { key: "trays_per_rack", label: "compute trays / rack", src: "gb200-ra", step: 1, min: 1, advanced: true },
+      { key: "it_mw", label: "compute IT (share note)", src: "legend", step: 0.1, min: 0.1, advanced: true },
+      { key: "mated_pairs", label: "mated MPO pairs", src: "tia568", step: 1, min: 0, advanced: true },
+      { key: "il_conn_db", label: "IL per mated pair", src: "tia568", step: 0.05, min: 0, advanced: true },
       { key: "leaves_per_su_rail", label: "leaves / SU / rail", src: "gb200-ra", step: 1, min: 1, advanced: true },
       { key: "spines_per_su_rail", label: "spines / SU / rail", src: "gb200-ra", step: 1, min: 1, advanced: true },
       { key: "links_leaf_spine", label: "links / leaf-spine pair", src: "gb200-ra", step: 1, min: 1, advanced: true },
@@ -49,6 +51,7 @@
       { key: "cables_per_tray", label: "cables in sized tray", src: "dossiers", step: 8, min: 1, advanced: true },
     ],
     derive: (r, kw) => {
+      const d = (v) => A.res.disp(v);
       const i = r.inputs, o = r.outputs;
       return [
         "§6.1 · NIC→leaf = SU×racks×trays×rails = " + i.su.value + "×" + i.racks_per_su.value + "×" +
@@ -57,28 +60,23 @@
           " → " + d(o.links_fabric_total.value) + " links",
         "§6.4 · optics = 2×links × W/end = " + d(o.port_ends.value) + " × " + d(i.w_per_end.value) + " W = " +
           d(o.optics_power_kw.value) + " kW = " + d(o.optics_share_of_it_pct.value) + "% of IT",
-        "§6.2 · length = (Δx+Δy+2×drop)×rf + slack = (" + d(i.dx_m.value) + "+" + d(i.dy_m.value) + "+2×" +
-          d(o.rack_to_tray_drop_m.value) + ")×" + d(i.routing_factor.value) + "+2 = " + d(o.link_length_m.value) +
-          " m → " + o.link_media_class.value,
-        "§6.6 · IL = 0.4×km + pairs×" + d(i.il_conn_db.value) + " = " + d(0.4 * o.link_length_m.value / 1000) +
-          " + " + i.mated_pairs.value + "×" + d(i.il_conn_db.value) + " = " + d(o.channel_il_db.value) +
-          " dB vs " + d(o.channel_il_budget_db.value) + " dB " + (o.channel_il_pass.value ? "✓" : "✕"),
-        "§6.5 · latency = 5 ns/m × " + d(i.path_fiber_m.value) + " + " + i.hops.value + "×" +
-          d(i.t_switch_ns.value) + " ns = " + d(o.latency_one_way_us.value) + " µs one-way",
+        "§6.3 · fibers/rack = trays×rails×" + i.fibers_per_parallel_port.value + " = " +
+          d(o.fibers_per_rack.value) + " F → " + d(o.trunks_per_rack.value) + " × MPO-" +
+          i.trunk_size_f.value + " trunks per rack",
       ];
     },
-    // keep the fiber-layout cross-link carrying the live hash state (v3);
-    // rewritten at click time too, so it never lags the hash-encode debounce
-    after: () => {
-      const a = document.querySelector('a[href^="fiber-layout.html"]');
-      if (!a) return;
-      if (!a.dataset.wired) {
-        a.dataset.wired = "1";
-        a.addEventListener("click", () => { a.href = "fiber-layout.html" + location.hash; });
-      }
-      a.href = "fiber-layout.html" + location.hash;
+    after: (r) => {
+      const lg = document.getElementById("fl-logical");
+      if (lg) A.fiberviews.fiberLogical(lg, r);
+      const ph = document.getElementById("fl-physical");
+      if (ph) A.fiberviews.fiberPhysical(ph, r);
+      const inset = document.getElementById("fl-inset");
+      if (inset) A.fiberviews.nvl72Inset(inset, r);
+      A.designs.liveLink("fl-open-fiber", "fiber.html");
     },
   });
 
+  A.designs.wireDownload("fl-dl-logical", "fl-logical", "fiber-logical-topology.svg");
+  A.designs.wireDownload("fl-dl-physical", "fl-physical", "fiber-physical-routing.svg");
   A.boot();
 })();

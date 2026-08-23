@@ -1,7 +1,9 @@
-// 3D viewer page — static hero webp per variant; the self-hosted model-viewer
-// bundle (~1 MB, Apache-2.0) loads ONLY on the explicit button click. The
-// chosen variant lives in this page's URL hash (#variant=<name>) so links
-// reproduce the view; rack.html deep-links here the same way.
+// Row-geometry section (per-platform GLBs) — static hero webp per variant;
+// the self-hosted model-viewer bundle loads ONLY on the explicit button click,
+// via the shared AIDC3D loader (viewer3d.js), so the building scene and this
+// section never fetch the vendor file twice. The chosen variant lives in this
+// page's URL hash (#variant=<name>, merged with the building scene's
+// #view/#layers keys) so links reproduce the view; rack.html deep-links here.
 "use strict";
 (function () {
   const VARIANTS = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
@@ -10,7 +12,7 @@
     const btn = document.getElementById("load3d");
     const stage = document.getElementById("twin-stage");
     const sel = document.getElementById("twin-variant");
-    if (!btn || !stage || !sel) return;
+    if (!btn || !stage || !sel || !globalThis.AIDC3D) return;
     let loaded = false;
 
     function heroSwap(variant) {
@@ -32,30 +34,29 @@
     }
 
     // per-page hash state: restore #variant=<name>
-    const m = /(?:^#|[#&])variant=([a-z0-9-]+)/.exec(location.hash || "");
-    if (m && VARIANTS.includes(m[1])) {
-      sel.value = m[1];
-      heroSwap(m[1]);
+    const v = AIDC3D.hashGet("variant");
+    if (v && VARIANTS.includes(v)) {
+      sel.value = v;
+      heroSwap(v);
     }
 
     btn.addEventListener("click", () => {
       btn.disabled = true;
       btn.textContent = "Loading viewer…";
-      const s = document.createElement("script");
-      s.src = "assets/vendor/model-viewer-umd.min.js";
-      s.onload = () => {
+      AIDC3D.loadVendor().then(() => {
         loaded = true;
         btn.textContent = "Interactive 3D loaded";
         btn.hidden = true;
         mount(sel.value);
-      };
-      s.onerror = () => { btn.textContent = "Viewer failed to load"; btn.disabled = false; };
-      document.body.appendChild(s);
+      }).catch(() => {
+        btn.textContent = "Viewer failed to load — retry";
+        btn.disabled = false;
+      });
     });
     sel.addEventListener("change", () => {
       heroSwap(sel.value);
       if (loaded) mount(sel.value);
-      history.replaceState(null, "", "#variant=" + sel.value);
+      AIDC3D.hashSet({ variant: sel.value });
     });
   }
 

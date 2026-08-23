@@ -57,12 +57,15 @@
       ctl.type = "checkbox";
       ctl.checked = !!(dflt && dflt.value);
     } else {
+      // text + inputmode, not type=number: no spinner or scroll-to-increment
+      // hazards; bounds are enforced in collect(). Fields that may go negative
+      // get no inputmode — the iOS decimal keypad has no minus sign.
       ctl = document.createElement("input");
-      ctl.type = "number";
-      ctl.inputMode = "decimal";
-      if (f.step !== undefined) ctl.step = f.step;
-      if (f.min !== undefined) ctl.min = f.min;
-      if (f.max !== undefined) ctl.max = f.max;
+      ctl.type = "text";
+      ctl.autocomplete = "off";
+      if (f.min !== undefined && f.min >= 0) {
+        ctl.inputMode = f.step === 1 ? "numeric" : "decimal";
+      }
       const pv = f.value !== undefined ? f.value : (dflt ? dflt.value : null);
       ctl.placeholder = pv === null || pv === undefined ? (f.placeholder || "optional") : String(pv);
     }
@@ -84,7 +87,9 @@
     wrap.appendChild(row);
     const err = document.createElement("span");
     err.className = "field-err";
+    err.id = ctl.id + "-err";
     err.setAttribute("role", "alert");
+    ctl.setAttribute("aria-describedby", err.id);
     wrap.appendChild(err);
     return wrap;
   }
@@ -165,8 +170,15 @@
       const raw = ctl.value.trim();
       if (raw === "") continue;              // empty = use default
       const v = Number(raw);
-      if (!isFinite(v) || (f.min !== undefined && v < f.min)) {
-        errEl.textContent = "invalid — using default";
+      let msg = "";
+      if (!isFinite(v)) {
+        msg = "enter a number";
+      } else if ((f.min !== undefined && v < f.min) || (f.max !== undefined && v > f.max)) {
+        msg = f.min !== undefined && f.max !== undefined ? "enter " + f.min + "–" + f.max
+            : f.min !== undefined ? "enter ≥ " + f.min : "enter ≤ " + f.max;
+      }
+      if (msg) {
+        errEl.textContent = msg + " — using the default";
         ctl.closest(".field").classList.add("is-err");
         bad = true;
         continue;
@@ -202,7 +214,16 @@
       res = sec.compute(got.kw);
     } catch (e) {
       const heroEl = document.getElementById(sec.id + "-hero");
-      if (heroEl) heroEl.textContent = String(e.message || e);
+      if (heroEl) {
+        heroEl.replaceChildren();
+        const lab = document.createElement("span");
+        lab.className = "hero-label";
+        lab.textContent = "check inputs";
+        const msg = document.createElement("span");
+        msg.className = "hero-err";
+        msg.textContent = String(e.message || e);
+        heroEl.append(lab, msg);
+      }
       return;
     }
     state.results[sec.id] = { res: res, kw: got.kw };
@@ -303,7 +324,10 @@
   }
 
   // ---- URL-hash shareable state ---------------------------------------------
-  function encodeHash() {
+  // buildHashString reads field state WITHOUT touching location — pages that
+  // pre-fill gallery presets use it to build deep links while keeping the
+  // "boot never writes the hash" convention.
+  function buildHashString() {
     const ps = new URLSearchParams();
     for (const sec of state.sections) {
       for (const f of sec.fields) {
@@ -325,7 +349,10 @@
         if (state.units[sec.id + "." + g]) ps.set("u." + sec.id + "." + g, "1");
       }
     }
-    const s = ps.toString();
+    return ps.toString();
+  }
+  function encodeHash() {
+    const s = buildHashString();
     history.replaceState(null, "", s ? "#" + s : location.pathname);
   }
   function scheduleHash() {
@@ -467,5 +494,6 @@
     if (sec) { renderSection(sec); scheduleHash(); }
   };
   A.chipEl = chipEl;
+  A.stateHash = buildHashString;
   A.appState = state;
 })();

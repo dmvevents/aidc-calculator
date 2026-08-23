@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Colo + GPUs: total cost per GPU over time — AI-DC Calculator</title>
-<meta name="description" content="Build a hall or lease colo space, buy a GPU fleet: levelized and by-year $/GPU-hour, cumulative cash curve, capex/opex/power/GPU split and break-even against a market rental rate you enter. Conservative, provenance-chipped defaults; an estimator, not an offer.">
+<title>Failure modes — the risk explorer, 116 modes across 11 systems — AI-DC Calculator</title>
+<meta name="description" content="A generic FMEA corpus for GPU-era data centers: 116 failure modes with mechanism, symptom, detection, prevention and recovery, filterable by system, phase and detection method — built from published postmortems, industry outage analyses and standards, with per-mode citations.">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="preload" href="assets/fonts/InterVariable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
 <link rel="preload" href="assets/fonts/JetBrainsMono-Variable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
@@ -519,51 +519,175 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
     <a href="capex.html">Capex</a>
     <a href="fiber.html">Fiber</a>
     <a href="commissioning.html">Commissioning</a>
-    <a href="tco.html" class="is-active" aria-current="page">TCO</a>
+    <a href="tco.html">TCO</a>
     <a href="designs.html">Designs</a>
     <a href="fiber-layout.html">Fiber layout</a>
-    <a href="risks.html">Risks</a>
+    <a href="risks.html" class="is-active" aria-current="page">Risks</a>
     <a href="3d.html">3D</a>
     <a href="sources.html">Sources</a>
   </div>
 </nav>
 <header class="masthead masthead-calc wrap">
-  <h1>Colo + GPUs — total cost per GPU over time</h1>
-  <p class="lede">BUILD a hall (own the facility at $/W-IT) or LEASE colo space ($/kW-month),
-  buy a GPU fleet, run it 1–6 years: the levelized and by-year <strong>cost</strong> per
-  delivered GPU-hour, the cumulative cash curve, the capex/opex/power/GPU split — and, if you
-  enter a market rental rate, the break-even month. Two failure-economics options (both OFF by
-  default, derivations on their chips): a <strong>maintenance-consumables anchor</strong>
-  (optics replacement + break-fix, ~30–60 $/kW-yr band) and a <strong>delivered-availability
-  haircut</strong> (expected-downtime band 0.5–1.5% of fleet-hours from published failure
-  floors). A cost estimator with deliberately
-  conservative defaults; not an investment case — no ROI, no IRR, no payback promises.</p>
+  <h1>Failure modes — what actually breaks, and how you'd know</h1>
+  <p class="lede">A generic FMEA corpus for GPU-era data centers:
+  <span class="mono" id="risk-hero-n">116</span> failure modes across 11 building
+  systems and three phases (install · commission · operate), each with its mechanism,
+  symptom signature, detection method, prevention hook and recovery path — built from
+  published postmortems, industry outage analyses, standards and vendor procedures.
+  Filter it, sort it, expand any row, print the lot.</p>
   <div class="section-head">
-    <span class="fid">T1–T8</span>
-    <a class="fid" href="sources.html#parity">parity: calc_tco.py</a>
-    <a class="fid" href="sources.html#tco-model">model &amp; defaults</a>
-    <button class="btn" id="tco-copy" type="button">Copy as Markdown</button>
+    <span class="fid" id="risk-tally">[S] · [D] · [A] primary evidence</span>
+    <a class="fid" href="sources.html#risk-method">method &amp; sources</a>
+    <a class="fid" href="designs.html">reference designs →</a>
   </div>
 </header>
 
 <main class="wrap">
-  <section class="section section-calc" id="tco" aria-label="TCO calculator">
-    <div class="calc-grid">
-      <div class="panel panel-inputs" id="tco-inputs" aria-label="TCO inputs"></div>
-      <div class="panel panel-outputs">
-        <div class="hero-tile" id="tco-hero"></div>
-        <details class="chain">
-          <summary>Derivation chain (T1–T8) — the model with your numbers</summary>
-          <div class="derive" id="tco-derive" aria-label="Derivation chain"></div>
-        </details>
-        <div id="tco-curve" aria-label="Cumulative cash curve"></div>
-        <div id="tco-split" aria-label="Cost split over the horizon"></div>
-        <div id="tco-sens" class="matrix-scroll" aria-label="Sensitivity strip"></div>
-        <div class="matrix-scroll"><table class="out-table" aria-label="TCO outputs"><tbody id="tco-out"></tbody></table></div>
-        <ul class="notes" id="tco-notes"></ul>
-      </div>
+
+  <section class="section" id="top-classes" aria-labelledby="top-classes-h">
+    <h2 id="top-classes-h">Top failure classes — ranked by industry data</h2>
+    <p>Ranking below follows <em>published, cross-industry</em> outage and fleet
+    statistics — not any single project's exposure. Click a system tag to filter the
+    full table.</p>
+    <div class="cards risk-cards">
+      <article class="card">
+        <span class="micro">1 · Power &amp; energy storage</span>
+        <h3>Power is still the #1 outage cause</h3>
+        <p>Power-related problems caused <span class="mono">43%</span> of significant
+        outages in Uptime's 2022 analysis, with <strong>UPS failures the single
+        biggest cause of power incidents</strong>; the 2026 analysis keeps UPS,
+        transfer switches and generators dominant.
+        <a class="chip chip-s" href="sources.html#uptime-outage" title="Uptime Institute 2022 outage analysis">S</a>
+        <a class="chip chip-s" href="sources.html#uptime-outage" title="Uptime Institute 2026 outage analysis">S</a></p>
+        <span class="card-open"><a href="#sys=PWR" data-sys-jump="PWR">PWR modes</a> ·
+        <a href="#sys=UPS" data-sys-jump="UPS">UPS modes</a> ·
+        <a href="#sys=GEN" data-sys-jump="GEN">GEN modes</a></span>
+      </article>
+      <article class="card">
+        <span class="micro">2 · Network &amp; fiber</span>
+        <h3>Networking leads IT-service downtime</h3>
+        <p>Networking-related problems were the <strong>single biggest cause of all IT
+        service downtime incidents</strong> over the three years before Uptime's 2022
+        survey; the 2026 analysis flags fiber/connectivity outages as rising and more
+        likely to cause extended disruption.
+        <a class="chip chip-s" href="sources.html#uptime-outage" title="Uptime Institute 2022 outage analysis">S</a>
+        <a class="chip chip-s" href="sources.html#uptime-outage" title="Uptime Institute 2026 outage analysis">S</a></p>
+        <span class="card-open"><a href="#sys=NET" data-sys-jump="NET">NET modes</a> ·
+        <a href="#sys=FIB" data-sys-jump="FIB">FIB modes</a></span>
+      </article>
+      <article class="card">
+        <span class="micro">3 · Compute hardware</span>
+        <h3>GPU/HBM mortality never reaches zero</h3>
+        <p>On a 16k-GPU fleet over 54 days, faulty GPUs (<span class="mono">30.1%</span>)
+        and HBM3 (<span class="mono">17.2%</span>) led unexpected interruptions; large
+        fleets run ≈<span class="mono">2.3</span> failures per 1,000 node-days in steady
+        state. Burn-in front-loads it; it does not eliminate it.
+        <a class="chip chip-s" href="sources.html#llama3" title="Llama 3 reliability snapshot">S</a>
+        <a class="chip chip-s" href="sources.html#meta-rel" title="Large-scale cluster reliability study">S</a></p>
+        <span class="card-open"><a href="#sys=RCK" data-sys-jump="RCK">RCK modes</a></span>
+      </article>
+      <article class="card">
+        <span class="micro">4 · Controls as common mode</span>
+        <h3>The control layer fails WITH the plant</h3>
+        <p>The heaviest documented facility cascades — AWS Tokyo 2019, Flexential
+        PDX-04 2023, Meta 2021 — pivot on controls and monitoring failing alongside
+        the equipment they manage, blinding the recovery.
+        <a class="chip chip-s" href="sources.html#risk-aws-tokyo" title="AWS Tokyo 2019 postmortem">S</a>
+        <a class="chip chip-s" href="sources.html#risk-flexential" title="Cloudflare/Flexential postmortem">S</a>
+        <a class="chip chip-s" href="sources.html#risk-meta21" title="Meta 2021 outage report">S</a></p>
+        <span class="card-open"><a href="#sys=BMS" data-sys-jump="BMS">BMS modes</a></span>
+      </article>
+      <article class="card">
+        <span class="micro">5 · Cooling at climate margins</span>
+        <h3>"Redundant" cooling fails simultaneously</h3>
+        <p>During the 2022 UK heatwave a Google London data center was shut down to
+        protect hardware after the <em>simultaneous failure of multiple, redundant
+        cooling systems</em> — design-exceedance days stress every unit the same way
+        at once.
+        <a class="chip chip-s" href="sources.html#risk-google-london" title="DCD on Google's incident report">S</a></p>
+        <span class="card-open"><a href="#sys=LIQ" data-sys-jump="LIQ">LIQ modes</a> ·
+        <a href="#sys=AIR" data-sys-jump="AIR">AIR modes</a></span>
+      </article>
+      <article class="card">
+        <span class="micro">6 · People &amp; procedures</span>
+        <h3>Human error rides every system</h3>
+        <p>Nearly <span class="mono">40%</span> of organizations suffered a major
+        human-error outage in three years — and <span class="mono">85%</span> of those
+        stemmed from staff failing to follow procedures, or from the procedures
+        themselves. That multiplier applies to every row below.
+        <a class="chip chip-s" href="sources.html#uptime-outage" title="Uptime Institute 2022 outage analysis">S</a></p>
+        <span class="card-open"><a href="#q=MOP" data-q-jump="MOP">see MOP/EOP hooks across modes</a></span>
+      </article>
     </div>
   </section>
+
+  <section class="section" id="matrix-sec" aria-labelledby="matrix-h">
+    <h2 id="matrix-h">Where modes are born vs where they bite</h2>
+    <p>Counts computed from the corpus headers at build time. A mode may carry more
+    than one phase: fiber and rack defects are <em>install-born</em> and caught by
+    inspection gates; UPS, genset and controls classes are <em>operate-revealed</em> —
+    latent states that only real events exercise, which is why integrated systems
+    tests create those events deliberately before handover.</p>
+    <div class="matrix-scroll">
+      <table class="matrix" aria-label="Failure modes by system and phase">
+        <thead><tr><th scope="col">system (click to filter)</th><th scope="col">modes</th>
+        <th scope="col">install</th><th scope="col">commission</th><th scope="col">operate</th></tr></thead>
+        <tbody id="risk-matrix"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="explorer" aria-labelledby="explorer-h">
+    <h2 id="explorer-h">The full corpus</h2>
+    <div class="risk-controls panel" aria-label="Filters">
+      <label class="field risk-f-sys"><span class="field-label">system</span>
+        <select id="risk-sys"><option value="">all 11 systems</option></select>
+      </label>
+      <fieldset class="risk-f-ph">
+        <legend class="field-label">phase</legend>
+        <label><input type="checkbox" id="risk-ph-INSTALL" checked> install</label>
+        <label><input type="checkbox" id="risk-ph-COMMISSION" checked> commission</label>
+        <label><input type="checkbox" id="risk-ph-OPERATE" checked> operate</label>
+      </fieldset>
+      <label class="field risk-f-q"><span class="field-label">text filter — name · mechanism · detection</span>
+        <input type="text" id="risk-q" inputmode="text" placeholder="e.g. IR scan, OTDR, torque, dew point">
+      </label>
+      <div class="risk-f-actions">
+        <span class="micro" id="risk-count" role="status">showing 116 of 116 failure modes</span>
+        <button class="btn" id="risk-expand-all" type="button">Expand all</button>
+      </div>
+    </div>
+    <div class="matrix-scroll">
+      <table class="matrix risk-table" id="risk-table" aria-label="Failure-mode corpus">
+        <thead><tr>
+          <th scope="col" data-sort="id" aria-sort="ascending"><button type="button" class="risk-sort">ID</button></th>
+          <th scope="col" data-sort="sys" aria-sort="none"><button type="button" class="risk-sort">system</button></th>
+          <th scope="col" data-sort="name" aria-sort="none"><button type="button" class="risk-sort">failure mode (click to expand)</button></th>
+          <th scope="col">phases</th>
+        </tr></thead>
+        <tbody id="risk-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="mitigation" aria-labelledby="mitigation-h">
+    <h2 id="mitigation-h">Turning the corpus into an operating discipline</h2>
+    <p>A list of failure modes only pays for itself when it becomes procedure. The
+    approach this corpus is built for has two halves. A <strong>field guide</strong>:
+    every mode mapped to the checklist, hold point or test that catches it — receiving
+    inspection with shock indicators, inspect-before-connect on every optical mate,
+    torque witness marks plus IR scans during the load-bank window, full-load battery
+    discharge before acceptance, integrated systems tests that deliberately create the
+    failure (pull the plug, stop the duty pump, kill a UPS module) rather than wait
+    for it. And an <strong>evidence model</strong>: every test leaves a time-stamped,
+    per-asset artifact — certification records, settings baselines, event-recorder
+    captures, discharge curves — so acceptance is a data package, not a walkthrough,
+    and the first real incident is debugged from records instead of memory. The
+    per-mode Detection and Prevention columns above are the raw material for both.</p>
+    <p class="micro">an estimator's companion, not an operations manual — engage
+    licensed engineers and your commissioning agent to instantiate it for a real project</p>
+  </section>
+
 </main>
 
 <footer class="footer">
@@ -581,7 +705,7 @@ font-size: 8.5pt; color: var(--muted); word-break: break-all;
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
 // engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/result.js","assets/js/app.js","assets/js/rackdata.js","assets/js/calc_tco.js","assets/js/page_tco.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+(function(){function go(){["assets/js/risksdata.js","assets/js/page_risks.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
 </script>
 </body>
 </html>

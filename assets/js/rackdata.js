@@ -26,9 +26,32 @@ globalThis.RACKDB = {
     "gpus_per_rack": 64,
     "height_mm": 2258,
     "idle_kw": null,
+    "labels": {
+      "air_kw": "[D]",
+      "edpp2_kw": null,
+      "gpus_per_rack": "[D]",
+      "height_mm": "[A]",
+      "liquid_kw": "[D]",
+      "liquid_pct": "[S]",
+      "nameplate_kw": "[D]",
+      "racks_per_su": "[D]",
+      "rails": "[S]",
+      "scale_out": "[S]",
+      "weight_kg": "[A]"
+    },
     "liquid_flow_curve": null,
     "liquid_kw": 73.9,
     "liquid_pct": 70,
+    "matrix_notes": [
+      [
+        "nameplate_kw",
+        "Derived: 8 nodes x 13.2 kW node maximum (2 x 6.6 kW Titanium PSUs on the N side); cross-checks the 14.3 kW air-cooled DGX B200 analog less fan power."
+      ],
+      [
+        "gpus_per_rack",
+        "Derived: 8 nodes x 8 GPUs; Dell publishes up to 9 nodes/rack (72 GPUs) as the ceiling."
+      ]
+    ],
     "nameplate_kw": 105.6,
     "nvlink_domain": 8,
     "nvlink_label": "[D]",
@@ -76,9 +99,28 @@ globalThis.RACKDB = {
     "gpus_per_rack": 16,
     "height_mm": 2258,
     "idle_kw": null,
+    "labels": {
+      "air_kw": "[D]",
+      "edpp2_kw": null,
+      "gpus_per_rack": "[D]",
+      "height_mm": "[A]",
+      "liquid_kw": "[S]",
+      "liquid_pct": "[S]",
+      "nameplate_kw": "[D]",
+      "racks_per_su": "[D]",
+      "rails": "[S]",
+      "scale_out": "[S]",
+      "weight_kg": "[A]"
+    },
     "liquid_flow_curve": null,
     "liquid_kw": 0,
     "liquid_pct": 0,
+    "matrix_notes": [
+      [
+        "nameplate_kw",
+        "Derived: 2 x 14.3 kW per-system maximum [A per-system]; the B200 RA plans for racks above 25 kW."
+      ]
+    ],
     "nameplate_kw": 28.6,
     "nvlink_domain": 8,
     "nvlink_label": "[D]",
@@ -128,6 +170,19 @@ globalThis.RACKDB = {
     "gpus_per_rack": 72,
     "height_mm": 2300,
     "idle_kw": 40.8,
+    "labels": {
+      "air_kw": "[S]",
+      "edpp2_kw": "[S]",
+      "gpus_per_rack": "[S]",
+      "height_mm": "[S]",
+      "liquid_kw": "[S]",
+      "liquid_pct": "[S]",
+      "nameplate_kw": "[S]",
+      "racks_per_su": "[S]",
+      "rails": "[S]",
+      "scale_out": "[A]",
+      "weight_kg": "[S]"
+    },
     "liquid_flow_curve": [
       [
         25.0,
@@ -157,6 +212,20 @@ globalThis.RACKDB = {
     ],
     "liquid_kw": 116,
     "liquid_pct": 87,
+    "matrix_notes": [
+      [
+        "nameplate_kw",
+        "136 kW is the GB300-template envelope value [S]; GB200 actuals are [A] <= it \u2014 public 120-132 kW GB200 quotes lack an NVIDIA document (assumption \u2014 verify). The liquid/air split and the EDPP ceilings inherit the same envelope basis."
+      ],
+      [
+        "weight_kg",
+        "1,500 kg is the sourced template value; press reports quote ~1.36 t for GB200 NVL72 [A] \u2014 the heavier figure is kept, conservative for structural design."
+      ],
+      [
+        "scale_out",
+        "Spectrum-X Ethernet is a design choice [A]; the GB200 RA's baseline compute fabric is NDR InfiniBand (QM9700), carried as the alternate."
+      ]
+    ],
     "nameplate_kw": 136,
     "nvlink_domain": 72,
     "nvlink_label": "[S]",
@@ -208,6 +277,19 @@ globalThis.RACKDB = {
     "gpus_per_rack": 72,
     "height_mm": 2300,
     "idle_kw": 40.8,
+    "labels": {
+      "air_kw": "[S]",
+      "edpp2_kw": "[S]",
+      "gpus_per_rack": "[S]",
+      "height_mm": "[S]",
+      "liquid_kw": "[S]",
+      "liquid_pct": "[S]",
+      "nameplate_kw": "[S]",
+      "racks_per_su": "[S]",
+      "rails": "[S]",
+      "scale_out": "[S]",
+      "weight_kg": "[S]"
+    },
     "liquid_flow_curve": [
       [
         25.0,
@@ -237,6 +319,16 @@ globalThis.RACKDB = {
     ],
     "liquid_kw": 116,
     "liquid_pct": 87,
+    "matrix_notes": [
+      [
+        "nameplate_kw",
+        "Direct GB300 value [S] \u2014 the template is auto-generated from NVIDIA's GB300 rack data, so no envelope inheritance applies on this column."
+      ],
+      [
+        "liquid_pct",
+        "The GB300 product page markets fully liquid-cooled; the engineering split stays 87/13 per the template \u2014 assumption-verify against a GB300 site-prep guide when published."
+      ]
+    ],
     "nameplate_kw": 136,
     "nvlink_domain": 72,
     "nvlink_label": "[S]",

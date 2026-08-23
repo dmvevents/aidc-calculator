@@ -62,27 +62,48 @@
       ];
     },
     init: () => {
-      // comparison matrix (static per page load — the data backbone visualised)
+      // comparison matrix (static per page load — the data backbone visualised).
+      // Every cell wears the [S]/[D]/[A] chip the variant YAML gives that value
+      // (rackdata.js labels, extracted at build time); † marks a value whose
+      // label carries a provenance caveat — the footnotes below the table.
       const host = document.getElementById("rack-matrix");
       if (!host) return;
+      const weakest = (...ls) => {
+        const rank = { "[S]": 0, "[D]": 1, "[A]": 2 };
+        let out = null;
+        for (const l of ls) if (l && (out === null || rank[l] > rank[out])) out = l;
+        return out;
+      };
+      const uTag = (s) => (s && /\[(S|D|A)\]\s*$/.test(s)) ? "[" + s.match(/\[(S|D|A)\]\s*$/)[1] + "]" : null;
+      const uText = (s) => s ? s.replace(/\s*\[(S|D|A)\]\s*$/, "") : s;
+      // [row label, value getter, chip getter, field key for footnotes]
       const rows = [
-        ["GPUs / rack", (v) => v.gpus_per_rack],
-        ["kW / rack (nameplate)", (v) => v.nameplate_kw],
-        ["Transient ceiling EDPP2 (kW)", (v) => v.edpp2_kw || "—"],
-        ["Cooling", (v) => v.cooling],
-        ["Liquid / air per rack (kW)", (v) => (v.liquid_kw || 0) + " / " + v.air_kw],
-        ["Weight (kg)", (v) => v.weight_kg],
-        ["Height (mm / U-class)", (v) => v.height_mm + (v.u_class ? " · " + v.u_class : "")],
-        ["Floor pressure (kPa)", (v) => v.floor_kpa],
-        ["Racks / MW", (v) => v.racks_per_mw],
-        ["GPUs / MW", (v) => v.gpus_per_mw],
-        ["NVLink domain (GPUs)", (v) => v.nvlink_domain + " " + v.nvlink_label],
-        ["Scale-out rails", (v) => v.rails],
-        ["Fabric", (v) => v.scale_out],
-        ["Racks / SU", (v) => v.racks_per_su],
+        ["GPUs / rack", (v) => v.gpus_per_rack, (v) => v.labels.gpus_per_rack, "gpus_per_rack"],
+        ["kW / rack (nameplate)", (v) => v.nameplate_kw, (v) => v.labels.nameplate_kw, "nameplate_kw"],
+        ["Transient ceiling EDPP2 (kW)", (v) => v.edpp2_kw || "—", (v) => v.edpp2_kw ? v.labels.edpp2_kw : null, "edpp2_kw"],
+        ["Cooling", (v) => v.cooling, (v) => v.labels.liquid_pct, "liquid_pct"],
+        ["Liquid / air per rack (kW)", (v) => (v.liquid_kw || 0) + " / " + v.air_kw,
+          (v) => weakest(v.labels.liquid_kw, v.labels.air_kw), "liquid_kw"],
+        ["Weight (kg)", (v) => v.weight_kg, (v) => v.labels.weight_kg, "weight_kg"],
+        ["Height (mm / U-class)", (v) => v.height_mm + (v.u_class ? " · " + uText(v.u_class) : ""),
+          (v) => weakest(v.labels.height_mm, uTag(v.u_class)), "height_mm"],
+        ["Floor pressure (kPa)", (v) => v.floor_kpa, () => "[D]", null],
+        ["Racks / MW", (v) => v.racks_per_mw, () => "[D]", null],
+        ["GPUs / MW", (v) => v.gpus_per_mw, () => "[D]", null],
+        ["NVLink domain (GPUs)", (v) => v.nvlink_domain, (v) => v.nvlink_label, null],
+        ["Scale-out rails", (v) => v.rails, (v) => v.labels.rails, "rails"],
+        ["Fabric", (v) => v.scale_out, (v) => v.labels.scale_out, "scale_out"],
+        ["Racks / SU", (v) => v.racks_per_su, (v) => v.labels.racks_per_su, "racks_per_su"],
       ];
+      const ROW_LABEL = {};
+      for (const [label, , , field] of rows) if (field) ROW_LABEL[field] = label;
+      const noted = (v, field) => field && (v.matrix_notes || []).some((n) => n[0] === field);
       const tbl = document.createElement("table");
       tbl.className = "matrix";
+      const cap = document.createElement("caption");
+      cap.textContent = "variant matrix — every value wears its own label from the " +
+        "variant YAML ([S] stated · [D] derived · [A] assumed); † = provenance note below";
+      tbl.appendChild(cap);
       const thead = document.createElement("thead");
       const hr = document.createElement("tr");
       hr.appendChild(document.createElement("th"));
@@ -94,21 +115,42 @@
       thead.appendChild(hr);
       tbl.appendChild(thead);
       const tb = document.createElement("tbody");
-      for (const [label, get] of rows) {
+      for (const [label, get, chip, field] of rows) {
         const tr = document.createElement("tr");
         const th = document.createElement("th");
         th.textContent = label;
         tr.appendChild(th);
         for (const n of VARIANT_ORDER) {
+          const v = globalThis.RACKDB[n];
           const td = document.createElement("td");
           td.className = "num";
-          td.textContent = String(get(globalThis.RACKDB[n]));
+          td.append(String(get(v)));
+          const l = chip(v);
+          if (l) td.append(" ", A.chipEl(l, "variants"));
+          if (noted(v, field)) {
+            const sup = document.createElement("sup");
+            sup.textContent = "†";
+            td.appendChild(sup);
+          }
           tr.appendChild(td);
         }
         tb.appendChild(tr);
       }
       tbl.appendChild(tb);
-      host.replaceChildren(tbl);
+      // provenance footnotes (†) — the caveats the YAML labels carry, per variant
+      const notes = document.createElement("ul");
+      notes.className = "notes";
+      for (const n of VARIANT_ORDER) {
+        const v = globalThis.RACKDB[n];
+        for (const [field, text] of v.matrix_notes || []) {
+          const li = document.createElement("li");
+          const b = document.createElement("strong");
+          b.textContent = "† " + v.platform + " · " + (ROW_LABEL[field] || field) + ": ";
+          li.append(b, text);
+          notes.appendChild(li);
+        }
+      }
+      host.replaceChildren(tbl, notes);
     },
     after: () => {
       // keep the 3D-page link pointed at the chosen variant (viewer is 3d.html)

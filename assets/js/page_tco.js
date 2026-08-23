@@ -233,6 +233,10 @@
         options: [["straight", "straight-line to salvage"], ["resale", "resale-decay band"]] },
       { key: "market_usd_per_gpu_hr", label: "market rental $/GPU-h (optional — unlocks break-even)",
         src: "rental-anchors", step: 0.05, min: 0, placeholder: "e.g. 10.50" },
+      { key: "consumables_usd_per_kw_yr", label: "consumables anchor $/kW-yr (optional — FMEA slice)",
+        src: "fm-consumables", step: 5, min: 0, placeholder: "off — band 30–60" },
+      { key: "availability_pct", label: "delivered availability % (optional haircut)",
+        src: "fm-availability", step: 0.1, min: 50, max: 100, placeholder: "off — band 98.5–99.5" },
       { key: "build_usd_per_w_it", label: "build capex $/W-IT", src: "jll",
         step: 0.1, min: 0, advanced: true },
       { key: "facility_life_years", label: "facility life (yr)", src: "legend",
@@ -267,12 +271,21 @@
           d(o.gpus_installed.value) + " GPUs · IT = " + o.racks.value + " × " +
           d(i.rack_kw.value) + " kW = " + d(o.it_mw.value) + " MW-IT",
         "T2 · GPU-h/mo = " + d(o.gpus_installed.value) + " × 730 × " + d(i.utilization.value) +
+          (i.availability_pct ? " × " + d(i.availability_pct.value) + "% avail" : "") +
           " = " + d(o.gpu_hours_month.value) + " → " + d(o.gpu_hours_horizon.value) +
-          " over the horizon",
+          " over the horizon" +
+          (o.gpu_hours_lost_to_downtime
+            ? " (downtime removes " + d(o.gpu_hours_lost_to_downtime.value) +
+              " GPU-h — the 0.5–1.5% expected-downtime band [D], FM evidence)"
+            : ""),
         "T3 · LF = " + d(i.utilization.value) + " + (1−" + d(i.utilization.value) + ")×" +
           d(i.idle_power_frac.value) + " = " + d(o.energy_load_factor.value) + " → energy = " +
           d(o.energy_kwh_month.value) + " kWh/mo × " + d(i.power_usd_per_kwh.value) + " $/kWh = " +
-          d(o.power_cost_usd_month.value) + " $/mo",
+          d(o.power_cost_usd_month.value) + " $/mo" +
+          (o.consumables_usd_month
+            ? " · consumables anchor + " + d(o.consumables_usd_month.value) +
+              " $/mo (optics AFR + break-fix [FM-NET-001])"
+            : ""),
         (build
           ? "T5 · facility = " + d(i.build_usd_per_w_it.value) + " $/W × " + d(o.it_mw.value) +
             " MW = " + M$(o.facility_capex_usd.value) + "$ · upfront = " + M$(o.upfront_usd.value) + "$"

@@ -18,7 +18,9 @@
       { key: "utilisation", label: "billable utilisation", src: "legend", step: 0.05, min: 0.05, max: 1 },
       { key: "gpus", label: "GPU count (else derived)", src: "legend", step: 8, min: 1, placeholder: "derived" },
       { key: "it_m_per_mw_it", label: "IT capex $M/MW-IT", src: "iren-8k", step: 0.5, min: 0 },
-      { key: "kw_per_gpu", label: "kW per GPU (all-in)", src: "aif-template", step: 0.01, min: 0.1, advanced: true },
+      { key: "spares_pct_of_it", label: "spares/DOA float % of IT", src: "fm-spares", step: 0.5, min: 0 },
+      { key: "contingency_pct_of_facility", label: "named-risk contingency % of facility", src: "fm-contingency", step: 0.5, min: 0 },
+      { key: "kw_per_gpu", label: "kW per GPU (rack nameplate)", src: "aif-template", step: 0.01, min: 0.1, advanced: true },
       { key: "colo_m_per_mw", label: "shell+core $M/MW", src: "jll", step: 0.1, min: 0, advanced: true },
       { key: "liquid_premium_pct", label: "liquid premium %", src: "jll", step: 1, min: 0, advanced: true },
       { key: "substation_m", label: "substation $M (FEED)", src: "legend", step: 1, min: 0, advanced: true },
@@ -31,12 +33,23 @@
     derive: (r, kw) => {
       const i = r.inputs, o = r.outputs;
       return [
+        (o.gpus.label === "[D]"
+          ? "GPUs = IT×1000 ÷ kW/GPU = " + d(i.it_mw.value) + "×1000 ÷ " + d(i.kw_per_gpu.value) +
+            " = " + d(o.gpus.value) + " — rack-nameplate basis (136 ÷ 72 = 1.89 kW/GPU · " +
+            "529 GPUs/MW on the rack page); support IT + optics excluded"
+          : "GPUs = " + d(o.gpus.value) + " (user-supplied — kW/GPU not used)"),
         "capex = shell(" + d(o.capex_colo_m.value) + ") + liquid(" + d(o.capex_liquid_adder_m.value) +
           ") + IT(" + d(o.capex_it_m.value) + ")" +
           (o.capex_substation_m && o.capex_substation_m.value ? " + sub(" + d(o.capex_substation_m.value) + ")" : "") +
+          " + spares(" + d(o.capex_spares_pool_m.value) + ") + contingency(" + d(o.capex_contingency_m.value) + ")" +
           " = " + d(o.capex_total_m.value) + " US$M (" + d(o.capex_per_gpu_usd.value) + " $/GPU)",
-        "amortisation = IT÷" + d(i.life_years.value) + " + facility÷" + d(i.facility_life_years.value) +
-          " = " + d(o.amortisation_m_yr.value) + " US$M/yr",
+        "spares float = IT × " + d(i.spares_pct_of_it.value) + "% — DOA ~10% is vendor-RMA-covered [S]; " +
+          "the float rides the RMA pipeline: 2.34/1k node-days [S] × ~25% swap [A] × 6-wk RMA [A] ≈ 2.5%",
+        "contingency = facility × " + d(i.contingency_pct_of_facility.value) + "% — Σ(P×exposure) over 10 " +
+          "NAMED failure classes (FM-RCK-001/002, FM-FIB-001, FM-NET-001, FM-PWR-001/005, FM-PWR-003/008, " +
+          "FM-UPS-001, FM-GEN-001/008, FM-LIQ-001/002, FM-LIQ-004, FM-BMS-001/003) = 2.54% → 2.5 default",
+        "amortisation = (IT + spares)÷" + d(i.life_years.value) + " + (facility + contingency)÷" +
+          d(i.facility_life_years.value) + " = " + d(o.amortisation_m_yr.value) + " US$M/yr",
         "energy = IT × PUE × 8760 × LF × rate = " + d(i.it_mw.value) + "×" + d(i.pue.value) + "×8760×" +
           d(i.load_factor.value) + "×" + d(i.power_usd_per_kwh.value) + " = " + d(o.energy_cost_m_yr.value) + " US$M/yr",
         "floor = (amort + opex + energy) ÷ billable = (" + d(o.amortisation_m_yr.value) + " + " +
@@ -80,7 +93,51 @@
         tb.appendChild(tr);
       });
       tbl.appendChild(tb);
-      host.replaceChildren(tbl);
+
+      // density basis: the floor at the three GB200 NVL72 density readings —
+      // rack nameplate (default), the unverified 120 kW public-quote band, and
+      // the SU-TDP basis that folds fabric+mgmt in. Skipped when the GPU count
+      // is user-supplied (kW/GPU is not used then).
+      if (kw.gpus !== null && kw.gpus !== undefined) { host.replaceChildren(tbl); return; }
+      const cur = (kw.kw_per_gpu !== null && kw.kw_per_gpu !== undefined)
+        ? Number(kw.kw_per_gpu) : A.calcCapex.DEFAULTS.kw_per_gpu.value;
+      const bases = [
+        ["136 kW nameplate ÷ 72 [D] — default; rack page reads the same", 1.889],
+        ["120 kW public quote ÷ 72 [A] — assumption-verify (no NVIDIA doc)", 1.667],
+        ["1.2 MW SU TDP ÷ 576 [D] — SU basis, fabric+mgmt folded in", 1.2 * 1000 / 576],
+      ];
+      if (!bases.some((b) => Math.abs(b[1] - cur) < 5e-4)) bases.push(["your kW/GPU input", cur]);
+      const dtbl = document.createElement("table");
+      dtbl.className = "matrix";
+      const dcap = document.createElement("caption");
+      dcap.textContent = "cost floor US$/GPU-h — GB200 NVL72 density basis [D]";
+      dtbl.appendChild(dcap);
+      const dhead = document.createElement("thead");
+      const dhr = document.createElement("tr");
+      for (const h of ["density basis", "kW/GPU", "GPUs", "floor $/GPU-h"]) {
+        const th = document.createElement("th");
+        th.textContent = h;
+        dhr.appendChild(th);
+      }
+      dhead.appendChild(dhr);
+      dtbl.appendChild(dhead);
+      const dtb = document.createElement("tbody");
+      for (const [label, v] of bases) {
+        const r2 = A.calcCapex.costs(Object.assign({}, kw, { kw_per_gpu: v }));
+        const tr = document.createElement("tr");
+        const th = document.createElement("th");
+        th.textContent = label;
+        tr.appendChild(th);
+        for (const cell of [d(v), d(r2.outputs.gpus.value), d(r2.outputs.cost_floor_per_gpu_hr.value)]) {
+          const td = document.createElement("td");
+          td.className = "num" + (Math.abs(v - cur) < 5e-4 ? " sens-base" : "");
+          td.textContent = cell;
+          tr.appendChild(td);
+        }
+        dtb.appendChild(tr);
+      }
+      dtbl.appendChild(dtb);
+      host.replaceChildren(tbl, dtbl);
     },
   });
 

@@ -13,8 +13,15 @@
   const DEFAULTS = {
     it_mw: q(1.0, "MW-IT", "[A]", "critical IT capacity — set to your project"),
     gpus: q(null, "", "[A]", "GPU count; if omitted, derived from it_mw / kw_per_gpu"),
-    kw_per_gpu: q(1.667, "kW/GPU", "[D]",
-                  "GB200 NVL72 density: 136 kW / 72 GPUs plus support"),
+    kw_per_gpu: q(1.889, "kW/GPU", "[D]",
+                  "GB200 NVL72 rack nameplate / GPUs: 136 kW / 72 = 1.889 (3 d.p.) — the " +
+                  "same basis as the rack planner (1.89 kW/GPU, 529 GPUs/MW). 136 kW is " +
+                  "the GB300-template envelope value; GB200 actuals are <= it. Bare rack " +
+                  "only: support IT (+7.7% reference share) and pluggable optics are " +
+                  "separate rows in the rack/power calculators, NOT folded into this " +
+                  "divisor — supply the GPU count to override. Public 120-140 kW GB200 " +
+                  "quotes lack an NVIDIA doc (assumption-verify); 120/72 = 1.667 is the " +
+                  "low-density alternative in the density table"),
     colo_m_per_mw: q(11.3, "US$M/MW", "[S]",
                      "JLL 2026 Global Data Center Outlook, global average shell-and-core " +
                      "ex land + IT"),
@@ -27,6 +34,28 @@
     substation_m: q(null, "US$M", "[A]",
                     "substation + interconnection: NO benchmark could be sourced. Carry as " +
                     "a FEED-priced placeholder, never a point estimate"),
+    spares_pct_of_it: q(2.5, "%", "[D]",
+                        "spares/DOA replacement float on IT capex: DOA ~10% of delivered " +
+                        "systems + ~25% PCIe reseats at a documented 4k-GPU bring-up " +
+                        "(FM-RCK-001/002, Imbue) are vendor-RMA-covered, so the owned cost " +
+                        "is the float that rides the RMA pipeline: 2.34 failures/1,000 " +
+                        "node-days steady floor (FM-RCK-003, Meta arXiv:2410.21680) x ~25% " +
+                        "needing physical swap [A] x 6-week RMA turnaround [A] = 2.46% of " +
+                        "fleet in transit at any instant -> 2.5% (band 1-4.5). Set 0 to " +
+                        "reproduce the pre-FMEA floor"),
+    contingency_pct_of_facility: q(2.5, "%", "[D]",
+                                   "NAMED-RISK contingency on facility capex, sum of P x " +
+                                   "cost-exposure over the 10 documented commissioning-window " +
+                                   "failure classes: FM-RCK-001/002 arrival quality 1.0x0.4 + " +
+                                   "FM-FIB-001/014 end-face contamination 0.9x0.3 + FM-NET-001 " +
+                                   "flap under load 0.9x0.2 + FM-PWR-001/005 torque/joints " +
+                                   "0.6x0.5 + FM-PWR-003/008 settings/load-bank 0.5x0.4 + " +
+                                   "FM-UPS-001 battery under-delivery 0.3x0.7 + FM-GEN-001/008 " +
+                                   "gen stability/ATS 0.4x0.5 + FM-LIQ-001/002 TCS " +
+                                   "contamination 0.4x1.0 + FM-LIQ-004 loop leaks 0.6x0.3 + " +
+                                   "FM-BMS-001/003 controls/sensors 0.5x0.4 = 2.54% -> 2.5 " +
+                                   "default. Exposure classes are [A] (verify); base rates are " +
+                                   "published postmortems. Set 0 for the pre-FMEA floor"),
     opex_k_per_mw_it_yr: q(940.0, "US$k/MW-IT/yr", "[D]",
                            "cash opex ex-power at 10 MW-IT, band 940-1,140; converges toward " +
                            "780 at >=20 MW-IT as the 24/7 crew amortises"),
@@ -53,15 +82,18 @@
     const liquid_adder = colo * Number(p.liquid_premium_pct) / 100.0;
     const it_capex = it * Number(p.it_m_per_mw_it);
     const substation = p.substation_m !== null && p.substation_m !== undefined ? Number(p.substation_m) : 0.0;
-    const total = colo + liquid_adder + it_capex + substation;
+    const spares = it_capex * Number(p.spares_pct_of_it) / 100.0;
+    const facility = colo + liquid_adder + substation;
+    const contingency = facility * Number(p.contingency_pct_of_facility) / 100.0;
+    const total = facility + it_capex + spares + contingency;
 
     const opex_yr = it * Number(p.opex_k_per_mw_it_yr) / 1000.0;
     const energy_kwh_yr = it * 1000.0 * Number(p.pue) * HOURS_PER_YEAR * Number(p.load_factor);
     const energy_yr = energy_kwh_yr * Number(p.power_usd_per_kwh) / 1e6;
 
     const billable_h = gpus * HOURS_PER_YEAR * Number(p.utilisation);
-    const amort_yr = it_capex / Number(p.life_years)
-                   + (colo + liquid_adder + substation) / Number(p.facility_life_years);
+    const amort_yr = (it_capex + spares) / Number(p.life_years)
+                   + (facility + contingency) / Number(p.facility_life_years);
     const per_h = (m_usd) => billable_h ? m_usd * 1e6 / billable_h : null;
 
     const out = {
@@ -73,6 +105,13 @@
       capex_it_m: q(it_capex, "US$M", "[D]", "it_mw x it_m_per_mw_it"),
       capex_substation_m: q(substation || null, "US$M", "[A]",
                             "0 unless supplied — unsourced by design"),
+      capex_spares_pool_m: q(spares, "US$M", "[D]",
+                             "it_capex x spares_pct_of_it — the owned replacement float " +
+                             "(FM-RCK-001/002/003); vendor RMA covers the parts, the float " +
+                             "covers the schedule"),
+      capex_contingency_m: q(contingency, "US$M", "[D]",
+                             "(colo + liquid + substation) x contingency_pct_of_facility — " +
+                             "named-risk sum, not a flat allowance (table on the input row)"),
       capex_total_m: q(total, "US$M", "[D]", "sum of the capex lines"),
       capex_per_mw_it_m: q(total / it, "US$M/MW-IT", "[D]", "capex_total_m / it_mw"),
       capex_per_gpu_usd: q(total * 1e6 / gpus, "US$/GPU", "[D]", "capex_total_m / gpus"),
@@ -82,7 +121,8 @@
       energy_cost_m_yr: q(energy_yr, "US$M/yr", "[D]",
                           "energy_kwh_yr x power_usd_per_kwh"),
       amortisation_m_yr: q(amort_yr, "US$M/yr", "[D]",
-                           "IT straight-line over life_years + facility over facility_life_years"),
+                           "IT + spares straight-line over life_years; facility + " +
+                           "contingency over facility_life_years"),
       billable_gpu_hours_yr: q(billable_h, "GPU-h/yr", "[D]",
                                "gpus x 8760 x utilisation"),
       cost_amort_per_gpu_hr: q(per_h(amort_yr), "US$/GPU-h", "[D]", "amortisation / billable hours"),
@@ -111,6 +151,14 @@
       "— research/10 §4.3 has the mechanics; per-site schedules belong in the project " +
       "manifest, not in a generic calculator.",
       "cost_floor_per_gpu_hr excludes financing, tax, SG&A and any margin.",
+      "The spares line is a replacement FLOAT, not a loss provision: DOA hardware is " +
+      "vendor-RMA-replaced (documented ~10% initial-boot failures, FM-RCK-001); what you " +
+      "buy is the pool that keeps bring-up and steady state on schedule while RMAs cycle. " +
+      "The float re-enters service, so it amortises with the fleet.",
+      "The contingency line is derived from ten NAMED failure classes with published " +
+      "base-rate anchors (Imbue/Meta/Llama-3 bring-up data, AWS/Cloudflare/Google " +
+      "postmortems, OCP liquid-cooling commissioning) x assumed cost-exposure classes — " +
+      "the exposure classes are the [A] to verify, the class list is not.",
     ];
 
     const inputs = {};
@@ -126,7 +174,8 @@
     return result(
       "capex — generic build cost and $/GPU-hr cost floor",
       "published primary sources (JLL, IREN & APLD 8-Ks, Mordor, EIA) · " +
-      "research/10-cooling-power.md §4.3 tariff mechanics",
+      "research/10-cooling-power.md §4.3 tariff mechanics · " +
+      "research/12-failure-modes.md FM-IDs (spares float + named-risk contingency)",
       inputs, out, notes);
   }
 

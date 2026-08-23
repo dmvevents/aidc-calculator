@@ -120,6 +120,28 @@
                           "staff + maintenance ex-power; default 940 in BUILD " +
                           "(published band), 235 in LEASE (tenant-side share — " +
                           "the landlord's O&M is inside the lease rate)"),
+    consumables_usd_per_kw_yr: q(null, "US$/kW-IT/yr", "[A]",
+                                 "maintenance-consumables anchor, OFF by default because the " +
+                                 "940 published opex band already carries maintenance — enable " +
+                                 "it on top of a staff-only opex, or to price the FMEA slice " +
+                                 "explicitly. FM-derived band ~30-60 (mid 45): optics " +
+                                 "replacement at 1-2%/yr AFR [A anchored on FM-NET-001 flap + " +
+                                 "burn-in evidence] x ~3.25 pluggables/GPU [D 4-SU NDR " +
+                                 "reference] x $500-1,319 published optic prices [S] + " +
+                                 "break-fix remote-hands labor [A $100-250/hr class] + " +
+                                 "filters/fluids/UPS-consumable classes (FM-UPS-007, " +
+                                 "FM-AIR-004, FM-LIQ-002)"),
+    availability_pct: q(null, "%", "[A]",
+                        "delivered-hours availability haircut, OFF by default (billable " +
+                        "utilization is the headline lever; this prices the residual). " +
+                        "Expected-downtime band [D] 0.5-1.5% of fleet-hours -> 98.5-99.5% " +
+                        "available: 2.34 failures/1,000 node-days steady floor (Meta " +
+                        "arXiv:2410.21680) x reseat/swap restore times + facility events " +
+                        "(Uptime 2022/2026: power 43% of significant outages; networking " +
+                        "the biggest cause of IT-service incidents) + planned windows. " +
+                        "Llama-3 ran >90% effective training time WITH 419 unexpected " +
+                        "interruptions in 54 days (arXiv:2407.21783) — the band prices " +
+                        "residual downtime, not bad ops"),
     wacc_pct: q(0.0, "%/yr", "[A]",
                 "cost of capital for the levelized-with-WACC variant; 0 = " +
                 "undiscounted (the default). Formula: T6 in the page header"),
@@ -191,13 +213,17 @@
       ? Number(p.build_usd_per_w_it) * it_kw * 1000.0 : 0.0;
     const upfront = gpu_capex + facility_capex;
 
-    const hours_m = gpus * HOURS_PER_MONTH * utilization;
+    const avail = (p.availability_pct !== null && p.availability_pct !== undefined)
+      ? Number(p.availability_pct) / 100.0 : 1.0;
+    const hours_m = gpus * HOURS_PER_MONTH * utilization * avail;
     const lf_energy = utilization + (1.0 - utilization) * Number(p.idle_power_frac);
     const kwh_m = it_kw * Number(p.pue) * HOURS_PER_MONTH * lf_energy;
     const power_m = kwh_m * power_usd_per_kwh;
     const opex_m = it_kw * Number(p.opex_usd_per_kw_yr) / 12.0;
+    const consumables_m = (p.consumables_usd_per_kw_yr !== null && p.consumables_usd_per_kw_yr !== undefined)
+      ? it_kw * Number(p.consumables_usd_per_kw_yr) / 12.0 : 0.0;
     const lease_m = p.mode === "lease" ? it_kw * Number(p.lease_usd_per_kw_month) : 0.0;
-    const cash_m = power_m + opex_m + lease_m;
+    const cash_m = power_m + opex_m + consumables_m + lease_m;
 
     const fac_amort_m = p.mode === "build"
       ? facility_capex / (Number(p.facility_life_years) * 12.0) : 0.0;
@@ -236,7 +262,8 @@
       gpu_capex: gpu_capex, facility_capex: facility_capex,
       upfront: upfront, hours_m: hours_m, hours_total: hours_total,
       lf_energy: lf_energy, kwh_m: kwh_m, power_m: power_m,
-      opex_m: opex_m, lease_m: lease_m, fac_amort_m: fac_amort_m,
+      opex_m: opex_m, consumables_m: consumables_m, lease_m: lease_m,
+      fac_amort_m: fac_amort_m, avail: avail,
       gpu_residual: gpu_residual, fac_residual: fac_residual, tv: tv,
       levelized: lev, levelized_pv: lev_pv, total_cost: total_cost,
       year_cost: year_cost, cum_cash: cum,
@@ -311,11 +338,27 @@
     out.upfront_usd = q(L.upfront, "US$", "[D]",
                         build ? "gpu_capex_usd + facility_capex_usd"
                               : "gpu_capex_usd (lease mode: no facility capex)");
-    out.gpu_hours_month = q(L.hours_m, "GPU-h/mo", "[D]",
-                            "T2: gpus x 730 x utilization = " + L.gpus + " x 730 x " +
-                            util.toFixed(2));
+    if (p.availability_pct !== null && p.availability_pct !== undefined) {
+      out.gpu_hours_month = q(L.hours_m, "GPU-h/mo", "[D]",
+                              "T2: gpus x 730 x utilization x availability = " +
+                              L.gpus + " x 730 x " + util.toFixed(2) + " x " +
+                              L.avail.toFixed(3));
+    } else {
+      out.gpu_hours_month = q(L.hours_m, "GPU-h/mo", "[D]",
+                              "T2: gpus x 730 x utilization = " + L.gpus + " x 730 x " +
+                              util.toFixed(2));
+    }
     out.gpu_hours_horizon = q(L.hours_total, "GPU-h", "[D]",
                               "T2: gpu_hours_month x " + months + " months");
+    if (p.availability_pct !== null && p.availability_pct !== undefined) {
+      out.gpu_hours_lost_to_downtime = q(
+        L.gpus * HOURS_PER_MONTH * util * (1.0 - L.avail) * months,
+        "GPU-h", "[D]",
+        "billable hours removed by the availability haircut: gpus x 730 x " +
+        "utilization x (1 - " + L.avail.toFixed(3) + ") x " + months + " months — the " +
+        "expected-downtime band (hardware floor + facility events + planned windows) " +
+        "priced on delivered hours");
+    }
     out.energy_load_factor = q(L.lf_energy, "frac", "[D]",
                                "T3: util + (1 - util) x idle_power_frac = " +
                                util.toFixed(2) + " + " + (1 - util).toFixed(2) + " x " +
@@ -326,6 +369,13 @@
                                  "energy_kwh_month x " + rate.toFixed(4) + " $/kWh");
     out.opex_usd_month = q(L.opex_m, "US$/mo", "[D]",
                            "it_kw x opex_usd_per_kw_yr / 12");
+    if (p.consumables_usd_per_kw_yr !== null && p.consumables_usd_per_kw_yr !== undefined) {
+      out.consumables_usd_month = q(
+        L.consumables_m, "US$/mo", "[D]",
+        "it_kw x consumables_usd_per_kw_yr / 12 — the maintenance-consumables " +
+        "anchor (optics AFR replacement + break-fix labor + filter/fluid/" +
+        "UPS-consumable classes), on top of the opex line");
+    }
     if (!build) {
       out.lease_usd_month = q(L.lease_m, "US$/mo", "[D]",
                               "T5: it_kw x lease_usd_per_kw_month = " + fmt0(L.it_kw) +
@@ -337,7 +387,7 @@
       ["gpu", L.gpu_capex - L.gpu_residual],
       [build ? "facility" : "lease", build ? fac_used : L.lease_m * months],
       ["power", L.power_m * months],
-      ["opex", L.opex_m * months],
+      ["opex", (L.opex_m + L.consumables_m) * months],
     ];
     out.levelized_usd_per_gpu_hr = q(
       L.levelized, "US$/GPU-h", "[D]",
@@ -440,6 +490,22 @@
         (100.0 * Number(p.resale_floor_frac)).toFixed(0) + "%): " +
         "no vendor publishes one. It front-loads cost into the early years — " +
         "compare the by-year rows against straight-line before quoting either.");
+    }
+    if (p.consumables_usd_per_kw_yr !== null && p.consumables_usd_per_kw_yr !== undefined) {
+      notes.push(
+        "consumables anchor ON: check for double-count against opex_usd_per_kw_yr " +
+        "— the published 940 build band already carries maintenance, so pair this " +
+        "line with a staff-only opex or treat it as the visible FMEA slice of the " +
+        "same total. Basis: optics AFR + break-fix labor + consumable classes " +
+        "(FM-NET-001/FM-UPS-007/FM-AIR-004 evidence; band ~30-60 $/kW-IT/yr).");
+    }
+    if (p.availability_pct !== null && p.availability_pct !== undefined) {
+      notes.push(
+        "availability haircut ON: delivered hours scaled by " +
+        Number(p.availability_pct).toFixed(1) + "%. Energy is " +
+        "conservatively NOT scaled (failed/serviced nodes still draw, and the " +
+        "idle floor dominates); the haircut compounds with utilization, so do " +
+        "not also bury downtime inside a lowered utilization input.");
     }
 
     if (p.market_usd_per_gpu_hr !== null && p.market_usd_per_gpu_hr !== undefined) {
