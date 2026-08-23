@@ -148,22 +148,28 @@ globalThis.DETAILRACKS = {
   "poster": "assets/img/poster-detail-gb200-nvl72.webp",
   "rows": [
    {
-    "chip": "S",
+    "chip": "A",
     "cite": "aif-template",
     "k": "envelope W\u00d7D\u00d7H",
     "v": "600 \u00d7 1200 \u00d7 2300 mm"
    },
    {
-    "chip": "S",
+    "chip": "A",
     "cite": "aif-template",
     "k": "mass",
     "v": "1500 kg"
    },
    {
-    "chip": "S",
+    "chip": "A",
     "cite": "aif-template",
     "k": "nameplate",
     "v": "136 kW"
+   },
+   {
+    "chip": "S",
+    "cite": "gb200-ra",
+    "k": "GPUs",
+    "v": "72 (+ 36 Grace)"
    },
    {
     "chip": "S",
@@ -184,7 +190,7 @@ globalThis.DETAILRACKS = {
     "v": "8 (6\u00d7 5.5 kW PSU)"
    },
    {
-    "chip": "S",
+    "chip": "D",
     "cite": "aif-template",
     "k": "liquid capture",
     "v": "85.7%"
@@ -237,6 +243,12 @@ globalThis.DETAILRACKS = {
    {
     "chip": "S",
     "cite": "gb300-ra",
+    "k": "GPUs",
+    "v": "72 (+ 36 Grace)"
+   },
+   {
+    "chip": "S",
+    "cite": "gb300-ra",
     "k": "compute trays",
     "v": "18"
    },
@@ -253,7 +265,7 @@ globalThis.DETAILRACKS = {
     "v": "8 (6\u00d7 5.5 kW PSU)"
    },
    {
-    "chip": "S",
+    "chip": "A",
     "cite": "aif-template",
     "k": "liquid capture",
     "v": "85.7%"
