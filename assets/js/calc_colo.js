@@ -54,17 +54,23 @@
                            "shell + MEP amortisation life (same convention as the capex " +
                            "and TCO calculators)"),
     ltc_pct: q(null, "%", "[A]",
-               "optional LEVERAGE: loan-to-cost — data-center construction lending is a " +
-               "quote-only market (announced facilities cluster in a broad ~55-70% LTC " +
-               "class); leave blank for the unlevered view. Setting it requires " +
-               "debt_rate_pct"),
+               "optional LEVERAGE: loan-to-cost. Published SEC prints ladder from 65% " +
+               "(IREN covenant ceiling) / 70% (APLD non-IG) / 80% (Galaxy Helios bank " +
+               "template) to ~85-95% only against an investment-grade hyperscaler " +
+               "lease (Cipher, Hut 8) — 70-80% is the standard construction band [S]; " +
+               "your term sheet governs. Leave blank for the unlevered view; setting " +
+               "it requires debt_rate_pct"),
     debt_rate_pct: q(null, "%/yr", "[A]",
-                     "all-in debt rate (reference rate + spread) for the leverage view — " +
-                     "floating construction debt then a stabilized perm refi is the " +
-                     "standard structure; rates are quote-only, get term sheets"),
+                     "all-in debt rate (reference + spread). Published prints run " +
+                     "SOFR+2.25% (IG offtake, CoreWeave rated DDTL) to SOFR+4.75% with " +
+                     "a 250bp floor (Galaxy Helios construction template) [S]; " +
+                     "stabilized ABS takeouts price ~5.2-5.4% senior. Floating " +
+                     "construction debt then a perm refi is the standard structure — " +
+                     "your term sheet governs"),
     amort_years: q(25.0, "yr", "[A]",
-                   "perm-loan amortization for the leverage view; construction-period " +
-                   "interest-only precedes it (not modelled)"),
+                   "perm-loan amortization for the leverage view — no published tenor " +
+                   "benchmark (assumption-verify); construction-period interest-only " +
+                   "precedes it (not modelled)"),
   };
 
   function costs(kw) {
@@ -169,8 +175,9 @@
                                 "monthly-amortizing payment x 12: loan x r/12 / " +
                                 "(1 - (1 + r/12)^-(12n))");
       out.dscr = q(ads ? noi / ads : null, "x", "[D]",
-                   "NOI / annual debt service — lenders covenant ~1.20-1.25x [A]; " +
-                   "below that this structure would not finance at these terms");
+                   "NOI / annual debt service — published covenants run 1.10-1.40x; " +
+                   "1.40x is the construction/post-stabilization anchor (Galaxy " +
+                   "Helios) [S]; below covenant this structure would not finance");
       out.debt_yield_pct = q(loan ? 100.0 * noi / loan : null, "%", "[D]",
                              "NOI / loan — the lender's rate-independent sizing floor");
       out.cash_on_cash_pct = q(equity > 0 ? 100.0 * (noi - ads) / equity : null,
@@ -205,8 +212,11 @@
         "from day one — no construction-draw schedule, no interest-only period, no " +
         "refi event, no rate hedge. The real structure is floating-rate construction " +
         "debt drawn against milestones, then a perm refi sized to BOTH a DSCR " +
-        "covenant (~1.20-1.25x class [A]) and a debt-yield floor at stabilization. " +
-        "Terms are quote-only: the LTC/rate you enter should come from a term sheet, " +
+        "covenant (published band 1.10-1.40x [S]) and a debt-yield floor at " +
+        "stabilization (debt-yield and cash-on-cash targets have NO public " +
+        "benchmark — get quotes). Rating-agency practice: ABS/CMBS fund STABILIZED " +
+        "cash-flowing assets; construction lends as project finance (KBRA). " +
+        "The LTC/rate you enter should come from a term sheet, " +
         "and the quarterly deal-grade model (draws, ramps, covenants) is the " +
         "financial-model layer, not this page.");
     }

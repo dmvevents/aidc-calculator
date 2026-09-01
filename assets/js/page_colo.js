@@ -58,7 +58,7 @@
           d(o.equity_m.value) + " · debt service " + d(o.debt_service_m_yr.value) +
           " US$M/yr → DSCR " + d(o.dscr.value) + "x · debt yield " +
           d(o.debt_yield_pct.value) + "% · cash-on-cash " + d(o.cash_on_cash_pct.value) +
-          "% (lenders covenant ~1.20–1.25x; quote-only market)",
+          "% (published covenants 1.10–1.40x; your term sheet governs)",
       ] : []);
     },
     after: (r, kw) => {
