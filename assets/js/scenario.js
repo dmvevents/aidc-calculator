@@ -185,6 +185,25 @@
       setNum("capex", "pue", v.pue_target);
       return [];
     },
+    colo: (d) => {
+      setNum("colo", "it_mw", d.it_mw);
+      return [];
+    },
+    neo: (d, v, s) => {
+      setSelect("neo", "platform", s.platform);
+      setNum("neo", "it_mw", d.it_mw);
+      setNum("neo", "gpus", d.gpus);
+      return [];
+    },
+    land: (d) => {
+      setNum("land", "it_mw", d.it_mw);
+      return [];
+    },
+    plan: (d, v, s) => {
+      setSelect("plan", "platform", s.platform);
+      setNum("plan", "gpus", d.gpus);
+      return [];
+    },
     fiber: (d, v) => {
       const rps = v.racks_per_su || 8;
       const su = Math.max(1, Math.floor(d.racks / rps));
@@ -257,6 +276,10 @@
                     capex: ["platform", "it_mw", "pue"],
                     fiber: ["su", "racks_per_su", "rails", "trays_per_rack", "ib_twin_modules"],
                     cx: ["it_mw", "pue", "scalable_units"],
+                    colo: ["it_mw"],
+                    neo: ["platform", "it_mw", "gpus"],
+                    land: ["it_mw"],
+                    plan: ["platform", "gpus"],
                     tco: ["platform", "racks", "gpus"] }[sec.id] || [];
       for (const k of ids) clearField(sec.id, k);
     }

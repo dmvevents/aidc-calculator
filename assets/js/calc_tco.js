@@ -33,7 +33,9 @@
       47700.0, "US$/GPU", "[D]",
       "GB200 NVL72 rack ~$3.0M widely reported (original not retrieved) / 72 " +
       "+ $6,000 fabric+storage share; cross-checks the IREN/Dell 8-K actual 29.0 $M/MW-IT " +
-      "($5.8bn/200MW) x 1.667 kW/GPU = $48.3k, ~1.3% above (see the Sources page; v3.1 TCO-H2)"),
+      "($5.8bn/200MW): at the adopted 136/72 density 1.889 kW/GPU the 8-K spreads to " +
+      "$54.8k (~15% above); the 120 kW-rack reading 1.667 gives $48.3k, ~1.3% above " +
+      "(see the Sources page; v3.1 TCO-H2)"),
     "gb300-nvl72": q(
       47700.0, "US$/GPU", "[A]",
       "NO public GB300 NVL72 price estimate exists — " +

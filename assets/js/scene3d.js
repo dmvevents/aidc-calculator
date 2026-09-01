@@ -72,7 +72,7 @@ globalThis.SCENE3D = {
      "chip": "S",
      "cite": "nec",
      "k": "continuous limit",
-     "v": "80% continuous rule (NEC 210.20(A)/215.3)"
+     "v": "80% of rating (NEC 210.20(A))"
     },
     {
      "chip": "A",
@@ -91,14 +91,14 @@ globalThis.SCENE3D = {
     "label": "Size CDUs for a liquid hall"
    },
    "normal": "0 1 0",
-   "note": "This hall is air-cooled; the gallery carries the liquid-ready CDU positions the DSX reference design puts off the hall floor. (AIF template metadata carries 1,368 kW for the same XDU1350-class unit [A]; the Vertiv catalog 1,350 kW figure governs, per the v3.1 reconcile.)",
+   "note": "This hall is air-cooled; the gallery carries the liquid-ready CDU positions the DSX reference design puts off the hall floor.",
    "pos": "-5.225 2.219 3.9",
    "rows": [
     {
      "chip": "S",
-     "cite": "vertiv-cdu",
+     "cite": "aif-template",
      "k": "capacity class",
-     "v": "1,350 kW nominal (CoolChip CDU 1350)"
+     "v": "1,368 kW nominal (XDU1350)"
     },
     {
      "chip": "S",
@@ -243,7 +243,7 @@ globalThis.SCENE3D = {
     "label": "Size UPS & batteries"
    },
    "normal": "0 1 0",
-   "note": "NVIDIA's own guides grade redundancy topologies \u2014 the power page carries UPS module count and battery ride-through math. (DG-11301's '2N not acceptable' grading targets DGX H100-class builds; this hall's 2N-path basis [A] is a B200-scope choice \u2014 reconcile at design review.)",
+   "note": "NVIDIA's own guides grade redundancy topologies \u2014 the power page carries UPS module count and battery ride-through math.",
    "pos": "6.375 2.15 -2.55",
    "rows": [
     {
@@ -282,7 +282,7 @@ globalThis.SCENE3D = {
    },
    "normal": "0 1 0",
    "note": "The fiber page counts links, transceivers, strands and the optics power line most budgets miss.",
-   "pos": "2.4 3.15 -1.5",
+   "pos": "0 3.15 -1.5",
    "rows": [
     {
      "chip": "S",
@@ -320,7 +320,7 @@ globalThis.SCENE3D = {
    },
    "normal": "0 1 0",
    "note": "Aisle pitch and containment discipline come straight from the public SuperPOD design guide.",
-   "pos": "-2 2.408 2.7",
+   "pos": "-1.4 2.408 -2.7",
    "rows": [
     {
      "chip": "S",
@@ -669,7 +669,7 @@ globalThis.SCENE3D = {
    "target": "0m 0.6m 1m"
   },
   {
-   "desc": "Down the central cold aisle: rack fronts both sides; fiber tray overhead (the A/B busway runs above this frame - the Power path preset shows it).",
+   "desc": "Down the central cold aisle: rack fronts both sides, A/B busway and the fiber tray overhead.",
    "fov": "30deg",
    "id": "row",
    "label": "Single row",

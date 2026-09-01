@@ -1,0 +1,127 @@
+// Parametric site-plan diagram (land + plan pages): draws the calc_land result
+// as a scaled parcel with its six component pads, the expansion reserve, a
+// LEGEND (name + area per pad — the site-SVG craft convention: no in-stage
+// label collisions) and a scale bar. DIAGRAMMATIC MASSING — areas are the land
+// model's [D] outputs, the ARRANGEMENT follows the reference-design site plan
+// convention [A] (building center, gensets west, heat rejection east,
+// substation NE, water SW, parking south); not a survey, and the caption says so.
+"use strict";
+(function () {
+  const A = globalThis.AIDC;
+  const NS = "http://www.w3.org/2000/svg";
+
+  // reference block geometry (aspect + fractional center on the 200x160 parcel)
+  const REF = {
+    building: { w: 80, l: 50, cx: 0.50, cy: 0.50, label: "building" },
+    gensets: { w: 24, l: 30, cx: 0.19, cy: 0.47, label: "gensets" },
+    cooling: { w: 28, l: 34, cx: 0.81, cy: 0.48, label: "heat rejection" },
+    substation: { w: 30, l: 20, cx: 0.87, cy: 0.13, label: "substation" },
+    water: { w: 15, l: 15, cx: 0.16, cy: 0.82, label: "water" },
+    parking_roads: { w: 50, l: 25, cx: 0.58, cy: 0.86, label: "parking/roads" },
+  };
+
+  function el(name, attrs, text) {
+    const e = document.createElementNS(NS, name);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  const fmtM2 = (v) => (v >= 10000 ? (v / 10000).toFixed(1) + " ha"
+                                   : Math.round(v).toLocaleString("en-US") + " m²");
+
+  // land = the calc_land result object (inputs/outputs with .value)
+  function render(host, land) {
+    const o = land.outputs;
+    const parcel = o.parcel_m2.value;                    // phase-1
+    const total = o.parcel_with_reserve_m2.value;        // incl. reserve
+    const reserve = total - parcel;
+
+    // phase-1 zone at the reference 5:4 aspect; the reserve extends east
+    // (the "second hall goes here" reading of the reserve fraction)
+    const W1 = Math.sqrt(parcel * 1.25);
+    const H = W1 / 1.25;
+    const Wt = total / H;
+
+    const VW = 640, PAD = 16, LGX = 476;                 // legend column at x>=476
+    const s = (LGX - 2 * PAD - 8) / Wt;
+    const VH = Math.max(236, Math.min(560, H * s + PAD * 2 + 26));
+    const oy = PAD + Math.max(0, (VH - PAD * 2 - 26 - H * s) / 2);
+    const X = (m) => PAD + m * s, Y = (m) => oy + m * s;
+
+    const svg = el("svg", { viewBox: "0 0 " + VW + " " + VH, class: "sp", role: "img",
+                            "aria-label": "Diagrammatic site plan: parcel with building, " +
+                              "gensets, heat rejection, substation, water and parking pads, " +
+                              "with a legend of areas" });
+
+    // parcel + reserve
+    svg.appendChild(el("rect", { x: X(0), y: Y(0), width: Wt * s, height: H * s, class: "sp-parcel" }));
+    if (reserve > 1e-9) {
+      const hx = X(W1);
+      svg.appendChild(el("rect", { x: hx, y: Y(0), width: (Wt - W1) * s, height: H * s, class: "sp-reserve" }));
+      svg.appendChild(el("line", { x1: hx, y1: Y(0), x2: hx, y2: Y(H), class: "sp-fence" }));
+    }
+
+    // component pads (phase-1 zone) — areas inside only where they fit; names
+    // live in the legend (zero-collision convention)
+    for (const key in REF) {
+      const r = REF[key];
+      const area = o[key + "_m2"].value;
+      const w = Math.sqrt(area * (r.w / r.l));
+      const l = area / w;
+      let x = r.cx * W1 - w / 2, y = r.cy * H - l / 2;
+      x = Math.max(1.5 / s, Math.min(W1 - w - 1.5 / s, x));
+      y = Math.max(1.5 / s, Math.min(H - l - 1.5 / s, y));
+      const g = el("g", { class: "sp-pad sp-" + key });
+      g.appendChild(el("rect", { x: X(x), y: Y(y), width: w * s, height: l * s }));
+      if (w * s >= 64 && l * s >= 24) {
+        g.appendChild(el("text", { x: X(x) + w * s / 2, y: Y(y) + l * s / 2 + 4,
+                                   class: "sp-val sp-mid" }, fmtM2(area)));
+      }
+      svg.appendChild(g);
+    }
+
+    // scale bar (bottom-left, under the parcel)
+    const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000];
+    const target = Wt / 5;
+    const bar = nice.reduce((a, b) => (Math.abs(b - target) < Math.abs(a - target) ? b : a));
+    const by = Y(H) + 16;
+    svg.appendChild(el("line", { x1: X(0), y1: by, x2: X(0) + bar * s, y2: by, class: "sp-scale" }));
+    svg.appendChild(el("line", { x1: X(0), y1: by - 4, x2: X(0), y2: by + 4, class: "sp-scale" }));
+    svg.appendChild(el("line", { x1: X(0) + bar * s, y1: by - 4, x2: X(0) + bar * s, y2: by + 4, class: "sp-scale" }));
+    svg.appendChild(el("text", { x: X(0) + bar * s + 8, y: by + 4, class: "sp-val" }, bar + " m"));
+
+    // ---- legend column: headline + one row per pad + reserve + totals ------
+    let ly = 22;
+    svg.appendChild(el("text", { x: LGX, y: ly, class: "sp-head-l" },
+                       o.site_acres.value.toFixed(o.site_acres.value >= 100 ? 0 : 2) + " acres"));
+    ly += 15;
+    svg.appendChild(el("text", { x: LGX, y: ly, class: "sp-sub-l" },
+                       fmtM2(total) + " · " + o.mw_it_per_acre.value.toFixed(2) + " MW-IT/acre"));
+    ly += 18;
+    const row = (cls, label, val) => {
+      const g = el("g", { class: cls ? "sp-pad sp-leg " + cls : "" });
+      if (cls) g.appendChild(el("rect", { x: LGX, y: ly - 8, width: 10, height: 10 }));
+      g.appendChild(el("text", { x: LGX + (cls ? 16 : 0), y: ly, class: "sp-name" }, label));
+      g.appendChild(el("text", { x: VW - 4, y: ly, class: "sp-val sp-end" }, val));
+      svg.appendChild(g);
+      ly += 17;
+    };
+    for (const key in REF) row("sp-" + key, REF[key].label, fmtM2(o[key + "_m2"].value));
+    if (reserve > 1e-9) row("sp-reserve", "reserve", fmtM2(reserve));
+    ly += 3;
+    svg.appendChild(el("line", { x1: LGX, y1: ly - 11, x2: VW - 4, y2: ly - 11, class: "sp-rule" }));
+    row(null, "developed", fmtM2(o.developed_m2.value));
+    row(null, "circ + setbacks", fmtM2(parcel - o.developed_m2.value));
+
+    const cap = document.createElement("p");
+    cap.className = "sp-caption";
+    cap.textContent = "Diagrammatic massing — areas from the land model [D]; arrangement " +
+      "follows the reference site-plan convention [A]. Not a survey: setbacks, stormwater " +
+      "and zoning are jurisdiction-specific.";
+    host.replaceChildren(svg, cap);
+  }
+
+  globalThis.AIDC = globalThis.AIDC || {};
+  A.siteplan = { render: render, REF: REF };
+})();

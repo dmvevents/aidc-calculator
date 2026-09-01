@@ -58,7 +58,7 @@
     cdu_approach_rated_k: q(4.0, "K", "[S]",
                             "approach the CDU is RATED at, 4-5 C market standard — F4 derate reference (research/10 §1.3)"),
     cdu_parasitic_frac: q(0.010, "frac", "[D]",
-                          "F4 CDU pump power / duty, band 0.5-1.5% (XDU1350 13.7/1368 = 1.0%, CHx2000 0.6%) (research/10 §1.3)"),
+                          "F4 CDU pump power / duty, band 0.5-1.5% (XDU1350 13.7/1350 = 1.0%, CHx2000 0.6%) (research/10 §1.3)"),
     cfm_per_kw: q(157.0, "CFM/kW", "[S]",
                   "157 CFM/kW, DG-11301-001 H100 design guide (stricter of 157 vs B200 deck 150) (research/10 §3.1)"),
     rejector: q("dry", "", "[A]", "dry | tower | adiabatic heat-rejection mode"),
@@ -86,8 +86,10 @@
     fws_supply_c: q(20.0, "C", "[A]", "F11 chilled-water supply when mechanical trim runs (reference cooling design)"),
     a_evap: q(5.0, "K", "[A]", "F11 evaporator approach"),
     a_cond: q(5.0, "K", "[A]", "F11 condenser approach"),
-    pump_fan_frac: q(0.021, "frac", "[D]",
-                     "CDU pumps + CRAH fans / IT (reference-design power budget ratio)"),
+    pump_fan_frac: q(0.0187, "frac", "[D]",
+                     "CDU pumps + CRAH fans / IT (reference-design power budget ratio = " +
+                     "0.0187; the prior 0.021 did not match its own derivation — " +
+                     "calc-fix stale-data pass)"),
   };
 
   function w_class_of(supply_c) {

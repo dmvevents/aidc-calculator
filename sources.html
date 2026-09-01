@@ -118,7 +118,7 @@ backdrop-filter: blur(8px);
 border-bottom: 1px solid var(--hairline);
 }
 .nav-inner {
-display: flex; align-items: center; gap: var(--sp-4);
+display: flex; align-items: center; gap: var(--sp-2);
 max-width: var(--w-content); margin: 0 auto; padding: var(--sp-3) var(--sp-5);
 overflow-x: auto; white-space: nowrap;
 }
@@ -126,7 +126,7 @@ overflow-x: auto; white-space: nowrap;
 .nav-mark img { width: 22px; height: 22px; }
 .nav a {
 font-size: var(--fs-xs); letter-spacing: var(--track-micro); text-transform: uppercase;
-color: var(--muted); padding: 7px var(--sp-2); border-radius: var(--r-ctl);
+color: var(--muted); padding: 7px 5px; border-radius: var(--r-ctl);
 transition: color var(--t-fast);
 }
 .nav a:hover { color: var(--ink); text-decoration: none; }
@@ -449,7 +449,7 @@ background: color-mix(in srgb, var(--chip-s) 12%, transparent); border-radius: 3
 .masthead-specimen { max-width: 620px; margin-top: var(--sp-4); }
 .derive-note { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--muted); padding-left: 0; text-indent: 0; }
 .preset-note { font-size: var(--fs-sm); color: var(--muted); max-width: 88ch; margin: 0 0 var(--sp-4); }
-@media (max-width: 1220px) {
+@media (max-width: 1260px) {
 .nav-inner {
 -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
 mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
@@ -535,6 +535,51 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
 .scen-row { gap: var(--sp-2); }
 .scen-derived { flex-basis: 100%; }
 }
+.siteplan { margin: var(--sp-4) 0; overflow-x: auto; }
+.siteplan svg { width: 100%; min-width: 560px; height: auto; display: block;
+background: var(--inset); border: 1px solid var(--hairline);
+border-radius: var(--r-card); }
+.sp-parcel { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; }
+.sp-reserve { fill: color-mix(in srgb, var(--chip-a) 8%, transparent); }
+.sp-fence { stroke: var(--chip-a); stroke-width: 1; stroke-dasharray: 5 4; }
+.sp-pad rect { fill: var(--raised); stroke: var(--rule); stroke-width: 1; }
+.sp-building rect { fill: color-mix(in srgb, var(--accent) 18%, var(--raised));
+stroke: var(--accent); }
+.sp-cooling rect { fill: color-mix(in srgb, var(--good) 14%, var(--raised));
+stroke: color-mix(in srgb, var(--good) 55%, var(--rule)); }
+.sp-gensets rect { fill: color-mix(in srgb, var(--warn) 12%, var(--raised));
+stroke: color-mix(in srgb, var(--warn) 45%, var(--rule)); }
+.sp-substation rect { fill: color-mix(in srgb, var(--chip-d) 12%, var(--raised));
+stroke: color-mix(in srgb, var(--chip-d) 45%, var(--rule)); }
+.sp-water rect { fill: color-mix(in srgb, var(--accent) 8%, var(--raised)); }
+.sp-parking_roads rect { fill: var(--inset); }
+.sp-name { fill: var(--muted); font-size: 10px; letter-spacing: 0.08em;
+text-transform: uppercase; font-family: var(--font-ui); }
+.sp-val { fill: var(--ink-2); font-size: 11px; font-family: var(--font-mono); }
+.sp-mid { text-anchor: middle; }
+.sp-end { text-anchor: end; }
+.sp-rule { stroke: var(--hairline); }
+.sp-scale { stroke: var(--ink-2); stroke-width: 1.5; }
+.sp-head-l { fill: var(--ink); font-size: 15px; font-family: var(--font-mono);
+font-weight: 600; }
+.sp-sub-l { fill: var(--muted); font-size: 10.5px; font-family: var(--font-mono); }
+.sp-caption { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--muted);
+max-width: 88ch; }
+.plan-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+gap: var(--sp-3); margin: var(--sp-4) 0; }
+.plan-card { display: block; background: var(--raised); border: 1px solid var(--hairline);
+border-radius: var(--r-card); padding: var(--sp-3) var(--sp-4);
+text-decoration: none; color: var(--ink); transition: border-color 120ms ease; }
+.plan-card:hover, .plan-card:focus-visible { border-color: var(--accent); }
+.plan-card-t { display: block; margin: 0 0 var(--sp-2); font-size: var(--fs-xs);
+color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+.plan-card p { margin: 2px 0; font-size: var(--fs-sm); color: var(--ink-2);
+font-variant-numeric: tabular-nums; }
+.plan-card p strong { color: var(--ink); font-family: var(--font-mono); font-weight: 600; }
+.plan-card .plan-open { display: inline-block; margin-top: var(--sp-2);
+font-size: var(--fs-xs); color: var(--accent); }
+.card-featured { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline)); }
+.card-featured h2 { font-size: var(--fs-lg); }
 </style>
 </head>
 <body>
@@ -542,6 +587,7 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
 <nav class="nav" aria-label="Pages">
   <div class="nav-inner">
     <a class="nav-mark" href="index.html"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</a>
+    <a href="plan.html">Plan</a>
     <a href="power.html">Power</a>
     <a href="cooling.html">Cooling</a>
     <a href="rack.html">Racks</a>
@@ -549,6 +595,9 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
     <a href="fiber.html">Fiber</a>
     <a href="commissioning.html">Commissioning</a>
     <a href="tco.html">TCO</a>
+    <a href="colo.html">Colo</a>
+    <a href="neocloud.html">Neocloud</a>
+    <a href="land.html">Land</a>
     <a href="designs.html">Designs</a>
     <a href="fiber-layout.html">Fiber layout</a>
     <a href="risks.html">Risks</a>

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI-DC Calculator — power, cooling, racks, capex, fiber, commissioning, TCO</title>
-<meta name="description" content="Seven generic, source-cited engineering estimators for AI data centers, each on its own page: power &amp; electrical sizing, cooling feasibility, rack planning by GPU platform, capex and $/GPU-hr cost floor, fiber plant, commissioning load steps, and a build-vs-lease GPU TCO-over-time model — plus engineering views: reference design drawings, the fiber-plant layout and a 116-mode failure-mode explorer. Every default carries a stated/derived/assumed provenance chip. Runs entirely in your browser.">
+<title>AI-DC Calculator — end-to-end planner, power, cooling, racks, capex, fiber, TCO, colo, neocloud, land</title>
+<meta name="description" content="Eleven generic, source-cited engineering estimators for AI data centers — including an end-to-end planner (GPUs in: racks, power, cooling, fabric, cost, TCO and land in acres out, with a parametric site plan), a colo-developer model with an optional financing view (build the facility, lease the kW), a neocloud-operator lens (own the fleet, sell GPU-hours) and a land/acres estimator — plus power &amp; electrical sizing, cooling feasibility, rack planning by GPU platform, capex and $/GPU-hr cost floor, fiber plant, commissioning load steps, and a build-vs-lease GPU TCO-over-time model, with engineering views: reference design drawings, the fiber-plant layout and a 116-mode failure-mode explorer. Every default carries a stated/derived/assumed provenance chip. Runs entirely in your browser.">
 <meta property="og:title" content="AI-DC Calculator">
 <meta property="og:description" content="Engineering estimator for AI data centers with visible math and per-value provenance. No tracking, no CDN, fully client-side.">
 <meta property="og:type" content="website">
@@ -123,7 +123,7 @@ backdrop-filter: blur(8px);
 border-bottom: 1px solid var(--hairline);
 }
 .nav-inner {
-display: flex; align-items: center; gap: var(--sp-4);
+display: flex; align-items: center; gap: var(--sp-2);
 max-width: var(--w-content); margin: 0 auto; padding: var(--sp-3) var(--sp-5);
 overflow-x: auto; white-space: nowrap;
 }
@@ -131,7 +131,7 @@ overflow-x: auto; white-space: nowrap;
 .nav-mark img { width: 22px; height: 22px; }
 .nav a {
 font-size: var(--fs-xs); letter-spacing: var(--track-micro); text-transform: uppercase;
-color: var(--muted); padding: 7px var(--sp-2); border-radius: var(--r-ctl);
+color: var(--muted); padding: 7px 5px; border-radius: var(--r-ctl);
 transition: color var(--t-fast);
 }
 .nav a:hover { color: var(--ink); text-decoration: none; }
@@ -454,7 +454,7 @@ background: color-mix(in srgb, var(--chip-s) 12%, transparent); border-radius: 3
 .masthead-specimen { max-width: 620px; margin-top: var(--sp-4); }
 .derive-note { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--muted); padding-left: 0; text-indent: 0; }
 .preset-note { font-size: var(--fs-sm); color: var(--muted); max-width: 88ch; margin: 0 0 var(--sp-4); }
-@media (max-width: 1220px) {
+@media (max-width: 1260px) {
 .nav-inner {
 -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
 mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
@@ -540,6 +540,51 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
 .scen-row { gap: var(--sp-2); }
 .scen-derived { flex-basis: 100%; }
 }
+.siteplan { margin: var(--sp-4) 0; overflow-x: auto; }
+.siteplan svg { width: 100%; min-width: 560px; height: auto; display: block;
+background: var(--inset); border: 1px solid var(--hairline);
+border-radius: var(--r-card); }
+.sp-parcel { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; }
+.sp-reserve { fill: color-mix(in srgb, var(--chip-a) 8%, transparent); }
+.sp-fence { stroke: var(--chip-a); stroke-width: 1; stroke-dasharray: 5 4; }
+.sp-pad rect { fill: var(--raised); stroke: var(--rule); stroke-width: 1; }
+.sp-building rect { fill: color-mix(in srgb, var(--accent) 18%, var(--raised));
+stroke: var(--accent); }
+.sp-cooling rect { fill: color-mix(in srgb, var(--good) 14%, var(--raised));
+stroke: color-mix(in srgb, var(--good) 55%, var(--rule)); }
+.sp-gensets rect { fill: color-mix(in srgb, var(--warn) 12%, var(--raised));
+stroke: color-mix(in srgb, var(--warn) 45%, var(--rule)); }
+.sp-substation rect { fill: color-mix(in srgb, var(--chip-d) 12%, var(--raised));
+stroke: color-mix(in srgb, var(--chip-d) 45%, var(--rule)); }
+.sp-water rect { fill: color-mix(in srgb, var(--accent) 8%, var(--raised)); }
+.sp-parking_roads rect { fill: var(--inset); }
+.sp-name { fill: var(--muted); font-size: 10px; letter-spacing: 0.08em;
+text-transform: uppercase; font-family: var(--font-ui); }
+.sp-val { fill: var(--ink-2); font-size: 11px; font-family: var(--font-mono); }
+.sp-mid { text-anchor: middle; }
+.sp-end { text-anchor: end; }
+.sp-rule { stroke: var(--hairline); }
+.sp-scale { stroke: var(--ink-2); stroke-width: 1.5; }
+.sp-head-l { fill: var(--ink); font-size: 15px; font-family: var(--font-mono);
+font-weight: 600; }
+.sp-sub-l { fill: var(--muted); font-size: 10.5px; font-family: var(--font-mono); }
+.sp-caption { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--muted);
+max-width: 88ch; }
+.plan-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+gap: var(--sp-3); margin: var(--sp-4) 0; }
+.plan-card { display: block; background: var(--raised); border: 1px solid var(--hairline);
+border-radius: var(--r-card); padding: var(--sp-3) var(--sp-4);
+text-decoration: none; color: var(--ink); transition: border-color 120ms ease; }
+.plan-card:hover, .plan-card:focus-visible { border-color: var(--accent); }
+.plan-card-t { display: block; margin: 0 0 var(--sp-2); font-size: var(--fs-xs);
+color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+.plan-card p { margin: 2px 0; font-size: var(--fs-sm); color: var(--ink-2);
+font-variant-numeric: tabular-nums; }
+.plan-card p strong { color: var(--ink); font-family: var(--font-mono); font-weight: 600; }
+.plan-card .plan-open { display: inline-block; margin-top: var(--sp-2);
+font-size: var(--fs-xs); color: var(--accent); }
+.card-featured { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline)); }
+.card-featured h2 { font-size: var(--fs-lg); }
 </style>
 </head>
 <body>
@@ -547,6 +592,7 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
 <nav class="nav" aria-label="Pages">
   <div class="nav-inner">
     <span class="nav-mark"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</span>
+    <a href="plan.html">Plan</a>
     <a href="power.html">Power</a>
     <a href="cooling.html">Cooling</a>
     <a href="rack.html">Racks</a>
@@ -554,6 +600,9 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
     <a href="fiber.html">Fiber</a>
     <a href="commissioning.html">Commissioning</a>
     <a href="tco.html">TCO</a>
+    <a href="colo.html">Colo</a>
+    <a href="neocloud.html">Neocloud</a>
+    <a href="land.html">Land</a>
     <a href="designs.html">Designs</a>
     <a href="fiber-layout.html">Fiber layout</a>
     <a href="risks.html">Risks</a>
@@ -565,9 +614,11 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
   <h1>AI data-center calculator</h1>
   <div class="masthead-grid">
     <div>
-      <p class="lede">Seven engineering estimators and four engineering views for GPU-era
-      data centers — power, cooling, racks, capex, fiber, commissioning, TCO, drawings,
-      the fiber plant, failure modes and a 3D twin. Every default wears a provenance chip
+      <p class="lede">Eleven engineering estimators and four engineering views for GPU-era
+      data centers — an end-to-end planner (GPUs in, a whole site out: racks, MW, cost and
+      acres), power, cooling, racks, capex, fiber, commissioning, TCO, the colo-developer
+      model, the neocloud operator lens, land, drawings, the fiber plant, failure modes and a 3D twin. Every default
+      wears a provenance chip
       (<span class="legend-inline"><a class="chip chip-s" href="sources.html#legend">S</a> stated
       · <a class="chip chip-d" href="sources.html#legend">D</a> derived
       · <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span>) that links to
@@ -591,6 +642,16 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
 <main class="wrap">
 
   <div class="cards">
+    <article class="card card-featured" id="plan">
+      <span class="micro">Start here · End-to-end</span>
+      <h2><a href="plan.html">End-to-end planner — GPUs in, a whole site out</a></h2>
+      <p>Pick a platform, type a GPU count: racks and rows, the power chain, cooling and
+      CDUs, the network fabric, capex, the $/GPU-hr floor, 5-year TCO, the colo view and
+      <strong>land in acres</strong> with a parametric site plan — every card deep-links
+      into its full calculator carrying your inputs.</p>
+      <span class="card-open"><a href="plan.html">Open the planner →</a></span>
+    </article>
+
     <article class="card" id="power">
       <span class="micro">1 · Power &amp; electrical</span>
       <h2><a href="power.html">Power &amp; electrical sizing</a></h2>
@@ -646,6 +707,33 @@ font-size: var(--fs-xs); color: var(--muted); max-width: 88ch;
       by-year $/GPU-hour, the cumulative cash curve, and break-even against a market rental
       rate you enter.</p>
       <span class="card-open"><a href="tco.html">Open the TCO calculator →</a></span>
+    </article>
+
+    <article class="card" id="colo">
+      <span class="micro">8 · Colo developer</span>
+      <h2><a href="colo.html">Build the facility, lease the kW</a></h2>
+      <p>The landlord's side: facility capex only (no GPUs), CBRE rate anchors, opex on full
+      capacity — the landlord cost floor $/kW-month, NOI, yield-on-cost and break-even
+      occupancy.</p>
+      <span class="card-open"><a href="colo.html">Open the colo calculator →</a></span>
+    </article>
+
+    <article class="card" id="neocloud">
+      <span class="micro">9 · Neocloud operator</span>
+      <h2><a href="neocloud.html">Own the fleet, sell GPU-hours</a></h2>
+      <p>The operator lens: all-in build and $/GPU-hr cost floor derived live, your sell
+      rate against dated on-demand anchors — margin per GPU-hour, revenue and payback vs
+      the GPU book life.</p>
+      <span class="card-open"><a href="neocloud.html">Open the neocloud calculator →</a></span>
+    </article>
+
+    <article class="card" id="land">
+      <span class="micro">10 · Land &amp; site</span>
+      <h2><a href="land.html">Land &amp; site area — MW to acres</a></h2>
+      <p>Component pads from the reference site plan, a setback factor and an expansion
+      reserve — parcel m², <strong>acres</strong>, MW per acre and a diagrammatic site plan,
+      with an optional land price.</p>
+      <span class="card-open"><a href="land.html">Open the land calculator →</a></span>
     </article>
 
   </div>
