@@ -72,6 +72,30 @@
       if (ph) A.fiberviews.fiberPhysical(ph, r);
       const inset = document.getElementById("fl-inset");
       if (inset) A.fiberviews.nvl72Inset(inset, r);
+      // ToR-vs-EoR card (backlog 77ce1aaa): research/09 §4.1 with the
+      // transceiver delta computed LIVE from this run's link counts.
+      const tor = document.getElementById("fl-tor");
+      if (tor) {
+        const d = (v) => A.res.disp(v);
+        const nl = r.outputs.links_nic_leaf.value;
+        const wrap = document.createElement("div");
+        wrap.className = "preset-note";
+        wrap.innerHTML =
+          "<strong>Why there is no top-of-rack switch in an NVL72 row:</strong> the " +
+          "compute rack is fully consumed — 18 compute trays + 9 NVLink-switch trays + " +
+          "8 power shelves leave no U-space for a leaf tier, and rail purity would need " +
+          "4 leaves per rack anyway. The AI-factory pattern relocates Tier-1 to " +
+          "<strong>end-of-row fabric racks</strong>, which makes every NIC→leaf run " +
+          "optical instead of DAC-able copper. At your inputs that is " +
+          "<span class='mono'>" + d(nl) + "</span> NIC→leaf links priced as pluggables " +
+          "(the NIC-END optics a DAC-able ToR would avoid; the leaf-end twin-port " +
+          "modules for those links add roughly half again) — the price of " +
+          "rail-pure wiring, radix utilization and serviceability. Copper reaches only " +
+          "~3 m at 100G+ PAM4 lane rates, so ToR would not scale past adjacent racks " +
+          "regardless. Basis: research dossier 09 §4.1 [D] over the public RA pattern; " +
+          "counts from this page's engine run.";
+        tor.replaceChildren(wrap);
+      }
       A.designs.liveLink("fl-open-fiber", "fiber.html");
     },
   });

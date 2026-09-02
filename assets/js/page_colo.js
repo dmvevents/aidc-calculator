@@ -109,6 +109,57 @@
       });
       tbl.appendChild(tb);
       host.replaceChildren(tbl);
+
+      // DT-2: LEVERED DOWNSIDE grid — only when financing is on. Rate and
+      // occupancy move DOWN together (the correlated case lenders test);
+      // every cell re-runs costs() with the same debt terms and reads DSCR.
+      // Cells under the 1.10x lender screen floor are flagged, never smoothed.
+      const levered = kw.ltc_pct !== null && kw.ltc_pct !== undefined && kw.ltc_pct !== ""
+        && kw.debt_rate_pct !== null && kw.debt_rate_pct !== undefined && kw.debt_rate_pct !== "";
+      if (levered) {
+        const dRates = [rate * 0.8, rate * 0.9, rate];
+        const dOccs = [Math.max(0.05, occ0 - 0.20), Math.max(0.05, occ0 - 0.10), occ0];
+        const t2 = document.createElement("table");
+        t2.className = "matrix";
+        const cap2 = document.createElement("caption");
+        cap2.textContent = "LEVERED DOWNSIDE — DSCR, rate -20/-10/base × occupancy -20/-10/base pts " +
+          "[D] (cells re-run the full model with your debt terms; <1.10x = under the " +
+          "published lender screen floor)";
+        t2.appendChild(cap2);
+        const th2 = document.createElement("thead");
+        const hr2 = document.createElement("tr");
+        const c02 = document.createElement("th");
+        c02.textContent = "occ \\ rate";
+        hr2.appendChild(c02);
+        for (const rt of dRates) {
+          const th = document.createElement("th");
+          th.textContent = d(rt) + " $/kW·mo";
+          hr2.appendChild(th);
+        }
+        th2.appendChild(hr2);
+        t2.appendChild(th2);
+        const tb2 = document.createElement("tbody");
+        dOccs.forEach((oc, oi) => {
+          const tr = document.createElement("tr");
+          const th = document.createElement("th");
+          th.textContent = (oc * 100).toFixed(0) + "%";
+          tr.appendChild(th);
+          dRates.forEach((rt, ri) => {
+            const dscr = A.calcColo.costs(Object.assign({}, kw, {
+              lease_usd_per_kw_month: rt, occupancy: oc,
+            })).outputs.dscr.value;
+            const td = document.createElement("td");
+            const bad = dscr !== null && dscr < 1.10;
+            td.className = "num" + (oi === 2 && ri === 2 ? " sens-base" : "") + (bad ? " cell-bad" : "");
+            td.textContent = dscr === null ? "n/a" : dscr.toFixed(2) + "x" + (bad ? " !" : "");
+            if (bad) td.title = "under the 1.10x lender screen floor (colo financing ladder)";
+            tr.appendChild(td);
+          });
+          tb2.appendChild(tr);
+        });
+        t2.appendChild(tb2);
+        host.appendChild(t2);
+      }
     },
   });
 

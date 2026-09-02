@@ -91,8 +91,11 @@
     return (lo + hi) / 2.0;
   }
 
-  function returns(kw) {
+  function returns(kw, seeded) {
+    // seeded: input keys whose values were COMPOSED (capex chain), not
+    // user-typed — echoed [D] w/ the composition label (v36 A-04).
     kw = kw || {};
+    const seededSet = new Set(seeded || []);
     const p = {};
     for (const k of Object.keys(DEFAULTS)) p[k] = DEFAULTS[k].value;
     for (const k of Object.keys(kw)) if (kw[k] !== null && kw[k] !== undefined) p[k] = kw[k];
@@ -174,26 +177,48 @@
       for (let t = 0; t < unlev.length; t++) npvU += unlev[t] / Math.pow(1.0 + d, t);
     }
 
-    let moic = null;
+    // MOIC counts EVERY dollar the investor must fund (v36 antagonist A-01):
+    // paid-in = |year-0 equity| + interim capital calls; a year-0-only
+    // denominator renders a net-losing strategy as a high multiple.
+    let moic = null, capitalCallsM = null;
     const flowsE = levered ? lev : unlev;
     if (haveRate) {
-      let dist = 0.0;
-      for (let i = 1; i < flowsE.length; i++) if (flowsE[i] > 0.0) dist += flowsE[i];
-      moic = flowsE[0] < 0.0 ? dist / -flowsE[0] : null;
+      let dist = 0.0, calls = 0.0;
+      for (let i = 1; i < flowsE.length; i++) {
+        if (flowsE[i] > 0.0) dist += flowsE[i];
+        else if (flowsE[i] < 0.0) calls += -flowsE[i];
+      }
+      capitalCallsM = calls;
+      const paidIn = flowsE[0] < 0.0 ? -flowsE[0] + calls : null;
+      moic = paidIn ? dist / paidIn : null;
     }
 
-    let payback = null;
+    // Payback only when nothing after it claws back (A-01).
+    let payback = null, paybackSuppressed = false;
     if (haveRate) {
       let cum = flowsE[0];
       for (let y = 1; y < flowsE.length; y++) {
         const nxt = cum + flowsE[y];
-        if (nxt >= 0.0 && flowsE[y] > 0.0) { payback = (y - 1) + (-cum / flowsE[y]); break; }
+        if (nxt >= 0.0 && flowsE[y] > 0.0) {
+          let laterNeg = false;
+          for (let z = y + 1; z < flowsE.length; z++) if (flowsE[z] < 0.0) laterNeg = true;
+          if (laterNeg) { paybackSuppressed = true; } else { payback = (y - 1) + (-cum / flowsE[y]); }
+          break;
+        }
         cum = nxt;
       }
     }
 
-    let dscr1 = null;
-    if (levered && haveRate && ads) dscr1 = ebitda[0] / ads;
+    let dscr1 = null, dscrMin = null;
+    if (levered && haveRate && ads) {
+      dscr1 = ebitda[0] / ads;
+      const dscrs = [];
+      for (let y = 1; y <= horizon; y++) {
+        const svcY = y * 12 <= nM ? ads : pmtM * Math.max(0, Math.min(12, nM - (y - 1) * 12));
+        if (svcY && svcY > 0.0 && ebitda[y - 1] !== null) dscrs.push(ebitda[y - 1] / svcY);
+      }
+      dscrMin = dscrs.length ? Math.min.apply(null, dscrs) : null;
+    }
 
     const yq = (i, label) => {
       let v = null;
@@ -223,18 +248,32 @@
       irr_unlevered_pct: q(irrU === null ? null : irrU * 100.0, "%", "[D]",
                            "bisection IRR on [-capex, EBITDA_y..., + terminal]"),
       irr_levered_pct: q(irrL === null ? null : irrL * 100.0, "%", "[D]",
-                         levered ? "bisection IRR on the equity flows (debt service + exit payoff)"
+                         levered ? (irrL !== null || !haveRate
+                                    ? "bisection IRR on the equity flows (debt service + exit payoff)"
+                                    : "NO UNIQUE IRR — the equity flows change sign more than " +
+                                      "once; judge by the cash rows and MOIC (see notes)")
                                  : "unlevered — set ltc_pct + debt_rate_pct"),
       npv_unlevered_m: q(npvU, "US$M", "[D]",
                          "unlevered flows discounted at discount_rate_pct"),
+      capital_calls_m: q(capitalCallsM, "US$M", "[D]",
+                         "interim NEGATIVE equity flows the investor must fund after " +
+                         "year 0 — counted in MOIC's denominator"),
       moic: q(moic, "x", "[D]",
-              (levered ? "levered" : "unlevered") + " distributions / equity in (undiscounted)"),
+              (levered ? "levered" : "unlevered") + " distributions / TOTAL paid-in (year-0 " +
+              "equity + interim capital calls), undiscounted"),
       payback_yr: q(payback, "yr", "[D]",
-                    "first year cumulative equity cash turns >= 0 (linear within the year)"),
+                    "first year cumulative equity cash turns >= 0 AND no later flow " +
+                    "is negative (suppressed with a note otherwise — a payback before " +
+                    "a capital call is not a payback)"),
       dscr_y1: q(dscr1, "x", "[D]",
                  levered ? "year-1 EBITDA / annual debt service (lender screens 1.10-1.40x — " +
                            "colo page ladder)"
                          : "unlevered — no debt"),
+      dscr_min_over_hold: q(dscrMin, "x", "[D]",
+                            levered ? "MIN yearly EBITDA / debt service across the hold — the " +
+                                      "covenant-relevant figure when rates decay or the ramp " +
+                                      "bites"
+                                    : "unlevered — no debt"),
     };
 
     const notes = [];
@@ -250,29 +289,63 @@
         "pricing history shows double-digit annual decay; set rate_decay_pct_yr and " +
         "watch the IRR sensitivity before believing the flat case.");
     }
+    if (haveRate && capitalCallsM !== null && capitalCallsM > 0.0) {
+      const yrs = [];
+      for (let y = 1; y < flowsE.length; y++) if (flowsE[y] < 0.0) yrs.push(String(y));
+      notes.push(
+        "CAPITAL CALLS: the equity flows go NEGATIVE again in year(s) " + yrs.join(", ") +
+        " — the investor must fund a further " + capitalCallsM.toFixed(2) +
+        " US$M after closing. MOIC's denominator counts this paid-in; payback is " +
+        "suppressed when a call follows it.");
+    }
+    if (haveRate && paybackSuppressed) {
+      notes.push(
+        "Payback suppressed: cumulative equity cash crosses zero and then a LATER " +
+        "flow is negative — quoting the crossing year would claim a payback the " +
+        "investor gives back. Read the cash rows.");
+    }
+    if (haveRate && levered && irrL === null) {
+      notes.push(
+        "Levered IRR has NO UNIQUE VALUE here: the equity flows change sign more " +
+        "than once (Descartes), so multiple mathematically valid IRRs exist and " +
+        "quoting one would be arbitrary. Judge this structure by the cash rows, " +
+        "MOIC (paid-in basis) and NPV at your hurdle.");
+    }
     notes.push(...[
       "Cash-opex basis: the capex page's 1 MW-IT outcome with amortisation EXCLUDED — " +
       "capex is the year-0 flow, so an amortised cost floor here would double-count it " +
       "(the neocloud page's 2.073 floor INCLUDES amortisation; different question).",
       "Energy scales with billable hours [A] — understates cost at low utilisation " +
-      "(idle facility power persists). At util_y1 the year-1 EBITDA is therefore " +
-      "slightly optimistic.",
+      "(idle facility power persists): at util_y1 " + Number(p.util_y1).toFixed(2) +
+      " vs the 0.85 cost basis, the fixed-power share of that line is understated " +
+      "by ~" + (100.0 * (1.0 - Number(p.util_y1) / 0.85)).toFixed(0) + "% in year 1.",
       "Not modelled: tax, SG&A/sales cost, GPU refresh at end of book life, working " +
       "capital, construction-period interest, rate/utilisation correlation. This is an " +
       "equity screen, not an underwriting model — the financial-model layer holds the " +
       "quarterly version.",
     ]);
-    if (levered && haveRate && dscr1 !== null && dscr1 < 1.0) {
+    if (levered && haveRate && dscr1 !== null && dscr1 < 1.10) {
       notes.push(
-        "YEAR-1 DSCR " + dscr1.toFixed(2) + " < 1.0x — the ramp year cannot cover debt " +
-        "service from EBITDA; lenders will require an interest reserve / equity cure " +
-        "or delayed amortization (construction-period IO is the standard structure).");
+        "YEAR-1 DSCR " + dscr1.toFixed(2) + " is UNDER the 1.10x published lender " +
+        "screen floor" + (dscr1 < 1.0 ? " (and under 1.0x — EBITDA cannot cover debt service)" : "") +
+        " — expect an interest reserve / equity cure / delayed amortization " +
+        "requirement (construction-period IO is the standard structure).");
+    }
+    if (levered && haveRate && dscrMin !== null && dscr1 !== null && dscrMin < dscr1) {
+      notes.push(
+        "DSCR deteriorates over the hold: minimum " + dscrMin.toFixed(2) +
+        "x vs year-1 " + dscr1.toFixed(2) + "x — decay/ramp effects bite the covenant " +
+        "test in later years, not year 1.");
     }
 
     const inputs = {};
     for (const k of Object.keys(DEFAULTS)) {
       inputs[k] = (k in kw && kw[k] !== null && kw[k] !== undefined)
-        ? q(kw[k], DEFAULTS[k].unit, "[S]", "user-supplied")
+        ? (seededSet.has(k)
+           ? q(kw[k], DEFAULTS[k].unit, "[D]",
+               "derived live by the capex engine at your platform/scale " +
+               "(composition — not user-typed)")
+           : q(kw[k], DEFAULTS[k].unit, "[S]", "user-supplied"))
         : DEFAULTS[k];
     }
 

@@ -102,9 +102,9 @@
     tower_spare_cells: q(1, "", "[A]",
                          "redundant cells beyond duty (N+1 convention — a cell down " +
                          "for basin/fill service is routine)"),
-    tower_drift_pct: q(0.002, "%", "[S]",
-                       "drift as % of recirculation flow with modern eliminators, " +
-                       "band 0.001-0.005% (CTI/vendor practice)"),
+    tower_drift_pct: q(0.002, "%", "[A]",
+                       "drift as % of recirculation flow with modern eliminators — " +
+                       "band 0.001-0.005% industry practice [assumption-verify: cite your eliminator datasheet or CTI cert at design]"),
     tower_fan_frac: q(0.012, "frac", "[A]",
                       "tower fan electrical draw / thermal duty, band 0.008-0.02 — " +
                       "DISPLAY estimate; plant pump/fan power is already budgeted " +
@@ -375,11 +375,11 @@
       tower_drift_m3_day: q(tower_drift_day, "m3/day", "[D]",
                             "F7b: recirculation x tower_drift_pct (modern eliminators)"),
       tower_makeup_m3_day: q(tower_makeup, "m3/day", "[D]",
-                             "F7b design-day total: evaporation + blowdown + drift — the " +
-                             "F7 annual figure applies wet_mode_hours + load_factor instead"),
+                             "F7b design-day total on the DUTY basis (incl. plant heat): evaporation + blowdown + drift — the " +
+                             "F7 annual figure is the WUE-convention figure (per IT kWh: excludes plant heat and drift) with wet_mode_hours + load_factor — multiply by ~(1+l_cool) for a duty-basis annual"),
       tower_fan_kw_est: q(tower_fan, "kW", "[D]",
-                          "F7b: duty x tower_fan_frac — display estimate; already inside " +
-                          "pump_fan_frac's F10 budget (not additive)"),
+                          "F7b: duty x tower_fan_frac — display estimate; treated as inside " +
+                          "pump_fan_frac's F10 budget [assumption-verify: that ratio is the reference chiller-plant share, not a tower plant] — fan heat also lands in the duty via (1+l_cool), a small conservatism"),
       loop_ride_through_s: q(ride_s, "s", "[D]",
                              "F8: loop_volume_l x rho x cp x dt_allow_k / liquid_load_kw"),
       tes_volume_m3: q(tes_m3, "m3", "[D]",

@@ -201,6 +201,9 @@ details.adv .fields { margin-top: var(--sp-3); }
 .matrix td { padding: 6px var(--sp-2); border-top: 1px solid var(--hairline); }
 .matrix td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); text-align: right; white-space: nowrap; }
 .matrix td.sens-base { outline: 1px solid var(--accent); outline-offset: -1px; border-radius: 2px; }
+/* DT-2 levered-downside cells under the lender screen floor — color + "!" glyph
+   (never color alone, chip rule) */
+.matrix td.cell-bad { color: var(--bad); font-weight: 600; }
 .matrix-scroll { overflow-x: auto; }
 
 /* ---- buttons ------------------------------------------------------------------------ */
@@ -438,15 +441,15 @@ details.chain[open] > summary { margin-bottom: var(--sp-2); }
 /* designs gallery: the visible preset label under each demonstrated view */
 .preset-note { font-size: var(--fs-sm); color: var(--muted); max-width: 88ch; margin: 0 0 var(--sp-4); }
 
-/* nav: 16 links overflow on narrow screens — fade the cut edge as the scent
-   (v3.5: wider fade + momentum scroll; the fade is the affordance, per A-16d) */
-@media (max-width: 1260px) {
-  .nav-inner {
-    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
-    mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
-    padding-right: var(--sp-7);
-    -webkit-overflow-scrolling: touch;
-  }
+/* nav: 17 links overflow on narrow screens — fade the cut edge as the scent
+   (v3.5 A-16d; v3.6.2 A-08: the mask applies ONLY when the nav actually
+   overflows — app.js toggles .nav-overflow on measure — a static media query
+   erased the last link's glyphs on wide screens with nothing to scroll) */
+.nav-inner.nav-overflow {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+  padding-right: var(--sp-7);
+  -webkit-overflow-scrolling: touch;
 }
 
 /* v3.5 field-guide watch-cards (risks.html #fieldguide) */
@@ -653,3 +656,18 @@ div:has(> svg.dg) { overflow-x: auto; }
 .param-stage { min-height: 80px; border-radius: var(--r-card); overflow: hidden; }
 .param-stage.is-live { border: 1px solid var(--hairline); }
 .param-stage canvas { display: block; width: 100%; height: auto; }
+
+/* v3.6.2 A-09: anchor landings clear the sticky nav (sources pattern) */
+#fieldguide, #fl-tor { scroll-margin-top: 90px; }
+
+/* v3.6.2 A-10: reserve height for late-built blocks (desktop CLS — the
+   scen-slot fix covered the bar; these cover the JS-built diagram stages) */
+#fl-logical { min-height: 420px; }
+#fl-physical { min-height: 480px; }
+/* plan's three JS-built blocks, measured at 1440 (mobile leaves them auto —
+   the mobile-form-factor CLS was already 0) */
+@media (min-width: 921px) {
+  #plan-siteplan { min-height: 520px; }
+  #plan-cards { min-height: 760px; }
+  #plan-dsx { min-height: 450px; }
+}

@@ -40,7 +40,7 @@
       debt_rate_pct: kw.debt_rate_pct != null ? kw.debt_rate_pct : null,
       debt_term_yr: kw.debt_term_yr != null ? kw.debt_term_yr : null,
       discount_rate_pct: kw.discount_rate_pct != null ? kw.discount_rate_pct : null,
-    });
+    }, ["gpus", "capex_total_m", "opex_fixed_m_yr", "energy_usd_per_gpu_hr"]);
     return { cap: cap, res: res };
   }
 

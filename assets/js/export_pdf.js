@@ -111,7 +111,11 @@
       objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PAGE_W + " " + PAGE_H + "] " +
                 "/Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents " +
                 (7 + i * 2) + " 0 R >>");
-      objs.push("<< /Length " + ENC.encode(stream).length + " >>\nstream\n" + stream + "\nendstream");
+      // /Length must count the EMITTED bytes: the writer maps every UTF-16 code
+      // unit to ONE latin-1 byte (charCodeAt & 0xff below), so the byte length
+      // is stream.length — NOT the UTF-8 length (v36 antagonist A-03: hi-bit
+      // chars like the em-dash made every /Length wrong by the hi-bit count).
+      objs.push("<< /Length " + stream.length + " >>\nstream\n" + stream + "\nendstream");
     }
     let out = "%PDF-1.4\n%\xb5\xb7\n";
     const xref = [0];

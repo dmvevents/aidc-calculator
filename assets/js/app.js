@@ -475,6 +475,18 @@
     }
   }
 
+  // nav overflow affordance (v3.6.2 A-08): fade-mask ONLY when there is
+  // actually more nav to scroll — a static mask erased glyphs on wide screens.
+  function navOverflowToggle() {
+    const inner = document.querySelector(".nav-inner");
+    if (!inner) return;
+    const on = inner.scrollWidth > inner.clientWidth + 2;
+    inner.classList.toggle("nav-overflow", on);
+  }
+  window.addEventListener("resize", navOverflowToggle);
+  if (document.readyState !== "loading") navOverflowToggle();
+  else document.addEventListener("DOMContentLoaded", navOverflowToggle);
+
   // ---- boot --------------------------------------------------------------------
   A.registerSections = function (sections) {
     state.sections = sections;
