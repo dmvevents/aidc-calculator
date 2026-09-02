@@ -5,6 +5,9 @@
 // scenario when one is set; the page's own inputs win once touched.
 "use strict";
 (function () {
+  // forward this script's own cache-buster (?v…) to the dynamic import so the
+  // viewer module busts in lockstep with the page's asset tag
+  const VTAG = (document.currentScript && (document.currentScript.src.split("?")[1] || "")) || "";
   const A = globalThis.AIDC;
   const DB = globalThis.RACKDB;
   if (!A || !DB || !A.sceneLayout) return;
@@ -86,10 +89,9 @@
     const btn = $("param-load");
     if (btn) { btn.disabled = true; btn.textContent = "loading three.js…"; }
     try {
-      // classic-script dynamic import resolves against the PAGE URL (trap list)
       // dynamic import() in a classic script resolves against THIS script's
       // URL (the documented trap) — sibling path, not page-relative
-      viewerMod = await import("./viewer3d_param.js");
+      viewerMod = await import("./viewer3d_param.js" + (VTAG ? "?" + VTAG : ""));
       const layout = A.sceneLayout.solve(currentInputs().plat, currentInputs().gpus);
       viewer = viewerMod.mount($("param-stage"), layout, layerState);
       if (btn) { btn.textContent = "Recompute"; btn.disabled = false; }
