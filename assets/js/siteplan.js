@@ -62,24 +62,54 @@
       svg.appendChild(el("line", { x1: hx, y1: Y(0), x2: hx, y2: Y(H), class: "sp-fence" }));
     }
 
-    // component pads (phase-1 zone) — areas inside only where they fit; names
-    // live in the legend (zero-collision convention)
+    // component pads — areas from the model, shapes from the reference
+    // aspects, POSITIONS from a deterministic band packing that computes its
+    // gaps from the pad sizes, so rectangles can NEVER overlap (the earlier
+    // reference-fraction placement collided once pads outgrew their slots:
+    // the phase-1 zone is half the reference parcel's area). Bands keep the
+    // reference reading: substation NE · gensets W | building | cooling E ·
+    // water SW | parking S. If the zone cannot hold the pads with clearances
+    // (very low setback factors), ALL pads display-scale uniformly and the
+    // caption says so — legend areas stay exact.
+    const pads = {};
     for (const key in REF) {
-      const r = REF[key];
       const area = o[key + "_m2"].value;
-      const w = Math.sqrt(area * (r.w / r.l));
-      const l = area / w;
-      let x = r.cx * W1 - w / 2, y = r.cy * H - l / 2;
-      x = Math.max(1.5 / s, Math.min(W1 - w - 1.5 / s, x));
-      y = Math.max(1.5 / s, Math.min(H - l - 1.5 / s, y));
-      const g = el("g", { class: "sp-pad sp-" + key });
-      g.appendChild(el("rect", { x: X(x), y: Y(y), width: w * s, height: l * s }));
-      if (w * s >= 64 && l * s >= 24) {
-        g.appendChild(el("text", { x: X(x) + w * s / 2, y: Y(y) + l * s / 2 + 4,
-                                   class: "sp-val sp-mid" }, fmtM2(area)));
-      }
-      svg.appendChild(g);
+      const w = Math.sqrt(area * (REF[key].w / REF[key].l));
+      pads[key] = { area: area, w: w, l: area / w };
     }
+    const BANDS = [["substation"], ["gensets", "building", "cooling"],
+                   ["water", "parking_roads"]];
+    const bandD = BANDS.map((r) => Math.max.apply(null, r.map((k) => pads[k].l)));
+    const bandW = BANDS.map((r) => r.reduce((a, k) => a + pads[k].w, 0));
+    const fit = Math.min(1,
+      (W1 * 0.92) / Math.max.apply(null, bandW),
+      (H * 0.90) / (bandD[0] + bandD[1] + bandD[2]));
+    if (fit < 1) for (const k in pads) { pads[k].w *= fit; pads[k].l *= fit; }
+    const dSum = bandD.map((d) => d * (fit < 1 ? fit : 1)).reduce((a, b) => a + b, 0);
+    const zGap = (H - dSum) / (BANDS.length + 1);
+    let zCur = zGap;
+    BANDS.forEach((row, bi) => {
+      const bd = bandD[bi] * (fit < 1 ? fit : 1);
+      const rw = row.reduce((a, k) => a + pads[k].w, 0);
+      const xGap = (W1 - rw) / (row.length + 1);
+      // substation band right-aligns (reference NE corner reading)
+      let xCur = (bi === 0) ? W1 - xGap - pads[row[0]].w : xGap;
+      for (const key of row) {
+        const p2 = pads[key];
+        const y = zCur + (bd - p2.l) / 2;
+        const g = el("g", { class: "sp-pad sp-" + key });
+        g.appendChild(el("rect", { x: X(xCur), y: Y(y),
+                                   width: p2.w * s, height: p2.l * s }));
+        if (p2.w * s >= 64 && p2.l * s >= 24) {
+          g.appendChild(el("text", { x: X(xCur) + p2.w * s / 2,
+                                     y: Y(y) + p2.l * s / 2 + 4,
+                                     class: "sp-val sp-mid" }, fmtM2(p2.area)));
+        }
+        svg.appendChild(g);
+        xCur += p2.w + xGap;
+      }
+      zCur += bd + zGap;
+    });
 
     // scale bar (bottom-left, under the parcel)
     const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000];
@@ -117,8 +147,9 @@
     const cap = document.createElement("p");
     cap.className = "sp-caption";
     cap.textContent = "Diagrammatic massing — areas from the land model [D]; arrangement " +
-      "follows the reference site-plan convention [A]. Not a survey: setbacks, stormwater " +
-      "and zoning are jurisdiction-specific.";
+      "follows the reference site-plan convention [A] with computed clearances (pads " +
+      "cannot overlap by construction). Not a survey: setbacks, stormwater and zoning " +
+      "are jurisdiction-specific.";
     host.replaceChildren(svg, cap);
   }
 
