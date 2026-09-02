@@ -90,6 +90,25 @@
                      "CDU pumps + CRAH fans / IT (reference-design power budget ratio = " +
                      "0.0187; the prior 0.021 did not match its own derivation — " +
                      "calc-fix stale-data pass)"),
+    // --- F7b cooling-tower fleet (rejector = tower only) --------------------
+    tower_cell_kw: q(2000.0, "kW_th", "[A]",
+                     "thermal duty per tower CELL at the design wet-bulb — large " +
+                     "open/closed cells span ~1-5 MW_th; capacity is wb-dependent, " +
+                     "vendor selection at YOUR design wet-bulb governs " +
+                     "(assumption-verify)"),
+    tower_range_k: q(10.0, "K", "[A]",
+                     "condenser/FWS water range across the tower (the reference FWS " +
+                     "runs 20/30 C — research/10 §1.3)"),
+    tower_spare_cells: q(1, "", "[A]",
+                         "redundant cells beyond duty (N+1 convention — a cell down " +
+                         "for basin/fill service is routine)"),
+    tower_drift_pct: q(0.002, "%", "[S]",
+                       "drift as % of recirculation flow with modern eliminators, " +
+                       "band 0.001-0.005% (CTI/vendor practice)"),
+    tower_fan_frac: q(0.012, "frac", "[A]",
+                      "tower fan electrical draw / thermal duty, band 0.008-0.02 — " +
+                      "DISPLAY estimate; plant pump/fan power is already budgeted " +
+                      "inside pump_fan_frac (do not double-count)"),
   };
 
   function w_class_of(supply_c) {
@@ -247,6 +266,32 @@
     const l_cool = Number(p.pump_fan_frac)
       + (cop ? x_mech * Number(p.liquid_frac) / cop : 0.0);
 
+    // --- F7b cooling-tower fleet (tower mode only; F6-null pattern) ---------
+    // parity: calc_cooling.py F7b — duty = it x (1+l_cool); evap on the same
+    // 1.47 L/kWh_th basis as F7; makeup(day) closes to evap + blowdown + drift.
+    let tower_duty = null, tower_cells = null, tower_recirc = null;
+    let tower_evap_day = null, tower_blow_day = null, tower_drift_day = null;
+    let tower_makeup = null, tower_fan = null;
+    if (p.rejector === "tower") {
+      tower_duty = it * (1.0 + l_cool);
+      const cell_kw = Number(p.tower_cell_kw);
+      if (cell_kw <= 0) throw new Error("tower_cell_kw must be > 0");
+      const range_k = Number(p.tower_range_k);
+      if (range_k <= 0) throw new Error("tower_range_k must be > 0");
+      tower_cells = Math.ceil(tower_duty / cell_kw) + Math.trunc(p.tower_spare_cells);
+      tower_recirc = tower_duty / (RHO_CP_WATER * range_k);           // L/s
+      const tower_evap = tower_duty * 1.47 / 3600.0;                  // L/s, all-latent
+      const tower_blow = coc > 1 ? tower_evap / (coc - 1.0) : null;
+      const tower_drift = tower_recirc * Number(p.tower_drift_pct) / 100.0;
+      if (tower_blow !== null) {
+        tower_makeup = (tower_evap + tower_blow + tower_drift) * 86.4; // m3/day
+      }
+      tower_evap_day = tower_evap * 86.4;
+      tower_blow_day = tower_blow !== null ? tower_blow * 86.4 : null;
+      tower_drift_day = tower_drift * 86.4;
+      tower_fan = tower_duty * Number(p.tower_fan_frac);
+    }
+
     const out = {
       liquid_load_kw: q(q_liq, "kW", "[D]", "it_kw x liquid_frac"),
       air_load_kw: q(q_air, "kW", "[D]", "it_kw - liquid_load_kw"),
@@ -313,6 +358,28 @@
                          "F7: it_kw x load_factor x wet_mode_hours_yr x makeup / 1000"),
       wue_m3_per_mwh_it: q(wue, "m3/MWh", "[D]",
                            "F7: annual_water_m3 / IT MWh — DSX KPI envelope 1.1-1.5 (research/10 §2.4)"),
+      tower_duty_kw_th: q(tower_duty, "kW_th", "[D]",
+                          "F7b: it_kw x (1 + l_cool) — IT heat + the plant's own pump/fan/" +
+                          "compressor heat, all rejected at the tower (tower mode only)"),
+      tower_cells_installed: q(tower_cells, "", "[D]",
+                               "F7b: ceil(duty / tower_cell_kw) + tower_spare_cells — " +
+                               "verify cell capacity at YOUR design wet-bulb (wb-dependent)"),
+      tower_recirc_l_s: q(tower_recirc, "L/s", "[D]",
+                          "F7b: duty / (rho.cp_water x tower_range_k)"),
+      tower_evaporation_m3_day: q(tower_evap_day, "m3/day", "[D]",
+                                  "F7b design-day: duty x 1.47 L/kWh_th (all-latent, same " +
+                                  "basis as F7) — the irreducible water cost of wet rejection"),
+      tower_blowdown_m3_day: q(tower_blow_day, "m3/day", "[D]",
+                               "F7b: evaporation / (coc - 1) — water-chemistry tax; raising " +
+                               "CoC cuts it but tightens treatment"),
+      tower_drift_m3_day: q(tower_drift_day, "m3/day", "[D]",
+                            "F7b: recirculation x tower_drift_pct (modern eliminators)"),
+      tower_makeup_m3_day: q(tower_makeup, "m3/day", "[D]",
+                             "F7b design-day total: evaporation + blowdown + drift — the " +
+                             "F7 annual figure applies wet_mode_hours + load_factor instead"),
+      tower_fan_kw_est: q(tower_fan, "kW", "[D]",
+                          "F7b: duty x tower_fan_frac — display estimate; already inside " +
+                          "pump_fan_frac's F10 budget (not additive)"),
       loop_ride_through_s: q(ride_s, "s", "[D]",
                              "F8: loop_volume_l x rho x cp x dt_allow_k / liquid_load_kw"),
       tes_volume_m3: q(tes_m3, "m3", "[D]",
