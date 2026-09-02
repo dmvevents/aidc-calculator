@@ -68,6 +68,10 @@ code, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   }
 }
 .panel-outputs { padding: var(--sp-4); display: grid; gap: var(--sp-4); }
+/* grid items default min-width:auto, so a wide table's min-content punches
+   through its inner scroll wrapper and stretches the page (antagonist A-03,
+   plan mobile) — let children shrink; the .matrix-scroll wrappers do the rest */
+.panel-outputs > * { min-width: 0; }
 
 /* ---- fields ---------------------------------------------------------------- */
 .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-3); }

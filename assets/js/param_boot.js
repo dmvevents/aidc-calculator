@@ -45,8 +45,12 @@
       if (!gpus) { gpus = g2; if (gpuInp) gpuInp.value = String(g2); }
     }
     if (!plat) plat = "gb200-nvl72";
+    let inputNote = null;
+    if (gpuInp && gpuInp.value.trim() !== "" && !(gpus > 0)) {
+      inputNote = "GPU count must be ≥ 1 — using 512";   // A-11: 0 is not a fleet
+    }
     if (!gpus || !(gpus > 0)) gpus = 512;
-    return { plat: plat, gpus: Math.round(gpus) };
+    return { plat: plat, gpus: Math.round(gpus), inputNote: inputNote };
   }
 
   function renderStats(layout) {
@@ -75,9 +79,24 @@
   }
 
   function recompute() {
-    const { plat, gpus } = currentInputs();
+    const { plat, gpus, inputNote } = currentInputs();
     const layout = A.sceneLayout.solve(plat, gpus);
     renderStats(layout);
+    const host = $("param-stats");
+    if (host && inputNote) {
+      const w = document.createElement("div");
+      w.className = "param-row";
+      w.setAttribute("role", "alert");
+      const kk = document.createElement("span");
+      kk.className = "param-k";
+      kk.textContent = "input";
+      const vv = document.createElement("span");
+      vv.className = "param-v";
+      vv.style.color = "var(--bad)";
+      vv.textContent = inputNote;
+      w.append(kk, vv);
+      host.prepend(w);
+    }
     if (viewer && viewerMod) {
       viewer.dispose();
       viewer = viewerMod.mount($("param-stage"), layout, layerState);

@@ -116,9 +116,11 @@
       "Closure: at the 5.2 MW-IT reference with expansion_reserve_frac 1.0 this model " +
       "gives 7.98 acres vs the reference's 8-acre [A] parcel (+0.9%) — the parcel that " +
       "the digital twin and drawing set draw.",
-      "Density cross-check: this single-story greenfield model lands ~0.6-0.9 MW-IT/acre " +
-      "at zero reserve. The DSX reference site is ~50 acres at GIGAWATT class [S4] — " +
-      "multi-story, campus-substation density; do not mix the classes.",
+      "Density cross-check: this single-story greenfield model lands ~1.0-1.7 MW-IT/acre " +
+      "at ZERO reserve across the 1.5-2.5 factor band (~0.65 with a full second-hall " +
+      "reserve — antagonist A-01: an earlier note quoted the reserve figure as the " +
+      "zero-reserve band). Hyperscale multi-story campuses land an order of magnitude " +
+      "denser — do not mix the classes.",
       "Excluded: utility ROW/interconnect corridor, off-site substation land, wetland/" +
       "buffer set-asides, and any phased masterplan beyond the single reserve fraction " +
       "— site-specific by nature (list them with your site's constraints).",

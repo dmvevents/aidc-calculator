@@ -88,7 +88,7 @@
                                 "research/10 §6.1) — above this you are buying multiple runs, an RPP, " +
                                 "or a higher distribution voltage, not a bigger busway"),
     breaker_factor: q(0.8, "frac", "[S]",
-                      "usable fraction of a breaker/busway rating for continuous load (NEC 210.20(A))"),
+                      "usable fraction of a breaker/busway rating for continuous load (NEC 215.3)"),
     shelves_per_rack: q(8, "", "[S]",
                         "F18 power shelves per rack, NVL72-class 8 x 33 kW deliverable"),
     shelf_kw: q(33.0, "kW", "[S]", "F18 deliverable kW per shelf (6 x 5.5 kW PSU, N redundant)"),

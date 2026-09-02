@@ -145,6 +145,7 @@ max-height: calc(100vh - 84px); overflow-y: auto;
 }
 }
 .panel-outputs { padding: var(--sp-4); display: grid; gap: var(--sp-4); }
+.panel-outputs > * { min-width: 0; }
 .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-3); }
 .field { display: grid; gap: var(--sp-1); }
 .field-label {
@@ -661,7 +662,7 @@ font-variant-numeric: tabular-nums; }
     path back to 8 to see the full-row-on-one-path failure this check exists to catch.
     Voltage basis: F17 is drawn at <strong>480 V</strong> distribution while F18 checks
     whips at the <strong>415 V</strong> shelf feed (NVIDIA's 400 V-minimum shelf pattern;
-    research/10 §6.2–6.3) — at 415 V end-to-end this drawn 6-rack row needs ≥1,434 A and
+    research/10 §6.2–6.3) — at 415 V end-to-end a 6-rack busway path needs ≥1,434 A (the drawn 8-rack row would need ≥1,911 A) and
     the PASS flips; the distribution-voltage input is in the advanced set.</p>
     <div class="calc-grid">
       <div class="panel panel-inputs" id="power-inputs" aria-label="Power inputs"></div>
@@ -753,13 +754,13 @@ font-variant-numeric: tabular-nums; }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 · site v3.4.2 · updated 2026-09-02</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.4.3 · updated 2026-09-02</p>
   </div>
 </footer>
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
 // engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/result.js?v342","assets/js/app.js?v342","assets/js/calc_power.js?v342","assets/js/calc_cooling.js?v342","assets/js/hallplan.js?v342","assets/js/designs.js?v342","assets/js/page_designs.js?v342"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+(function(){function go(){["assets/js/result.js?v343","assets/js/app.js?v343","assets/js/calc_power.js?v343","assets/js/calc_cooling.js?v343","assets/js/hallplan.js?v343","assets/js/designs.js?v343","assets/js/page_designs.js?v343"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
 </script>
 </body>
 </html>

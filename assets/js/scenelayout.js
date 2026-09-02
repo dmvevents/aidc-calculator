@@ -185,7 +185,9 @@
       ["hall", (hallX + GALLERY_W + ELEC_W + 3 * WALL).toFixed(1) + " × " + (hallZ + 2 * WALL).toFixed(1) +
         " m envelope", "A", "scene3d-method"],
       ["power", facilityMw.toFixed(2) + " MW facility · " + nGenset + " gensets" +
-        capNote(genShown, nGenset) + " · " + nUpsPerPath + " UPS modules/path", "D", "dossiers"],
+        capNote(genShown, nGenset) + " · " + nUpsPerPath + " UPS modules/path" +
+        capNote(upsShown, nUpsPerPath) + " · " + nTx + " transformers" +
+        capNote(txShown, max(nTx, 2)), "D", "dossiers"],
       ["cooling", (v.liquid_pct ? nCdu + " CDUs" + capNote(cduShown, nCdu) + " · " : "") +
         nCrah + " CRAH class" + capNote(crahShown, nCrah) + " · " + nDry + " dry coolers [A class]" +
         capNote(dryShown, nDry), "D", "dossiers"],

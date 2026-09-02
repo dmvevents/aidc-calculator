@@ -188,6 +188,7 @@
           d(O(c.tco, "levelized_usd_per_gpu_hr")) + " $/GPU-h (0.70, 5-yr build)",
         "land: " + d(O(c.land, "developed_m2")) + " m² developed × " +
           d(c.land.inputs.circulation_setback_factor.value) + " = " +
+          d(O(c.land, "parcel_m2")) + " m² = " +
           d(O(c.land, "site_acres")) + " acres (" + d(O(c.land, "mw_it_per_acre")) +
           " MW-IT/acre)",
       ];
@@ -202,16 +203,19 @@
       const cards = [
         ["Racks & floor", "rack.html", [
           [O(c.rack, "racks") + " racks", d(c.itMw) + " MW-IT"],
-          ["floor " + O(c.rack, "floor_pressure_kpa") + " kPa", O(c.rack, "rack_footprint_m2") + " m² racks"]]],
+          ["floor " + O(c.rack, "floor_pressure_kpa") + " kPa",
+           "busway " + (c.rack.outputs.busway_rating_ok.value ? "PASS" : "FAIL — split the row (F17)")]]],
         ["Power chain", "power.html", [
           [O(c.power, "facility_mw") + " MW facility", O(c.power, "utility_service_mva") + " MVA service"],
-          [O(c.power, "ups_modules_n") + " UPS modules/path", O(c.power, "genset_units_installed") + " gensets"]]],
+          [O(c.power, "ups_modules_n") + " UPS modules/path", O(c.power, "genset_units_installed") + " gensets · compute-basis IT"]]],
         ["Cooling", "cooling.html", [
           [O(c.cooling, "liquid_load_kw") + " kW liquid", O(c.cooling, "cdu_units_installed") + " CDUs (N+1)"],
-          [O(c.cooling, "air_flow_cfm") + " CFM residual air", (c.v.liquid_pct || 0) + "% liquid capture"]]],
+          ["site verdict: " + c.cooling.outputs.cooling_verdict.value + " (generic climate)",
+           (c.v.liquid_pct || 0) + "% liquid capture"]]],
         ["Network fabric", "fiber.html", [
           [c.su + " scalable units", O(c.fiber, "links_fabric_total") + " fabric links"],
-          [O(c.fiber, "pluggables_total") + " pluggables", O(c.fiber, "optics_power_kw") + " kW optics"]]],
+          [O(c.fiber, "pluggables_total") + " pluggables",
+           "channel IL " + (c.fiber.outputs.channel_il_pass.value ? "PASS" : "FAIL — low-loss APC (§4.3)")]]],
         ["Capex", "capex.html", [
           [O(c.capex, "capex_total_m") + " US$M total", O(c.capex, "capex_per_gpu_usd") + " $/GPU"],
           ["floor " + O(c.capex, "cost_floor_per_gpu_hr") + " $/GPU-h", "@0.85 utilisation"]]],
@@ -226,7 +230,7 @@
           ["your sell rate prices margin + payback", "@0.85 utilisation basis"]]],
         ["Land", "land.html", [
           [O(c.land, "site_acres") + " acres", O(c.land, "site_hectares") + " ha"],
-          [O(c.land, "mw_it_per_acre") + " MW-IT/acre", "zero expansion reserve"]]],
+          [O(c.land, "mw_it_per_acre") + " MW-IT/acre", "zero reserve · compute-basis IT"]]],
       ];
       const host = document.getElementById("plan-cards");
       if (host) {
@@ -287,7 +291,7 @@
            "GPU load rides through on thermal mass — size it on the cooling page (F8)",
            "info", "dsx-rd"],
           ["site density", d(c.itMw / acres) + " MW-IT/acre",
-           "single-story greenfield ~0.6–0.9; DSX ref site ~50 acres at GW class (multi-story)",
+           "single-story greenfield ~1.0–1.7 at zero reserve (≈0.65 with a full second-hall reserve); multi-story campuses land an order denser",
            "info", "dsx-rd"],
         ];
         const wrap = document.createElement("div");
@@ -328,7 +332,10 @@
           tb.appendChild(tr);
         }
         tbl.appendChild(tb);
-        wrap.appendChild(tbl);
+        const scroll = document.createElement("div");
+        scroll.className = "matrix-scroll";
+        scroll.appendChild(tbl);
+        wrap.appendChild(scroll);
         const foot = document.createElement("p");
         foot.className = "dsx-foot";
         foot.innerHTML = 'Placement, not certification. DSX = Reference Design · Sim · OS · ' +

@@ -111,7 +111,7 @@
     out.busway_continuous_a = q(bw.busway_continuous_a, "A", "[D]",
                                 "F17: rack_current_a x racks_per_path_used");
     out.busway_min_rating_a = q(bw.busway_min_rating_a, "A", "[D]",
-                                "F17: busway_continuous_a / breaker_factor (NEC 210.20(A) continuous)");
+                                "F17: busway_continuous_a / breaker_factor (NEC 215.3 feeder continuous)");
     out.busway_rating_ok = q(bw.busway_rating_ok, "", "[D]",
                              "F17 PASS/FAIL: busway_rating_a >= busway_min_rating_a");
     out.busway_within_product_band = q(bw.busway_within_product_band, "", "[D]",

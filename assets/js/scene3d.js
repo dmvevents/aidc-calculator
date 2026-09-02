@@ -49,8 +49,8 @@ globalThis.SCENE3D = {
    "label": "Overhead busway (A/B)",
    "layer": "power",
    "link": {
-    "href": "power.html#power.it_mw=1.15&power.pue=1.35&power.rack_kw=28.6",
-    "label": "Run the busway check (F17)"
+    "href": "power.html#power.it_mw=1.15&power.pue=1.35&power.rack_kw=28.6&power.dist_v=415",
+    "label": "Run the busway check (F17, at this hall's 415 V)"
    },
    "normal": "0 1 0",
    "note": "The power page's F17 busway check runs this exact ampacity chain against a rating you pick.",
@@ -72,7 +72,7 @@ globalThis.SCENE3D = {
      "chip": "S",
      "cite": "nec",
      "k": "continuous limit",
-     "v": "80% of rating (NEC 210.20(A))"
+     "v": "80% of rating (NEC 215.3 feeder)"
     },
     {
      "chip": "A",
@@ -96,9 +96,15 @@ globalThis.SCENE3D = {
    "rows": [
     {
      "chip": "S",
-     "cite": "aif-template",
+     "cite": "vertiv-cdu",
      "k": "capacity class",
-     "v": "1,368 kW nominal (XDU1350)"
+     "v": "1,350 kW catalog (CoolChip CDU 1350)"
+    },
+    {
+     "chip": "A",
+     "cite": "aif-template",
+     "k": "AIF metadata",
+     "v": "1,368 kW as-authored (same unit)"
     },
     {
      "chip": "S",
