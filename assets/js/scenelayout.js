@@ -17,12 +17,16 @@
   const BUSWAY_Y = [3.8, 4.2], TRAY_Y = 3.0;
   const CRAH_CLASS_KW = 150.0;         // [A] CRAH unit class (reference convention)
   const DRYCOOLER_CLASS_MW = 1.2;      // [A] ~1.2 MW-class dry cooler per unit
-  const DISPLAY_CAPS = { crah: 12, cdu: 12, drycooler: 10, genset: 8, ups: 6, transformer: 4 };
+  const DISPLAY_CAPS = { crah: 12, cdu: 12, drycooler: 10, tower: 12, genset: 8, ups: 6, transformer: 4 };
 
   const ceil = Math.ceil, max = Math.max, min = Math.min;
 
-  function solve(platform, gpus) {
+  function solve(platform, gpus, rejector) {
     const v = DB[platform];
+    // heat-rejection mode drives calc_cooling's F7b tower fleet + the F5 verdict;
+    // unknown/absent -> dry (the engine throws on an invalid rejector).
+    const REJ = (A.calcCooling && A.calcCooling.REJECTORS) || ["dry", "tower", "adiabatic"];
+    const rej = REJ.indexOf(rejector) >= 0 ? rejector : "dry";
     const gpr = v.gpus_per_rack, rackKw = v.nameplate_kw;
     const rw = 0.6, rd = 1.2, rh = (v.height_mm || 2258) / 1000.0;
     const racks = max(1, ceil(gpus / gpr));
@@ -36,7 +40,7 @@
       dist_v: v.distribution_voltage_v, gpus: racks * gpr,
       racks_per_path: (v.row_plan && v.row_plan.compute) || null,
     }).outputs;
-    const coolKw = { it_kw: itMw * 1000.0, liquid_frac: (v.liquid_pct || 0) / 100.0 };
+    const coolKw = { it_kw: itMw * 1000.0, liquid_frac: (v.liquid_pct || 0) / 100.0, rejector: rej };
     if (v.liquid_pct > 0) {
       coolKw.rack_liquid_kw = v.liquid_kw;
       coolKw.cdu_kw = v.cdu_nominal_kw;
@@ -54,6 +58,9 @@
     const nCrah = max(2, ceil(qAirKw / CRAH_CLASS_KW) + 1);        // N+1 [A class]
     const nDry = max(2, ceil(facilityMw / DRYCOOLER_CLASS_MW) + 1); // [A class]
     const tesM3 = cooling.tes_volume_m3.value;
+    const verdict = cooling.cooling_verdict.value;                  // dry-only | wetted-assist | infeasible
+    const nTower = rej === "tower" ? cooling.tower_cells_installed.value : 0;   // F7b (engine-bound)
+    const towerMakeup = rej === "tower" ? cooling.tower_makeup_m3_day.value : null; // m3/day, duty basis
 
     // ---- hall geometry (reference z-stack, generalized to N rows) --------
     const rowLen = perRow * rw + (perRow - 1) * GAP;
@@ -144,13 +151,27 @@
     box("shell", "shell", bx1 - WALL / 2, CLEAR_H / 2, hallZC, WALL, CLEAR_H, bd - 2 * WALL);
     box("shell", "shell", bxc, CLEAR_H + 0.125, hallZC, bw, 0.25, bd);
 
-    // ---- yard: dry coolers (W), gensets (N), TES (SW) ----------------------
+    // ---- yard: heat rejection (W), gensets (N), TES (SW) -------------------
+    // mode-driven: tower -> the engine's tower_cells_installed as tower cells
+    // (taller cell body + fan deck + cold-water basin); dry/adiabatic -> the
+    // dry-cooler pad (adiabatic reuses the massing with a distinct tint).
     const dcX = bx0 - 3.6;
-    const dryShown = min(nDry, DISPLAY_CAPS.drycooler);
-    for (let i = 0; i < dryShown; i++) {
-      const dz = hallZC - ((dryShown - 1) * 5.4) / 2 + i * 5.4;
-      box("liquid", "drycooler", dcX, 1.2, dz, 2.2, 2.4, 5.0);
-      for (let k = 0; k < 3; k++) box("liquid", "fws", dcX, 2.46, dz - 1.7 + k * 1.7, 1.6, 0.12, 1.6);
+    if (rej === "tower") {
+      const towerShown = min(nTower, DISPLAY_CAPS.tower);
+      for (let i = 0; i < towerShown; i++) {
+        const tz = hallZC - ((towerShown - 1) * 4.6) / 2 + i * 4.6;
+        box("liquid", "tower", dcX, 2.3, tz, 3.4, 4.6, 3.6);   // cell body
+        box("liquid", "tower", dcX, 4.75, tz, 3.0, 0.3, 3.2);  // fan deck
+        box("liquid", "fws", dcX, 0.35, tz, 3.8, 0.7, 4.0);    // cold-water basin
+      }
+    } else {
+      const dryMat = rej === "adiabatic" ? "adiabatic" : "drycooler";
+      const dryShown = min(nDry, DISPLAY_CAPS.drycooler);
+      for (let i = 0; i < dryShown; i++) {
+        const dz = hallZC - ((dryShown - 1) * 5.4) / 2 + i * 5.4;
+        box("liquid", dryMat, dcX, 1.2, dz, 2.2, 2.4, 5.0);
+        for (let k = 0; k < 3; k++) box("liquid", "fws", dcX, 2.46, dz - 1.7 + k * 1.7, 1.6, 0.12, 1.6);
+      }
     }
     const genZ = bz0 - 3.4;
     const genShown = min(nGenset, DISPLAY_CAPS.genset);
@@ -179,6 +200,19 @@
 
     // ---- stats (every count names its engine; caps stated, never silent) ---
     const capNote = (shown, n) => (shown < n ? " (showing " + shown + " — massing cap)" : "");
+    // heat-rejection line: mode-aware, engine-bound counts + the F5 site verdict
+    let rejectStr;
+    if (rej === "tower") {
+      const towerShown = min(nTower, DISPLAY_CAPS.tower);
+      rejectStr = nTower + " tower cell" + (nTower !== 1 ? "s" : "") + " (N+1)" +
+        capNote(towerShown, nTower) +
+        (towerMakeup != null ? " · makeup " + Math.round(towerMakeup).toLocaleString("en-US") + " m³/day" : "") +
+        " · " + verdict;
+    } else {
+      const dryShown = min(nDry, DISPLAY_CAPS.drycooler);
+      const dryLabel = rej === "adiabatic" ? " adiabatic-assist dry coolers [A class]" : " dry coolers [A class]";
+      rejectStr = nDry + dryLabel + capNote(dryShown, nDry) + " · " + verdict;
+    }
     const stats = [
       ["fleet", racks + " racks · " + (racks * gpr).toLocaleString("en-US") + " GPUs · " +
         rows + " row" + (rows > 1 ? "s" : "") + " of ≤" + perRow, "D", "variants"],
@@ -189,8 +223,7 @@
         capNote(upsShown, nUpsPerPath) + " · " + nTx + " transformers" +
         capNote(txShown, max(nTx, 2)), "D", "dossiers"],
       ["cooling", (v.liquid_pct ? nCdu + " CDUs" + capNote(cduShown, nCdu) + " · " : "") +
-        nCrah + " CRAH class" + capNote(crahShown, nCrah) + " · " + nDry + " dry coolers [A class]" +
-        capNote(dryShown, nDry), "D", "dossiers"],
+        nCrah + " CRAH class" + capNote(crahShown, nCrah) + " · " + rejectStr, "D", "dossiers"],
       ["land", land.site_acres.value.toFixed(2) + " acres parcel · " +
         Math.round(land.developed_m2.value).toLocaleString("en-US") + " m² developed", "D", "land-model"],
     ];
@@ -202,7 +235,8 @@
     return { spec: S, stats: stats,
              camera: { r: apDiag * 0.82, targetY: 1.2 },
              counts: { racks: racks, rows: rows, gensets: nGenset, cdus: nCdu,
-                       crah: nCrah, dry: nDry, facilityMw: facilityMw,
+                       crah: nCrah, dry: nDry, tower: nTower, rejector: rej,
+                       verdict: verdict, facilityMw: facilityMw,
                        acres: land.site_acres.value } };
   }
 

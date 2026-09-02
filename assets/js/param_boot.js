@@ -50,7 +50,11 @@
       inputNote = "GPU count must be ≥ 1 — using 512";   // A-11: 0 is not a fleet
     }
     if (!gpus || !(gpus > 0)) gpus = 512;
-    return { plat: plat, gpus: Math.round(gpus), inputNote: inputNote };
+    const rejSel = $("param-rejector");
+    const REJ = (A.calcCooling && A.calcCooling.REJECTORS) || ["dry", "tower", "adiabatic"];
+    let rej = rejSel && rejSel.value;
+    if (REJ.indexOf(rej) < 0) rej = "dry";
+    return { plat: plat, gpus: Math.round(gpus), rej: rej, inputNote: inputNote };
   }
 
   function renderStats(layout) {
@@ -79,8 +83,8 @@
   }
 
   function recompute() {
-    const { plat, gpus, inputNote } = currentInputs();
-    const layout = A.sceneLayout.solve(plat, gpus);
+    const { plat, gpus, rej, inputNote } = currentInputs();
+    const layout = A.sceneLayout.solve(plat, gpus, rej);
     renderStats(layout);
     const host = $("param-stats");
     if (host && inputNote) {
@@ -111,7 +115,8 @@
       // dynamic import() in a classic script resolves against THIS script's
       // URL (the documented trap) — sibling path, not page-relative
       viewerMod = await import("./viewer3d_param.js" + (VTAG ? "?" + VTAG : ""));
-      const layout = A.sceneLayout.solve(currentInputs().plat, currentInputs().gpus);
+      const ci = currentInputs();
+      const layout = A.sceneLayout.solve(ci.plat, ci.gpus, ci.rej);
       viewer = viewerMod.mount($("param-stage"), layout, layerState);
       if (btn) { btn.textContent = "Recompute"; btn.disabled = false; }
       $("param-stage").classList.add("is-live");
@@ -130,10 +135,22 @@
         platSel.appendChild(o);
       }
     }
+    const rejSel = $("param-rejector");
+    if (rejSel && !rejSel.options.length) {
+      for (const [val, label] of [["dry", "dry cooler"],
+                                  ["tower", "cooling tower / wetted"],
+                                  ["adiabatic", "adiabatic-assist dry"]]) {
+        const o = document.createElement("option");
+        o.value = val;
+        o.textContent = label;
+        rejSel.appendChild(o);
+      }
+    }
     recompute();
     if (platSel) platSel.addEventListener("change", recompute);
     const gpuInp = $("param-gpus");
     if (gpuInp) gpuInp.addEventListener("change", recompute);
+    if (rejSel) rejSel.addEventListener("change", recompute);
     const btn = $("param-load");
     if (btn) btn.addEventListener("click", () => (viewer ? recompute() : load3d()));
     document.querySelectorAll("#param-layers input").forEach((cb) => {

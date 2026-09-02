@@ -735,14 +735,17 @@ font-variant-numeric: tabular-nums; }
     <p class="scene-note"><strong>New (v3.4):</strong> pick a platform, type a GPU count — the
     layout below is <strong>computed, not drawn</strong>: rows of one scalable unit, and every
     equipment count comes from the same parity-locked engines the calculator pages run
-    (gensets and UPS modules from the <a href="power.html">power engine</a>, CDUs and the TES
-    tank from the <a href="cooling.html">cooling engine</a>, parcel and fence from the
-    <a href="land.html">land model</a>). Follows the shared scenario when one is set.
+    (gensets and UPS modules from the <a href="power.html">power engine</a>, CDUs, the TES
+    tank, and the heat-rejection fleet — dry coolers or F7b cooling-tower cells per the
+    <strong>reject</strong> selector — from the <a href="cooling.html">cooling engine</a>,
+    parcel and fence from the <a href="land.html">land model</a>). Follows the shared
+    scenario when one is set.
     Massing-grade by design — counts are engineering, shapes are conventions
     <a class="chip chip-a" href="sources.html#scene3d-method" aria-label="assumed — view source">A</a>.</p>
     <div class="twin-bar param-bar">
       <label class="micro" for="param-platform">platform&nbsp;<select id="param-platform"></select></label>
       <label class="micro" for="param-gpus">GPUs&nbsp;<input type="text" inputmode="numeric" id="param-gpus" value="512" size="7"></label>
+      <label class="micro" for="param-rejector">reject&nbsp;<select id="param-rejector"></select></label>
       <span id="param-layers" class="lyr-set">
         <label class="lyr"><input type="checkbox" data-layer="racks" checked> racks</label>
         <label class="lyr"><input type="checkbox" data-layer="liquid" checked> cooling</label>
@@ -753,6 +756,12 @@ font-variant-numeric: tabular-nums; }
       <button class="btn" id="param-load" type="button">Compute &amp; load 3D</button>
     </div>
     <div id="param-stats" class="param-stats" aria-live="polite"></div>
+    <p class="scene-note" id="param-verdict-legend">The <strong>cooling verdict</strong> closing the
+    cooling row reads dry-side heat-rejection feasibility at the model's default design-day ambient —
+    <em>dry-only</em> means air-side rejection suffices, while <em>wetted-assist</em> or
+    <em>infeasible</em> means a cooling tower or adiabatic assist is needed at that ambient (switch
+    <strong>reject</strong> to size the wetted fleet). It is a rejection-topology signal, not a verdict
+    that the site cannot be built.</p>
     <div id="param-stage" class="param-stage" role="img" aria-label="Computed 3D site — massing view of the layout the inputs above derive"></div>
     <p class="scene-note">display caps keep huge fleets readable (stated in the stats line,
     never silent); the certified engineering package for a real project is the private
@@ -940,13 +949,16 @@ font-variant-numeric: tabular-nums; }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.2 · updated 2026-09-02</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.4 · updated 2026-09-02</p>
   </div>
 </footer>
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
-// engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/result.js?v362","assets/js/rackdata.js?v362","assets/js/calc_power.js?v362","assets/js/calc_cooling.js?v362","assets/js/calc_land.js?v362","assets/js/scenelayout.js?v362","assets/js/scene3d.js?v362","assets/js/viewer3d.js?v362","assets/js/page_3d.js?v362","assets/js/param_boot.js?v362","assets/js/detailracks.js?v362","assets/js/page_detail3d.js?v362"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+// engine loads AFTER the first frame paints (double-rAF past DOMContentLoaded;
+// setTimeout covers hidden tabs, where rAF never fires) — so the masthead text
+// LCP no longer shares the simulated mobile link with the script chain.
+// (Preloading the chain, the opposite move, measured WORSE — note in main().)
+(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v364","assets/js/rackdata.js?v364","assets/js/calc_power.js?v364","assets/js/calc_cooling.js?v364","assets/js/calc_land.js?v364","assets/js/scenelayout.js?v364","assets/js/scene3d.js?v364","assets/js/viewer3d.js?v364","assets/js/page_3d.js?v364","assets/js/param_boot.js?v364","assets/js/detailracks.js?v364","assets/js/page_detail3d.js?v364"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
 </script>
 </body>
 </html>

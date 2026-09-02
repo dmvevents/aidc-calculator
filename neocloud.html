@@ -714,13 +714,16 @@ font-variant-numeric: tabular-nums; }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.2 · updated 2026-09-02</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.4 · updated 2026-09-02</p>
   </div>
 </footer>
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
-// engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/result.js?v362","assets/js/app.js?v362","assets/js/rackdata.js?v362","assets/js/calc_capex.js?v362","assets/js/calc_neocloud.js?v362","assets/js/scenario.js?v362","assets/js/page_neocloud.js?v362","assets/js/export_xlsx.js?v362","assets/js/export_pdf.js?v362","assets/js/export.js?v362"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+// engine loads AFTER the first frame paints (double-rAF past DOMContentLoaded;
+// setTimeout covers hidden tabs, where rAF never fires) — so the masthead text
+// LCP no longer shares the simulated mobile link with the script chain.
+// (Preloading the chain, the opposite move, measured WORSE — note in main().)
+(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v364","assets/js/app.js?v364","assets/js/rackdata.js?v364","assets/js/calc_capex.js?v364","assets/js/calc_neocloud.js?v364","assets/js/scenario.js?v364","assets/js/page_neocloud.js?v364","assets/js/export_xlsx.js?v364","assets/js/export_pdf.js?v364","assets/js/export.js?v364"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
 </script>
 </body>
 </html>

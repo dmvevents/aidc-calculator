@@ -13,6 +13,7 @@ const MATS = {
   containment: [0x8ca6bf, 0.10, 0.30, 0.16], cdu: [0x213861, 0.35, 0.50],
   crah: [0x2b455c, 0.30, 0.50], pipe: [0x29736b, 0.50, 0.40],
   fws: [0x1a5257, 0.50, 0.45], drycooler: [0x295c57, 0.35, 0.50],
+  tower: [0x3f7d86, 0.25, 0.55], adiabatic: [0x2f7d66, 0.35, 0.48],
   busway: [0x8c6b2e, 0.60, 0.40], ups: [0x2e4d80, 0.35, 0.50],
   swgr: [0x243357, 0.35, 0.50], transformer: [0x474d57, 0.55, 0.45],
   genset: [0x4d4733, 0.40, 0.50], tray: [0x6b618c, 0.45, 0.45],
