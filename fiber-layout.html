@@ -592,6 +592,21 @@ padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); }
 .dsx-warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, transparent); }
 .dsx-info { color: var(--ink-2); }
 .dsx-foot { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--muted); }
+.param-bar { flex-wrap: wrap; }
+.param-bar input#param-gpus { background: var(--inset); color: var(--ink);
+border: 1px solid var(--rule); border-radius: var(--r-ctl); padding: 5px 8px;
+font-family: var(--font-mono); width: 8ch; }
+.param-stats { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5);
+margin: var(--sp-3) 0; padding: var(--sp-3) var(--sp-4); background: var(--inset);
+border: 1px solid var(--hairline); border-radius: var(--r-card); }
+.param-row { display: flex; gap: var(--sp-2); align-items: baseline; }
+.param-k { font-size: var(--fs-xs); color: var(--muted); letter-spacing: 0.08em;
+text-transform: uppercase; }
+.param-v { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink);
+font-variant-numeric: tabular-nums; }
+.param-stage { min-height: 80px; border-radius: var(--r-card); overflow: hidden; }
+.param-stage.is-live { border: 1px solid var(--hairline); }
+.param-stage canvas { display: block; width: 100%; height: auto; }
 </style>
 </head>
 <body>
@@ -680,7 +695,7 @@ padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 · site v3.3 · updated 2026-09-02</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 · site v3.4 · updated 2026-09-02</p>
   </div>
 </footer>
 <script>

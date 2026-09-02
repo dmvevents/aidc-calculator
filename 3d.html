@@ -592,6 +592,21 @@ padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); }
 .dsx-warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, transparent); }
 .dsx-info { color: var(--ink-2); }
 .dsx-foot { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--muted); }
+.param-bar { flex-wrap: wrap; }
+.param-bar input#param-gpus { background: var(--inset); color: var(--ink);
+border: 1px solid var(--rule); border-radius: var(--r-ctl); padding: 5px 8px;
+font-family: var(--font-mono); width: 8ch; }
+.param-stats { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5);
+margin: var(--sp-3) 0; padding: var(--sp-3) var(--sp-4); background: var(--inset);
+border: 1px solid var(--hairline); border-radius: var(--r-card); }
+.param-row { display: flex; gap: var(--sp-2); align-items: baseline; }
+.param-k { font-size: var(--fs-xs); color: var(--muted); letter-spacing: 0.08em;
+text-transform: uppercase; }
+.param-v { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ink);
+font-variant-numeric: tabular-nums; }
+.param-stage { min-height: 80px; border-radius: var(--r-card); overflow: hidden; }
+.param-stage.is-live { border: 1px solid var(--hairline); }
+.param-stage canvas { display: block; width: 100%; height: auto; }
 </style>
 </head>
 <body>
@@ -657,7 +672,7 @@ padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); }
         </span>
         <button class="btn" id="load-scene" type="button">Load interactive 3D</button>
       </div>
-      <p class="scene-note"><strong>Scene v3.3 (Sep 2026):</strong> the site now carries 168
+      <p class="scene-note"><strong>Scene v3.3+ (Sep 2026):</strong> the site now carries 168
       placed assets — perimeter fence &amp; gate, MV yard with transformer radiator banks,
       genset exhaust stacks, a TES tank + water-treatment skid, row-end RPPs and a meet-me
       cabinet — and <strong>13 provenance hotspots</strong>, including three new cards that
@@ -681,6 +696,35 @@ padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); }
     each value resolves on the <a href="sources.html">Sources page</a> and each card deep-links
     into the calculator that runs the math.</p>
     <div class="hs-grid" id="scene-annotations"></div>
+  </section>
+
+  <section class="section section-calc" id="param" aria-label="Parametric site — computed from your inputs">
+    <h2 class="hs-head">Parametric site — computed from your inputs</h2>
+    <p class="scene-note"><strong>New (v3.4):</strong> pick a platform, type a GPU count — the
+    layout below is <strong>computed, not drawn</strong>: rows of one scalable unit, and every
+    equipment count comes from the same parity-locked engines the calculator pages run
+    (gensets and UPS modules from the <a href="power.html">power engine</a>, CDUs and the TES
+    tank from the <a href="cooling.html">cooling engine</a>, parcel and fence from the
+    <a href="land.html">land model</a>). Follows the shared scenario when one is set.
+    Massing-grade by design — counts are engineering, shapes are conventions
+    <a class="chip chip-a" href="sources.html#scene3d-method" aria-label="assumed — view source">A</a>.</p>
+    <div class="twin-bar param-bar">
+      <label class="micro" for="param-platform">platform&nbsp;<select id="param-platform"></select></label>
+      <label class="micro" for="param-gpus">GPUs&nbsp;<input type="text" inputmode="numeric" id="param-gpus" value="512" size="7"></label>
+      <span id="param-layers" class="lyr-set">
+        <label class="lyr"><input type="checkbox" data-layer="racks" checked> racks</label>
+        <label class="lyr"><input type="checkbox" data-layer="liquid" checked> cooling</label>
+        <label class="lyr"><input type="checkbox" data-layer="power" checked> power</label>
+        <label class="lyr"><input type="checkbox" data-layer="fiber"> fiber</label>
+        <label class="lyr"><input type="checkbox" data-layer="shell" checked> shell</label>
+      </span>
+      <button class="btn" id="param-load" type="button">Compute &amp; load 3D</button>
+    </div>
+    <div id="param-stats" class="param-stats" aria-live="polite"></div>
+    <div id="param-stage" class="param-stage" role="img" aria-label="Computed 3D site — massing view of the layout the inputs above derive"></div>
+    <p class="scene-note">display caps keep huge fleets readable (stated in the stats line,
+    never silent); the certified engineering package for a real project is the private
+    toolkit's USD twin pipeline — this view is the browser-side massing of the same math.</p>
   </section>
 
   <section class="section section-calc" id="twin" aria-label="Row geometry viewer">
@@ -863,13 +907,13 @@ padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 · site v3.3 · updated 2026-09-02</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 · site v3.4 · updated 2026-09-02</p>
   </div>
 </footer>
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
 // engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/scene3d.js","assets/js/viewer3d.js","assets/js/page_3d.js","assets/js/detailracks.js","assets/js/page_detail3d.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+(function(){function go(){["assets/js/result.js","assets/js/rackdata.js","assets/js/calc_power.js","assets/js/calc_cooling.js","assets/js/calc_land.js","assets/js/scenelayout.js","assets/js/scene3d.js","assets/js/viewer3d.js","assets/js/page_3d.js","assets/js/param_boot.js","assets/js/detailracks.js","assets/js/page_detail3d.js"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
 </script>
 </body>
 </html>

@@ -212,8 +212,9 @@
       mv.setAttribute("camera-controls", "");
       mv.setAttribute("touch-action", "pan-y");
       mv.setAttribute("interaction-prompt", "none");
-      mv.setAttribute("shadow-intensity", "0.45");
-      mv.setAttribute("exposure", "1.05");
+      mv.setAttribute("shadow-intensity", "0.95");
+      mv.setAttribute("shadow-softness", "0.85");
+      mv.setAttribute("exposure", "1.08");
       mv.setAttribute("interpolation-decay", "160");
       mv.setAttribute("min-camera-orbit", "auto 0deg 1.5m");
       mv.setAttribute("max-camera-orbit", "auto 88deg 160m");
