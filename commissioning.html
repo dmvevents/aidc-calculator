@@ -269,6 +269,13 @@ transition: background var(--t-fast), border-color var(--t-fast);
 .btn:hover { background: color-mix(in srgb, var(--raised) 70%, var(--rule)); }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-primary {
+background: var(--accent); border-color: var(--accent);
+color: var(--bg); font-weight: 600;
+}
+.btn-primary:hover { background: color-mix(in srgb, var(--accent) 86%, #fff); color: var(--bg); }
+.cta-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+.cta-row .btn { text-decoration: none; }
 .twin { display: grid; gap: var(--sp-3); }
 .twin-stage { position: relative; border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; background: var(--inset); aspect-ratio: 16 / 8; }
 .twin-stage img, .twin-stage model-viewer { width: 100%; height: 100%; display: block; object-fit: cover; --poster-color: transparent; }
@@ -452,11 +459,21 @@ background: color-mix(in srgb, var(--chip-s) 12%, transparent); border-radius: 3
 .preset-note { font-size: var(--fs-sm); color: var(--muted); max-width: 88ch; margin: 0 0 var(--sp-4); }
 @media (max-width: 1260px) {
 .nav-inner {
--webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
-padding-right: var(--sp-6);
+-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+padding-right: var(--sp-7);
+-webkit-overflow-scrolling: touch;
 }
 }
+.fg-list {
+list-style: none; margin: 0 0 var(--sp-3); padding: 0;
+font-size: var(--fs-sm); color: var(--ink-2);
+}
+.fg-list li {
+padding: var(--sp-2) 0; border-top: 1px solid var(--hairline);
+}
+.fg-list li:first-child { border-top: 0; }
+.fg-list strong { color: var(--ink); font-weight: 500; }
 .chip { position: relative; text-indent: 0; }
 .chip::after { content: ""; position: absolute; inset: -4px; }
 @media (max-width: 640px) {
@@ -512,6 +529,12 @@ border: 1px solid var(--rule); border-radius: var(--r-ctl);
 background: var(--surface); padding: var(--sp-2) var(--sp-3);
 margin: 0 0 var(--sp-4);
 }
+.scen-slot { height: 65px; margin: 0 0 var(--sp-4); }
+@media (max-width: 1079px) { .scen-slot { height: 94px; } }
+@media (max-width: 520px)  { .scen-slot { height: 134px; } }
+@media (max-width: 440px)  { .scen-slot { height: 154px; } }
+@media (max-width: 375px)  { .scen-slot { height: 179px; } }
+@media print { .scen-slot { display: none; } }
 .scenariobar.scen-active { border-color: var(--accent); }
 .scen-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
 .scen-title {
@@ -625,6 +648,7 @@ font-variant-numeric: tabular-nums; }
     <a href="tco.html">TCO</a>
     <a href="colo.html">Colo</a>
     <a href="neocloud.html">Neocloud</a>
+    <a href="invest.html">Invest</a>
     <a href="land.html">Land</a>
     <a href="designs.html">Designs</a>
     <a href="fiber-layout.html">Fiber layout</a>
@@ -648,6 +672,7 @@ font-variant-numeric: tabular-nums; }
 
 <main class="wrap">
   <section class="section section-calc" id="commissioning" aria-label="Commissioning calculator">
+    <div class="scen-slot" aria-hidden="true"></div>
     <div class="calc-grid">
       <div class="panel panel-inputs" id="cx-inputs" aria-label="Commissioning inputs"></div>
       <div class="panel panel-outputs">
@@ -674,13 +699,13 @@ font-variant-numeric: tabular-nums; }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.4.3 · updated 2026-09-02</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.0 · updated 2026-09-02</p>
   </div>
 </footer>
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
 // engine loads at DOMContentLoaded (sequential, order-preserving).
-(function(){function go(){["assets/js/result.js?v343","assets/js/app.js?v343","assets/js/rackdata.js?v343","assets/js/calc_commissioning.js?v343","assets/js/scenario.js?v343","assets/js/diagrams.js?v343","assets/js/page_commissioning.js?v343"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+(function(){function go(){["assets/js/result.js?v360","assets/js/app.js?v360","assets/js/rackdata.js?v360","assets/js/calc_commissioning.js?v360","assets/js/scenario.js?v360","assets/js/diagrams.js?v360","assets/js/page_commissioning.js?v360","assets/js/export_xlsx.js?v360","assets/js/export_pdf.js?v360","assets/js/export.js?v360"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
 </script>
 </body>
 </html>

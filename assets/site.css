@@ -214,6 +214,15 @@ details.adv .fields { margin-top: var(--sp-3); }
 .btn:hover { background: color-mix(in srgb, var(--raised) 70%, var(--rule)); }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+/* v3.5 hero CTA: the one accent-filled action per page (dark ink on accent
+   measures ~9:1 on --accent — AA with margin); siblings stay neutral .btn */
+.btn-primary {
+  background: var(--accent); border-color: var(--accent);
+  color: var(--bg); font-weight: 600;
+}
+.btn-primary:hover { background: color-mix(in srgb, var(--accent) 86%, #fff); color: var(--bg); }
+.cta-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+.cta-row .btn { text-decoration: none; }
 
 /* ---- 3D twin ---------------------------------------------------------------------------- */
 .twin { display: grid; gap: var(--sp-3); }
@@ -429,14 +438,27 @@ details.chain[open] > summary { margin-bottom: var(--sp-2); }
 /* designs gallery: the visible preset label under each demonstrated view */
 .preset-note { font-size: var(--fs-sm); color: var(--muted); max-width: 88ch; margin: 0 0 var(--sp-4); }
 
-/* nav: 15 links overflow on narrow screens — fade the cut edge as the scent */
+/* nav: 16 links overflow on narrow screens — fade the cut edge as the scent
+   (v3.5: wider fade + momentum scroll; the fade is the affordance, per A-16d) */
 @media (max-width: 1260px) {
   .nav-inner {
-    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
-    mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
-    padding-right: var(--sp-6);
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+    padding-right: var(--sp-7);
+    -webkit-overflow-scrolling: touch;
   }
 }
+
+/* v3.5 field-guide watch-cards (risks.html #fieldguide) */
+.fg-list {
+  list-style: none; margin: 0 0 var(--sp-3); padding: 0;
+  font-size: var(--fs-sm); color: var(--ink-2);
+}
+.fg-list li {
+  padding: var(--sp-2) 0; border-top: 1px solid var(--hairline);
+}
+.fg-list li:first-child { border-top: 0; }
+.fg-list strong { color: var(--ink); font-weight: 500; }
 
 /* chips: 16px glyph, ≥24px effective touch target (invisible hit-area growth).
    text-indent reset: the derive-line hanging indent would otherwise inherit
@@ -516,6 +538,15 @@ div:has(> svg.dg) { overflow-x: auto; }
   background: var(--surface); padding: var(--sp-2) var(--sp-3);
   margin: 0 0 var(--sp-4);
 }
+/* v3.5: build-time reserved slot the bar mounts into (CLS fix). Pure spacer —
+   its outer height mirrors the mounted bar's so replaceWith() shifts nothing;
+   heights are MEASURED from the rendered bar (see evidence/uiux-v35). */
+.scen-slot { height: 65px; margin: 0 0 var(--sp-4); }
+@media (max-width: 1079px) { .scen-slot { height: 94px; } }
+@media (max-width: 520px)  { .scen-slot { height: 134px; } }
+@media (max-width: 440px)  { .scen-slot { height: 154px; } }
+@media (max-width: 375px)  { .scen-slot { height: 179px; } }
+@media print { .scen-slot { display: none; } }
 .scenariobar.scen-active { border-color: var(--accent); }
 .scen-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
 .scen-title {

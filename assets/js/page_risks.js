@@ -298,8 +298,18 @@
                            " · [A] " + R.meta.tally.A + " primary evidence";
   }
 
-  // "top failure classes" cards jump-filter the table (system or text filter)
+  // "top failure classes" cards jump-filter the table (system or text filter);
+  // v3.5 field-guide cards additionally deep-open a single mode (data-open-jump)
   document.addEventListener("click", (ev) => {
+    const o = ev.target.closest("[data-open-jump]");
+    if (o) {
+      ev.preventDefault();
+      state.sys = ""; state.q = "";
+      reflectControls();
+      applyFilter();
+      openMode(o.getAttribute("data-open-jump"), true);
+      return;
+    }
     const t = ev.target.closest("[data-sys-jump],[data-q-jump]");
     if (!t) return;
     ev.preventDefault();

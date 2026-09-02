@@ -482,7 +482,11 @@
     psel.addEventListener("change", onBarChange);
     tgt.addEventListener("change", onBarChange);
     seg.addEventListener("change", onBarChange);
-    host.insertBefore(bar, host.firstChild);
+    // v3.5: pages reserve a fixed-height .scen-slot at build time — mounting
+    // into it (rather than prepending) removes the layout shift the bar used
+    // to cause (plan.html CLS 0.08 → ~0). Legacy prepend kept as fallback.
+    const slot = host.querySelector(".scen-slot") || document.querySelector(".scen-slot");
+    if (slot) { slot.replaceWith(bar); } else { host.insertBefore(bar, host.firstChild); }
     barEl = bar;
 
     // two-way sync: a page's own platform select (rack/tco/capex) updates the

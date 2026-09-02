@@ -3,13 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI-DC Calculator — end-to-end planner, power, cooling, racks, capex, fiber, TCO, colo, neocloud, land</title>
-<meta name="description" content="Eleven generic, source-cited engineering estimators for AI data centers — including an end-to-end planner (GPUs in: racks, power, cooling, fabric, cost, TCO and land in acres out, with a parametric site plan), a colo-developer model with an optional financing view (build the facility, lease the kW), a neocloud-operator lens (own the fleet, sell GPU-hours) and a land/acres estimator — plus power &amp; electrical sizing, cooling feasibility, rack planning by GPU platform, capex and $/GPU-hr cost floor, fiber plant, commissioning load steps, and a build-vs-lease GPU TCO-over-time model, with engineering views: reference design drawings, the fiber-plant layout and a 116-mode failure-mode explorer. Every default carries a stated/derived/assumed provenance chip. Runs entirely in your browser.">
-<meta property="og:title" content="AI-DC Calculator">
-<meta property="og:description" content="Engineering estimator for AI data centers with visible math and per-value provenance. No tracking, no CDN, fully client-side.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://dmvevents.github.io/aidc-calculator/">
-<meta property="og:image" content="https://dmvevents.github.io/aidc-calculator/assets/img/og.png">
+<title>Investor screen — IRR, NPV, MOIC on a GPU fleet build — AI-DC Calculator</title>
+<meta name="description" content="The equity check: capex year 0 (derived live), EBITDA through a utilisation ramp against a sell rate with an optional decay curve, terminal at exit, optional leverage on the published SEC ladder — unlevered and levered IRR, NPV at your hurdle, MOIC, payback, year-1 DSCR, and a rate-by-decay sensitivity grid. An equity screen, not an underwriting model.">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="preload" href="assets/fonts/InterVariable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
 <link rel="preload" href="assets/fonts/JetBrainsMono-Variable.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
@@ -642,7 +637,7 @@ font-variant-numeric: tabular-nums; }
 
 <nav class="nav" aria-label="Pages">
   <div class="nav-inner">
-    <span class="nav-mark"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</span>
+    <a class="nav-mark" href="index.html"><img src="assets/img/favicon.svg" alt="" width="22" height="22">AI-DC CALC</a>
     <a href="plan.html">Plan</a>
     <a href="power.html">Power</a>
     <a href="cooling.html">Cooling</a>
@@ -653,7 +648,7 @@ font-variant-numeric: tabular-nums; }
     <a href="tco.html">TCO</a>
     <a href="colo.html">Colo</a>
     <a href="neocloud.html">Neocloud</a>
-    <a href="invest.html">Invest</a>
+    <a href="invest.html" class="is-active" aria-current="page">Invest</a>
     <a href="land.html">Land</a>
     <a href="designs.html">Designs</a>
     <a href="fiber-layout.html">Fiber layout</a>
@@ -662,211 +657,48 @@ font-variant-numeric: tabular-nums; }
     <a href="sources.html">Sources</a>
   </div>
 </nav>
-<header class="masthead wrap">
-  <h1>AI data-center calculator</h1>
-  <div class="masthead-grid">
-    <div>
-      <p class="lede">Twelve engineering estimators and four engineering views for GPU-era
-      data centers — an end-to-end planner (GPUs in, a whole site out: racks, MW, cost and
-      acres), power, cooling, racks, capex, fiber, commissioning, TCO, the colo-developer
-      model, the neocloud operator lens, the investor screen, land, drawings, the fiber plant, failure modes and a 3D twin. Every default
-      wears a provenance chip
-      (<span class="legend-inline"><a class="chip chip-s" href="sources.html#legend">S</a> stated
-      · <a class="chip chip-d" href="sources.html#legend">D</a> derived
-      · <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span>) that links to
-      its citation, and nothing leaves your browser.</p>
-      <div class="derive masthead-specimen" aria-label="Example derivation chain">
-        <div class="derive-title micro">Every headline number shows its math — like this</div>
-        <div class="derive-line">F13 · facility_mw = it_mw × PUE = 1.00 × 1.15
-          = 1.15 MW <a class="chip chip-d" href="sources.html#dsx-kpi"
-          aria-label="derived — view source"
-          title="derived: arithmetic shown">D</a></div>
-        <div class="derive-note">live with your numbers on the <a href="power.html">power
-        page</a> — click any chip for its citation</div>
-      </div>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="plan.html">Open the planner →</a>
-        <a class="btn" href="3d.html">See the facility in 3D</a>
-        <a class="btn" href="risks.html">What breaks — 116 failure modes</a>
-      </div>
-    </div>
-    <img class="masthead-visual" src="assets/img/hero-gb200-nvl72.webp" fetchpriority="high"
-         alt="Procedural 3D render of a GB200 NVL72 row group — compute racks, in-row CDUs, fabric racks, overhead busway and TCS mains — generated from the public variant data."
-         width="1600" height="800">
+<header class="masthead masthead-calc wrap">
+  <h1>Investor screen — equity returns on a GPU fleet build</h1>
+  <p class="lede">The fourth business lens: the <a href="colo.html">colo page</a> is the
+  landlord, the <a href="tco.html">TCO page</a> is the owner's cost, the
+  <a href="neocloud.html">neocloud page</a> is the operator's margin — this page is the
+  <strong>equity check</strong>. The capex engine derives the build and the cash-opex
+  basis live; you supply a sell rate (dated on-demand anchors listed) and, if you want,
+  a <strong>decay curve</strong> and a <strong>loan-to-cost</strong> from your term sheet —
+  and the page returns <strong>IRR (unlevered and levered), NPV at your hurdle, MOIC,
+  payback and year-1 DSCR</strong> over the hold period. An equity screen, not an
+  underwriting model — the notes carry every exclusion.</p>
+  <div class="section-head">
+    <span class="fid">capex year 0 · EBITDA ramp · terminal at exit</span>
+    <a class="fid" href="sources.html#invest-model">method &amp; exclusions</a>
+    <a class="fid" href="sources.html#parity">parity: calc_invest.py</a>
+    <button class="btn" id="inv-copy" type="button">Copy as Markdown</button>
   </div>
 </header>
 
 <main class="wrap">
-
-  <div class="cards">
-    <article class="card card-featured" id="plan">
-      <span class="micro">Start here · End-to-end</span>
-      <h2><a href="plan.html">End-to-end planner — GPUs in, a whole site out</a></h2>
-      <p>Pick a platform, type a GPU count: racks and rows, the power chain, cooling and
-      CDUs, the network fabric, capex, the $/GPU-hr floor, 5-year TCO, the colo view and
-      <strong>land in acres</strong> with a parametric site plan — every card deep-links
-      into its full calculator carrying your inputs.</p>
-      <span class="card-open"><a href="plan.html">Open the planner →</a></span>
-    </article>
-
-    <article class="card" id="power">
-      <span class="micro">1 · Power &amp; electrical</span>
-      <h2><a href="power.html">Power &amp; electrical sizing</a></h2>
-      <p>How many MW, MVA, UPS modules, gensets and litres of fuel does an IT load need — and
-      does the busway chain hold up rack by rack?</p>
-      <span class="card-open"><a href="power.html">Open the power calculator →</a></span>
-    </article>
-
-    <article class="card" id="cooling">
-      <span class="micro">2 · Cooling</span>
-      <h2><a href="cooling.html">Cooling load &amp; heat-rejection feasibility</a></h2>
-      <p>Can this climate reject the heat — dry, wetted-assist or not at all — and what flow,
-      CDU count and pump head does the liquid loop need?</p>
-      <span class="card-open"><a href="cooling.html">Open the cooling calculator →</a></span>
-    </article>
-
-    <article class="card" id="racks">
-      <span class="micro">3 · Rack planner</span>
-      <h2><a href="rack.html">Rack planner by GPU platform</a></h2>
-      <p>How many racks, rows, MW and kilograms does a GPU count become on GB200/GB300 NVL72,
-      HGX B200 or DGX B200 — with the cross-platform matrix?</p>
-      <span class="card-open"><a href="rack.html">Open the rack planner →</a></span>
-    </article>
-
-    <article class="card" id="capex">
-      <span class="micro">4 · Capex</span>
-      <h2><a href="capex.html">Capex &amp; $/GPU-hr cost floor</a></h2>
-      <p>What does a build cost per MW and per GPU on published benchmarks — and what static
-      cost floor per billable GPU-hour does that imply?</p>
-      <span class="card-open"><a href="capex.html">Open the capex calculator →</a></span>
-    </article>
-
-    <article class="card" id="fiber">
-      <span class="micro">5 · Fiber</span>
-      <h2><a href="fiber.html">Fiber plant &amp; latency</a></h2>
-      <p>How many links, transceivers, strands and trunks does the fabric need — and does the
-      channel clear its insertion-loss budget?</p>
-      <span class="card-open"><a href="fiber.html">Open the fiber calculator →</a></span>
-    </article>
-
-    <article class="card" id="commissioning">
-      <span class="micro">6 · Commissioning</span>
-      <h2><a href="commissioning.html">Commissioning — load steps, energy, timeline</a></h2>
-      <p>When does the site need how many MW of test load — house → mechanical → UPS load-banks
-      → IST → GPU burn-in — and what does that energy cost?</p>
-      <span class="card-open"><a href="commissioning.html">Open the commissioning calculator →</a></span>
-    </article>
-
-    <article class="card" id="tco">
-      <span class="micro">7 · TCO</span>
-      <h2><a href="tco.html">Colo + GPUs: total cost per GPU over time</a></h2>
-      <p>Build a hall or lease colo space, buy a GPU fleet, run it 1–6 years: levelized and
-      by-year $/GPU-hour, the cumulative cash curve, and break-even against a market rental
-      rate you enter.</p>
-      <span class="card-open"><a href="tco.html">Open the TCO calculator →</a></span>
-    </article>
-
-    <article class="card" id="colo">
-      <span class="micro">8 · Colo developer</span>
-      <h2><a href="colo.html">Build the facility, lease the kW</a></h2>
-      <p>The landlord's side: facility capex only (no GPUs), CBRE rate anchors, opex on full
-      capacity — the landlord cost floor $/kW-month, NOI, yield-on-cost and break-even
-      occupancy.</p>
-      <span class="card-open"><a href="colo.html">Open the colo calculator →</a></span>
-    </article>
-
-    <article class="card" id="neocloud">
-      <span class="micro">9 · Neocloud operator</span>
-      <h2><a href="neocloud.html">Own the fleet, sell GPU-hours</a></h2>
-      <p>The operator lens: all-in build and $/GPU-hr cost floor derived live, your sell
-      rate against dated on-demand anchors — margin per GPU-hour, revenue and payback vs
-      the GPU book life.</p>
-      <span class="card-open"><a href="neocloud.html">Open the neocloud calculator →</a></span>
-    </article>
-
-    <article class="card" id="land">
-      <span class="micro">10 · Land &amp; site</span>
-      <h2><a href="land.html">Land &amp; site area — MW to acres</a></h2>
-      <p>Component pads from the reference site plan, a setback factor and an expansion
-      reserve — parcel m², <strong>acres</strong>, MW per acre and a diagrammatic site plan,
-      with an optional land price.</p>
-      <span class="card-open"><a href="land.html">Open the land calculator →</a></span>
-    </article>
-
-    <article class="card">
-      <span class="micro">11 · Investor returns</span>
-      <h2><a href="invest.html">Investor screen — IRR, NPV, MOIC on a fleet build</a></h2>
-      <p>The equity check: capex year 0 (derived live), a utilisation ramp against your
-      sell rate with an optional <strong>decay curve</strong>, terminal at exit, optional
-      <strong>leverage</strong> on the published SEC ladder — unlevered/levered IRR, NPV at
-      your hurdle, MOIC, payback, DSCR, and a rate×decay sensitivity grid.</p>
-      <span class="card-open"><a href="invest.html">Open the investor screen →</a></span>
-    </article>
-
-  </div>
-
-  <section class="section" id="eng-views" aria-labelledby="eng-views-h">
-    <h2 id="eng-views-h">Engineering views</h2>
-    <p>The drawings and the risk analysis behind the calculators — same parity-tested
-    engines, same provenance discipline, rendered as interactive views you can filter,
-    deep-link, download as SVG and print.</p>
-    <div class="cards">
-      <article class="card" id="designs">
-        <span class="micro">Views · Reference designs</span>
-        <h2><a href="designs.html">Reference designs — one-line, cooling, hall plan</a></h2>
-        <p>The annotated electrical one-line (F13–F18), the cooling schematic with the
-        ASHRAE W-class ladder (F1–F5), and the hall layout plan that matches the 3D
-        scene — live-sized by your inputs, each downloadable as a standalone SVG.</p>
-        <span class="card-open"><a href="designs.html">Open the design gallery →</a></span>
-      </article>
-      <article class="card" id="fiber-layout">
-        <span class="micro">Views · Fiber layout</span>
-        <h2><a href="fiber-layout.html">Fiber layout — logical &amp; physical</a></h2>
-        <p>The fabric as a graph — link, switch and pluggable counts computed live by
-        the fiber engine — and as tray/pathway routing on the hall plan, including the
-        NVL72 rear-copper vs front-fiber distinction.</p>
-        <span class="card-open"><a href="fiber-layout.html">Open the fiber layout →</a></span>
-      </article>
-      <article class="card" id="risks">
-        <span class="micro">Views · Failure modes</span>
-        <h2><a href="risks.html">Risks — the failure-mode explorer</a></h2>
-        <p>116 generic failure modes across 11 building systems — mechanism → symptom →
-        detection → prevention → recovery with citations, filterable by system, phase
-        and detection method; top classes ranked by published industry outage data.</p>
-        <span class="card-open"><a href="risks.html">Open the failure-mode explorer →</a></span>
-      </article>
-      <article class="card card-teaser" id="twin">
-        <span class="micro">3D · Digital twin — site to rack</span>
-        <h2><a href="3d.html">The whole facility in 3D</a></h2>
-        <a href="3d.html"><img src="assets/img/hero-scene-building.webp" loading="lazy"
-             alt="Procedural 3D render of a generic single-hall AI data center: four contained rack rows flanked by a mechanical gallery and electrical rooms, with genset and dry-cooler pads in the yard."
-             width="1600" height="800"></a>
-        <p>A generic single-hall AI facility generated from the same public data as the
-        calculators — contained rack rows, the CDU gallery, electrical rooms, gensets and
-        the dry-cooler pad. Seven camera presets from site to rack close-up, five layer
-        toggles (liquid · power · fiber · shell), and thirteen provenance-chipped hotspots that
-        deep-link into the calculators — plus one row group of each GPU platform at real
-        dimensions. Static renders first; the viewer loads only if you ask.</p>
-        <span class="card-open"><a href="3d.html">Open the 3D viewer →</a></span>
-      </article>
+  <section class="section section-calc" id="inv" aria-label="Investor returns calculator">
+    <div class="scen-slot" aria-hidden="true"></div>
+    <p class="preset-note">The two levers that kill GPU deals live on this page as inputs,
+    not footnotes: <strong>rate decay</strong> (0 = flat is the optimistic case — H100
+    street history is double-digit annual decline) and <strong>leverage</strong> (the same
+    published SEC ladder as the colo page; GPU-secured paper prices at the wide end and
+    amortizes inside the asset life). The sensitivity grid below re-runs the full model
+    per cell, so leverage amplification is visible, never smoothed.</p>
+    <div class="calc-grid">
+      <div class="panel panel-inputs" id="inv-inputs" aria-label="Investor inputs"></div>
+      <div class="panel panel-outputs">
+        <div class="hero-tile" id="inv-hero"></div>
+        <details class="chain">
+          <summary>Derivation chain — the governing formulas with your numbers</summary>
+          <div class="derive" id="inv-derive" aria-label="Derivation chain"></div>
+        </details>
+        <div id="inv-sens" aria-label="IRR sensitivity grid"></div>
+        <div class="matrix-scroll"><table class="out-table" aria-label="Investor outputs"><tbody id="inv-out"></tbody></table></div>
+        <ul class="notes" id="inv-notes"></ul>
+      </div>
     </div>
   </section>
-
-  <section class="section" id="promise" aria-labelledby="promise-h">
-    <h2 id="promise-h">The provenance promise</h2>
-    <p>Every load-bearing default carries a <span class="legend-inline"><a class="chip chip-s"
-    href="sources.html#legend">S</a> stated · <a class="chip chip-d"
-    href="sources.html#legend">D</a> derived · <a class="chip chip-a"
-    href="sources.html#legend">A</a> assumed</span> chip that deep-links to its citation on the
-    <a href="sources.html">Sources page</a>, and every headline number shows the governing
-    formula with your actual values substituted. The calculators are line-for-line ports of a
-    frozen reference core, verified by an automated parity diff
-    (<a href="sources.html#parity">details</a>). Your inputs recompute instantly and live in
-    each page's URL fragment, so a link reproduces your exact scenario. The site is static and
-    fully client-side — no tracking, no CDN, no cookies; external links are citations, not
-    loads.</p>
-  </section>
-
 </main>
 
 <footer class="footer">
@@ -878,8 +710,13 @@ font-variant-numeric: tabular-nums; }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · no tracking, no CDN, no cookies · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.0 · updated 2026-09-02</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.0 · updated 2026-09-02</p>
   </div>
 </footer>
+<script>
+// progressive boot: the page is readable static HTML first; the calculator
+// engine loads at DOMContentLoaded (sequential, order-preserving).
+(function(){function go(){["assets/js/result.js?v360","assets/js/app.js?v360","assets/js/rackdata.js?v360","assets/js/calc_capex.js?v360","assets/js/calc_invest.js?v360","assets/js/scenario.js?v360","assets/js/page_invest.js?v360","assets/js/export_xlsx.js?v360","assets/js/export_pdf.js?v360","assets/js/export.js?v360"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}document.readyState==="loading"?addEventListener("DOMContentLoaded",go):go();})();
+</script>
 </body>
 </html>
