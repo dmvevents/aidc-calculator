@@ -108,7 +108,11 @@
     const leaf_n = su * rails * leaves;
     const spine_n = su * rails * spines;
     const core_n = tiers >= 3 ? rails * cores_per_rail : 0;
-    const leaf_ports = trays + spines * lls;
+    // per-leaf downlinks = the SU's NIC links per rail spread across its leafs;
+    // ceil = the worst-loaded leaf. Equals trays_per_rack ONLY when
+    // leaves == racks_per_su (deep-audit A1 — the old shortcut overcounted).
+    const leaf_down = Math.ceil(rps * trays / leaves);
+    const leaf_ports = leaf_down + spines * lls;
     const spine_ports = leaves * lls + (tiers >= 3 ? cores_per_rail * lsc : 0);
     const core_ports = tiers >= 3 ? su * spines * lsc : 0;  // no core tier -> no ports (v3.1 A-10)
 
@@ -158,6 +162,9 @@
     const tray_area_mm2 = Math.trunc(p.cables_per_tray) * area_per_cable_mm2 / Number(p.tray_fill_max);
     const tray_load_kg_m = Math.trunc(p.cables_per_tray) * FIBER_KG_PER_M;
 
+    if (Math.trunc(p.spares_per_endpoints) <= 0) {
+      throw new Error("spares_per_endpoints must be > 0");
+    }
     const spares = Math.ceil(port_ends / Math.trunc(p.spares_per_endpoints));
 
     const out = {
@@ -173,7 +180,8 @@
       switches_leaf: q(leaf_n, "", "[D]", "su x rails x leaves_per_su_rail"),
       switches_spine: q(spine_n, "", "[D]", "su x rails x spines_per_su_rail"),
       switches_core: q(core_n, "", "[D]", "rails x cores_per_rail"),
-      ports_per_leaf: q(leaf_ports, "", "[D]", "trays down + spines x links_leaf_spine up"),
+      ports_per_leaf: q(leaf_ports, "", "[D]", "ceil(racks_per_su x trays / leaves) down (worst-loaded leaf) " +
+                          "+ spines x links_leaf_spine up (deep-audit A1)"),
       ports_per_spine: q(spine_ports, "", "[D]", "leaves x links down + cores x links up"),
       ports_per_core: q(tiers >= 3 ? core_ports : null, "", "[D]",
                         "su x spines x links_spine_core (tiers=3 only)"),
@@ -211,7 +219,14 @@
                             "cables x 0.009 kg/m fiber jumper [S] (§6.7)"),
     };
 
-    const notes = [
+    const notes = [];
+    if ((rps * trays) % leaves) {
+      notes.push(
+        "NIC links per SU rail (" + (rps * trays) + ") do not divide evenly across " +
+        leaves + " leafs — per-leaf figures use the worst-loaded leaf (ceil " +
+        leaf_down + "); rebalance racks per leaf or adjust the SU split for an even fabric.");
+    }
+    notes.push(...[
       "Lengths here use ONE representative dx/dy. A real BOM runs §6.2 per link over the " +
       "layout generator's rack positions so cable lengths stay twin-consistent — that " +
       "per-link pass belongs in the topology generator, not in this estimator " +
@@ -221,7 +236,7 @@
       "structural sign-off (research/09 §8 A-2).",
       "Optics power is real IT load AND real heat — budget a network.optics_kw line " +
       "item; it is routinely omitted (research/09 §7).",
-    ];
+    ]);
     if (!out.channel_il_pass.value) {
       notes.push(
         "CHANNEL LOSS FAILS the " + String(p.loss_budget_media).toUpperCase() +

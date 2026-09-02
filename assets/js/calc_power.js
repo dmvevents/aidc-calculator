@@ -138,6 +138,7 @@
     }
 
     const it = Number(p.it_mw);
+    if (!(it > 0)) throw new Error("it_mw must be > 0");
     const pue = Number(p.pue);
     const pf = Number(p.pf);
     const facility = it * pue;

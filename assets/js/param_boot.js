@@ -24,7 +24,7 @@
       return (s && DB[s.platform] && Number(s.target) > 0) ? s : null;
     } catch (e) { return null; }
   }
-  function deriveRacks(plat, driver, target) {
+  function deriveGpus(plat, driver, target) {
     const g = DB[plat].gpus_per_rack, k = DB[plat].nameplate_kw;
     const ceilEps = (x) => Math.ceil(x - 1e-9 * Math.max(1, Math.abs(x)));
     let racks;
@@ -40,7 +40,7 @@
     let plat = platSel && platSel.value;
     let gpus = gpuInp && Number(gpuInp.value);
     if ((!plat || !gpus) && scen) {
-      const g2 = deriveRacks(scen.platform, scen.driver, Number(scen.target));
+      const g2 = deriveGpus(scen.platform, scen.driver, Number(scen.target));
       if (!plat) { plat = scen.platform; if (platSel) platSel.value = plat; }
       if (!gpus) { gpus = g2; if (gpuInp) gpuInp.value = String(g2); }
     }

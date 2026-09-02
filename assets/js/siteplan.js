@@ -74,11 +74,14 @@
     const pads = {};
     for (const key in REF) {
       const area = o[key + "_m2"].value;
-      const w = Math.sqrt(area * (REF[key].w / REF[key].l));
+      if (!(area > 0)) continue;               // zero-area pad = not drawn (audit A3:
+      const w = Math.sqrt(area * (REF[key].w / REF[key].l));   // 0/0 NaN-poisoned the SVG)
       pads[key] = { area: area, w: w, l: area / w };
     }
     const BANDS = [["substation"], ["gensets", "building", "cooling"],
-                   ["water", "parking_roads"]];
+                   ["water", "parking_roads"]]
+      .map((row) => row.filter((k) => pads[k]))
+      .filter((row) => row.length);
     const bandD = BANDS.map((r) => Math.max.apply(null, r.map((k) => pads[k].l)));
     const bandW = BANDS.map((r) => r.reduce((a, k) => a + pads[k].w, 0));
     const fit = Math.min(1,
@@ -92,8 +95,10 @@
       const bd = bandD[bi] * (fit < 1 ? fit : 1);
       const rw = row.reduce((a, k) => a + pads[k].w, 0);
       const xGap = (W1 - rw) / (row.length + 1);
-      // substation band right-aligns (reference NE corner reading)
-      let xCur = (bi === 0) ? W1 - xGap - pads[row[0]].w : xGap;
+      // single-pad band right-aligns with a fixed margin (true NE reading —
+      // audit A9: (W1-w)/2 as the gap degenerated to centered)
+      let xCur = (row.length === 1)
+        ? W1 - Math.min(xGap, W1 * 0.06) - pads[row[0]].w : xGap;
       for (const key of row) {
         const p2 = pads[key];
         const y = zCur + (bd - p2.l) / 2;
