@@ -257,6 +257,88 @@
       }
       const sp = document.getElementById("plan-siteplan");
       if (sp && A.siteplan) A.siteplan.render(sp, c.land);
+
+      // DSX reference envelope — where this scenario sits against the published
+      // bands. Informational placement, not certification: WITHIN/ABOVE report
+      // position, INFO rows carry the stance/context.
+      const dsxHost = document.getElementById("plan-dsx");
+      if (dsxHost) {
+        const v = c.v;
+        const wClassOf = (t) => {
+          for (const [nm, cap] of A.calcCooling.W_CLASSES) if (t <= cap) return nm;
+          return "W+";
+        };
+        const acres = c.land.outputs.site_acres.value;
+        const rows = [
+          ["facility PUE", d(v.pue_target), "DSX KPI band 1.15–1.20",
+           v.pue_target <= 1.20 ? "within" : "above", "dsx-kpi"],
+          ["liquid heat capture", (v.liquid_pct || 0) + "%",
+           "NVL-class 87% headline (85.7% kW split)",
+           (v.liquid_pct || 0) >= 85 ? "within" : (v.liquid_pct ? "below" : "air-cooled"),
+           "aif-template"],
+          ["rack density", d(v.nameplate_kw) + " kW",
+           "NVL72-class envelope 132–140 kW",
+           v.nameplate_kw >= 132 ? "within" : "below", "variants"],
+          [v.design_inlet_c != null ? "liquid class at " + d(v.design_inlet_c) + " °C inlet"
+                                    : "liquid class", 
+           v.design_inlet_c != null ? wClassOf(v.design_inlet_c) : "n/a (air-cooled)",
+           "ASHRAE ladder W17/W27/W32/W45", "info", "ashrae2021"],
+          ["UPS stance", "core-only in the DSX RD",
+           "GPU load rides through on thermal mass — size it on the cooling page (F8)",
+           "info", "dsx-rd"],
+          ["site density", d(c.itMw / acres) + " MW-IT/acre",
+           "single-story greenfield ~0.6–0.9; DSX ref site ~50 acres at GW class (multi-story)",
+           "info", "dsx-rd"],
+        ];
+        const wrap = document.createElement("div");
+        wrap.className = "dsx-panel";
+        const h = document.createElement("p");
+        h.className = "micro dsx-title";
+        h.textContent = "DSX reference envelope — where this scenario sits";
+        wrap.appendChild(h);
+        const tbl = document.createElement("table");
+        tbl.className = "matrix dsx-tbl";
+        const tb = document.createElement("tbody");
+        for (const [k, val, band, badge, cite] of rows) {
+          const tr = document.createElement("tr");
+          const th = document.createElement("th");
+          th.textContent = k;
+          tr.appendChild(th);
+          const tdv = document.createElement("td");
+          tdv.className = "num";
+          tdv.textContent = val;
+          tr.appendChild(tdv);
+          const tdb = document.createElement("td");
+          const bs = document.createElement("span");
+          bs.className = "dsx-badge dsx-" + (badge === "within" ? "ok" :
+            (badge === "above" || badge === "below" ? "warn" : "info"));
+          bs.textContent = badge.toUpperCase();
+          tdb.appendChild(bs);
+          tr.appendChild(tdb);
+          const tdn = document.createElement("td");
+          tdn.className = "dsx-band";
+          tdn.appendChild(document.createTextNode(band + " "));
+          const a2 = document.createElement("a");
+          a2.className = "chip chip-s";
+          a2.href = "sources.html#" + cite;
+          a2.textContent = "S";
+          a2.setAttribute("aria-label", "stated — view source");
+          tdn.appendChild(a2);
+          tr.appendChild(tdn);
+          tb.appendChild(tr);
+        }
+        tbl.appendChild(tb);
+        wrap.appendChild(tbl);
+        const foot = document.createElement("p");
+        foot.className = "dsx-foot";
+        foot.innerHTML = 'Placement, not certification. DSX = Reference Design · Sim · OS · ' +
+          'MaxLPS · Flex · Exchange — this site implements the RD-side sizing math ' +
+          '(<a class="chip chip-s" href="sources.html#dsx-family" ' +
+          'aria-label="stated — view source">S</a>); the power page\'s Minimum Power ' +
+          'Floor models the Flex-side smoothing lever (F16).';
+        wrap.appendChild(foot);
+        dsxHost.replaceChildren(wrap);
+      }
       const tw = document.getElementById("plan-3d-link");
       if (tw) tw.href = "3d.html#variant=" + encodeURIComponent(c.plat);
     },

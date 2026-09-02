@@ -349,6 +349,120 @@ globalThis.SCENE3D = {
    ]
   },
   {
+   "id": "tes",
+   "label": "TES & ride-through",
+   "layer": "liquid",
+   "link": {
+    "href": "cooling.html#cool.loop_volume_l=5000",
+    "label": "Size ride-through & TES (F8)"
+   },
+   "normal": "0 1 0",
+   "note": "Seconds of loop mass is why pumps and fans sit on the UPS while GPU compute does not \u2014 the cooling page's F8 row sizes the tank that buys minutes.",
+   "pos": "-8.575 2.8 9.9",
+   "rows": [
+    {
+     "chip": "S",
+     "cite": "dsx-rd",
+     "k": "DSX stance",
+     "v": "GPU load rides through on thermal mass"
+    },
+    {
+     "chip": "D",
+     "cite": "refdesign",
+     "k": "loop reality",
+     "v": "loop mass buys SECONDS (~13 s at 10 K class)"
+    },
+    {
+     "chip": "D",
+     "cite": "scene3d-method",
+     "k": "TES sizing",
+     "v": "F8: Q x bridge-min / (rho-cp x dT-allow)"
+    },
+    {
+     "chip": "D",
+     "cite": "refdesign",
+     "k": "mandate",
+     "v": "CDU pumps + fans on UPS, not gensets"
+    }
+   ]
+  },
+  {
+   "id": "parcel",
+   "label": "Parcel & land",
+   "layer": "shell",
+   "link": {
+    "href": "land.html#land.it_mw=1.15",
+    "label": "Size land & acres"
+   },
+   "normal": "0 1 0",
+   "note": "Six component pads x a circulation/setback factor turn MW into acres \u2014 the land page carries the bands and the priced-land row.",
+   "pos": "-81 0.6 -58.5",
+   "rows": [
+    {
+     "chip": "A",
+     "cite": "variants",
+     "k": "parcel",
+     "v": "180 x 135 m (6.0 acres)"
+    },
+    {
+     "chip": "D",
+     "cite": "land-model",
+     "k": "this hall needs",
+     "v": "~0.88 acres at zero reserve"
+    },
+    {
+     "chip": "D",
+     "cite": "land-model",
+     "k": "developed pads",
+     "v": "~1879 m2 across six pad classes"
+    },
+    {
+     "chip": "A",
+     "cite": "land-model",
+     "k": "headroom",
+     "v": "reserve fraction banks future halls"
+    }
+   ]
+  },
+  {
+   "id": "colo",
+   "label": "Leasable capacity",
+   "layer": "shell",
+   "link": {
+    "href": "colo.html#colo.it_mw=1.15",
+    "label": "Run the landlord model"
+   },
+   "normal": "0 1 0",
+   "note": "Build the facility, lease the kW: the colo page prices this hall as a product \u2014 cost floor, NOI, yield-on-cost and the optional financing view.",
+   "pos": "0.8 5.6 1.2",
+   "rows": [
+    {
+     "chip": "D",
+     "cite": "variants",
+     "k": "leasable IT",
+     "v": "1.15 MW-IT"
+    },
+    {
+     "chip": "D",
+     "cite": "colo-model",
+     "k": "landlord floor",
+     "v": "~$155/kW-mo at 0.85 occupancy"
+    },
+    {
+     "chip": "S",
+     "cite": "cbre-colo",
+     "k": "retail anchor",
+     "v": "$217.30/kW-mo asking (CBRE)"
+    },
+    {
+     "chip": "D",
+     "cite": "colo-model",
+     "k": "yield-on-cost",
+     "v": "~10% at the anchor, 0.85 occupancy"
+    }
+   ]
+  },
+  {
    "id": "mv",
    "label": "MV yard / utility service",
    "layer": "power",
@@ -407,7 +521,8 @@ globalThis.SCENE3D = {
     "crah",
     "pipe",
     "fws",
-    "drycooler"
+    "drycooler",
+    "tes"
    ]
   },
   {
@@ -500,6 +615,15 @@ globalThis.SCENE3D = {
    ],
    "mode": "OPAQUE"
   },
+  "fence": {
+   "factor": [
+    0.14,
+    0.17,
+    0.22,
+    1.0
+   ],
+   "mode": "OPAQUE"
+  },
   "floor": {
    "factor": [
     0.045,
@@ -577,6 +701,15 @@ globalThis.SCENE3D = {
     0.22,
     0.42,
     0.6,
+    1.0
+   ],
+   "mode": "OPAQUE"
+  },
+  "tes": {
+   "factor": [
+    0.12,
+    0.38,
+    0.4,
     1.0
    ],
    "mode": "OPAQUE"

@@ -585,6 +585,18 @@ font-variant-numeric: tabular-nums; }
 font-size: var(--fs-xs); color: var(--accent); }
 .card-featured { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline)); }
 .card-featured h2 { font-size: var(--fs-lg); }
+.dsx-panel { margin: var(--sp-4) 0; background: var(--inset); border: 1px solid var(--hairline);
+border-radius: var(--r-card); padding: var(--sp-3) var(--sp-4); }
+.dsx-title { color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+margin: 0 0 var(--sp-2); }
+.dsx-tbl th { font-weight: 500; color: var(--ink-2); }
+.dsx-band { color: var(--muted); font-size: var(--fs-xs); }
+.dsx-badge { display: inline-block; font-size: var(--fs-xs); font-family: var(--font-mono);
+padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); }
+.dsx-ok { color: var(--good); border-color: color-mix(in srgb, var(--good) 55%, transparent); }
+.dsx-warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, transparent); }
+.dsx-info { color: var(--ink-2); }
+.dsx-foot { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--muted); }
 </style>
 </head>
 <body>
