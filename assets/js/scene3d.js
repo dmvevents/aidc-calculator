@@ -212,7 +212,7 @@ globalThis.SCENE3D = {
    },
    "normal": "0 1 0",
    "note": "The power page sizes genset units, block-load steps and fuel autonomy from the same facility load.",
-   "pos": "-0.05 2.7 -9.9",
+   "pos": "-1.75 2.7 -9.9",
    "rows": [
     {
      "chip": "A",

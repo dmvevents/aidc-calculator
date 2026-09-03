@@ -30,17 +30,20 @@
       capex_total_m: cap.outputs.capex_total_m.value,
       opex_fixed_m_yr: cap.outputs.opex_ex_power_m_yr.value,
       energy_usd_per_gpu_hr: cap.outputs.cost_energy_per_gpu_hr.value,
+      it_frac_of_capex: cap.outputs.capex_it_m.value / cap.outputs.capex_total_m.value,
       rate_usd_per_gpu_hr: kw.rate_usd_per_gpu_hr != null ? kw.rate_usd_per_gpu_hr : null,
       rate_decay_pct_yr: kw.rate_decay_pct_yr != null ? kw.rate_decay_pct_yr : null,
       util_y1: kw.util_y1 != null ? kw.util_y1 : null,
       util_steady: kw.util_steady != null ? kw.util_steady : null,
       horizon_yr: kw.horizon_yr != null ? kw.horizon_yr : null,
-      resale_frac_of_capex: kw.resale_frac_of_capex != null ? kw.resale_frac_of_capex : null,
+      resale_frac_of_fleet: kw.resale_frac_of_fleet != null ? kw.resale_frac_of_fleet : null,
+      facility_residual_frac: kw.facility_residual_frac != null ? kw.facility_residual_frac : null,
       ltc_pct: kw.ltc_pct != null ? kw.ltc_pct : null,
       debt_rate_pct: kw.debt_rate_pct != null ? kw.debt_rate_pct : null,
       debt_term_yr: kw.debt_term_yr != null ? kw.debt_term_yr : null,
       discount_rate_pct: kw.discount_rate_pct != null ? kw.discount_rate_pct : null,
-    }, ["gpus", "capex_total_m", "opex_fixed_m_yr", "energy_usd_per_gpu_hr"]);
+    }, ["gpus", "capex_total_m", "opex_fixed_m_yr", "energy_usd_per_gpu_hr",
+        "it_frac_of_capex"]);
     return { cap: cap, res: res };
   }
 
@@ -55,7 +58,8 @@
       util_y1: A.calcInvest.DEFAULTS.util_y1,
       util_steady: A.calcInvest.DEFAULTS.util_steady,
       horizon_yr: A.calcInvest.DEFAULTS.horizon_yr,
-      resale_frac_of_capex: A.calcInvest.DEFAULTS.resale_frac_of_capex,
+      resale_frac_of_fleet: A.calcInvest.DEFAULTS.resale_frac_of_fleet,
+      facility_residual_frac: A.calcInvest.DEFAULTS.facility_residual_frac,
       ltc_pct: A.calcInvest.DEFAULTS.ltc_pct,
       debt_rate_pct: A.calcInvest.DEFAULTS.debt_rate_pct,
       debt_term_yr: A.calcInvest.DEFAULTS.debt_term_yr,
@@ -83,7 +87,9 @@
       { key: "debt_term_yr", label: "FINANCING: amortization (yr)", src: "invest-model",
         step: 0.5, min: 0.5, advanced: true },
       { key: "horizon_yr", label: "hold period (yr)", src: "invest-model", step: 1, min: 1, max: 10, advanced: true },
-      { key: "resale_frac_of_capex", label: "terminal value (frac of capex)", src: "invest-model",
+      { key: "resale_frac_of_fleet", label: "fleet resale (frac of IT-fleet capex)", src: "invest-model",
+        step: 0.05, min: 0, max: 1, advanced: true },
+      { key: "facility_residual_frac", label: "facility residual (frac of non-fleet capex)", src: "invest-model",
         step: 0.05, min: 0, max: 1, advanced: true },
       { key: "discount_rate_pct", label: "NPV hurdle %/yr", src: "invest-model", step: 1, min: 0, advanced: true },
     ],
@@ -99,7 +105,8 @@
           " → revenue " + d(o.revenue_y1_m.value) + " US$M → EBITDA " + d(o.ebitda_y1_m.value) +
           " US$M; steady-state EBITDA " + d(o.ebitda_steady_m.value) + " US$M/yr",
         "exit year " + d(i.horizon_yr.value) + ": terminal " + d(o.terminal_value_m.value) +
-          " US$M (" + d(i.resale_frac_of_capex.value) + " × capex)" +
+          " US$M (fleet resale " + d(o.fleet_resale_m.value) + " + facility residual " +
+          d(o.facility_residual_m.value) + " US$M)" +
           (o.loan_m.value ? " − debt payoff" : ""),
       ];
       if (o.irr_unlevered_pct.value !== null && o.irr_unlevered_pct.value !== undefined) {

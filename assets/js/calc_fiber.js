@@ -1,10 +1,10 @@
 // Fiber plant: link counts, cable lengths, strands, transceivers, latency, loss.
 // parity: cli/aidc/core/calc_fiber.py — plant() and media_for() ported 1:1.
-// Direct implementation of research/09-network-fiber-routing.md §6.1-§6.7
+// Direct implementation of research/09-network-fiber-routing.md §6.1-§6.8
 // (the dossier's "calculator-ready" formulas). The defaults reproduce the
 // dossier's worked 4-SU example, so a no-input run is a regression test:
-// 2,304 / 2,304 / 1,728 = 6,336 fabric links, 12,672 port-ends,
-// 7,488 pluggables, 576 fibers/rack, ~101-127 kW optics (2.1-2.6% of IT).
+// 2,304 / 2,304 / 1,728 = 6,336 fabric links, 12,672 port-ends, 7,488
+// pluggables, 576 fibers/rack, 1.33:1 taper (0.75x bisection), ~101-127 kW optics.
 "use strict";
 (function () {
   const { q, result } = globalThis.AIDC.res;
@@ -104,6 +104,25 @@
     const n_fabric = n_nic_leaf + n_leaf_spine + n_spine_core;
     const n_storage = su * rps * trays * Math.trunc(p.storage_ports_per_tray);
 
+    // §6.8 fabric oversubscription + bisection — from the §6.1 tier link counts
+    // (equal-speed links => bandwidth ratio == link-count ratio). Per-tier ratios
+    // are informational (a tier reads < 1 when it is over-provisioned). The binding
+    // cut is the NARROWEST internal fabric cut, capped at the endpoint injection:
+    // delivered bisection can never exceed the ideal (n_nic_leaf / 2). In a monotone
+    // taper this equals the top cut and oversub_fabric == oversub_leaf x oversub_spine;
+    // an over-wide upper tier floors the fabric at non-blocking (1.0). A required tier
+    // with zero links => the fabric is undefined and the whole group nulls out.
+    const oversub_leaf = n_leaf_spine ? n_nic_leaf / n_leaf_spine : null;
+    const oversub_spine = (tiers >= 3 && n_spine_core) ? n_leaf_spine / n_spine_core : null;
+    const _internal_cuts = tiers >= 3 ? [n_leaf_spine, n_spine_core] : [n_leaf_spine];
+    const binding_cut = (_internal_cuts.every((c) => c) && n_nic_leaf)
+      ? Math.min(Math.min(..._internal_cuts), n_nic_leaf) : null;
+    const oversub_fabric = binding_cut ? n_nic_leaf / binding_cut : null;
+    const bisection_links = binding_cut ? binding_cut / 2.0 : null;
+    const bisection_full_links = n_nic_leaf ? n_nic_leaf / 2.0 : null;
+    const bisection_ratio = binding_cut ? binding_cut / n_nic_leaf : null;
+    const fabric_non_blocking = oversub_fabric !== null ? oversub_fabric <= 1.0 + 1e-9 : null;
+
     // switch counts + per-switch ports used (§6.4)
     const leaf_n = su * rails * leaves;
     const spine_n = su * rails * spines;
@@ -186,6 +205,25 @@
       ports_per_core: q(tiers >= 3 ? core_ports : null, "", "[D]",
                         "su x spines x links_spine_core (tiers=3 only)"),
       port_ends: q(port_ends, "", "[D]", "2 x links_fabric_total"),
+      oversub_leaf: q(oversub_leaf, "", "[D]",
+                      "links_nic_leaf / links_leaf_spine — leaf access:uplink ratio " +
+                      "(1.0 = non-blocking, the §1.2 18-down/18-up leaf anchor [S])"),
+      oversub_spine: q(oversub_spine, "", "[D]",
+                       "links_leaf_spine / links_spine_core — spine access:uplink ratio " +
+                       "(tiers=3; N/A when the spine is the root tier)"),
+      oversub_fabric: q(oversub_fabric, "", "[D]",
+                        "links_nic_leaf / narrowest binding cut — end-to-end taper " +
+                        "(= oversub_leaf x oversub_spine in a monotone taper; floors at " +
+                        "1.0 / non-blocking); >1 means oversubscribed"),
+      bisection_links: q(bisection_links, "links", "[D]",
+                         "narrowest binding cut / 2 — delivered bisection (<= ideal)"),
+      bisection_full_links: q(bisection_full_links, "links", "[D]",
+                              "links_nic_leaf / 2 — ideal (non-blocking) bisection"),
+      bisection_ratio: q(bisection_ratio, "", "[D]",
+                         "delivered / ideal bisection (= 1 / oversub_fabric; <= 1)"),
+      fabric_non_blocking: q(fabric_non_blocking, "", "[D]",
+                             "oversub_fabric <= 1 — design-dial verdict (a 1:1 fabric), " +
+                             "not a pass/fail like channel_il_pass"),
       switch_modules: q(switch_modules, "", "[D]", switch_modules_note),
       nic_modules: q(nic_modules, "", "[D]", "= links_nic_leaf, flat OSFP"),
       pluggables_total: q(pluggables, "", "[D]",
@@ -236,7 +274,19 @@
       "structural sign-off (research/09 §8 A-2).",
       "Optics power is real IT load AND real heat — budget a network.optics_kw line " +
       "item; it is routinely omitted (research/09 §7).",
+      "Oversubscription/bisection cover the compute rail fabric (NIC->leaf->spine->core) " +
+      "only — links_storage_inband rides separate converged ports and is excluded from " +
+      "the taper (research/09 §2).",
     ]);
+    if (oversub_fabric !== null && oversub_fabric > 1.0 + 1e-9) {
+      notes.push(
+        "Fabric is oversubscribed " + oversub_fabric.toFixed(2) + ":1 (delivered bisection " +
+        bisection_ratio.toFixed(2) + "x a non-blocking fabric). This is a design dial [D] — " +
+        "the cores_per_rail / links_spine_core choice against the §6.1 counts, not an error — " +
+        "and the same kind of deliberate blocking the dossier applies to the separate storage " +
+        "fabric (§2, a 5:3 ratio there). Raise cores_per_rail (or links_spine_core) toward a " +
+        "1:1 top tier for full bisection.");
+    }
     if (!out.channel_il_pass.value) {
       notes.push(
         "CHANNEL LOSS FAILS the " + String(p.loss_budget_media).toUpperCase() +

@@ -155,14 +155,24 @@
     // mode-driven: tower -> the engine's tower_cells_installed as tower cells
     // (taller cell body + fan deck + cold-water basin); dry/adiabatic -> the
     // dry-cooler pad (adiabatic reuses the massing with a distinct tint).
-    const dcX = bx0 - 3.6;
+    // yard massing sizes ([A]) + named ground clearances that keep the yard
+    // collision-free BY CONSTRUCTION: a cell is pitched by its widest footprint
+    // (the basin) plus a gap, and every yard element is offset from the shell by
+    // a clearance derived from its own size — so the invariants hold for any
+    // engine-bound count, not by coincidence of the literals.
+    const YARD_CLEAR = 1.7;                                    // [A] tower ↔ shell ground gap
+    const TWR_BODY = { w: 3.4, d: 3.6 }, TWR_DECK = { w: 3.0, d: 3.2 }, TWR_BASIN = { w: 3.8, d: 4.0 };
+    const GEN_BODY = { w: 4.2, d: 1.6 };
+    const TWR_PITCH = max(TWR_BODY.d, TWR_BASIN.d) + 0.6;      // cell-to-cell pitch (=4.6) > deepest footprint
+    // basin (widest tower element) sits YARD_CLEAR west of the shell west face
+    const dcX = bx0 - (TWR_BASIN.w / 2 + YARD_CLEAR);          // = bx0 - 3.6
     if (rej === "tower") {
       const towerShown = min(nTower, DISPLAY_CAPS.tower);
       for (let i = 0; i < towerShown; i++) {
-        const tz = hallZC - ((towerShown - 1) * 4.6) / 2 + i * 4.6;
-        box("liquid", "tower", dcX, 2.3, tz, 3.4, 4.6, 3.6);   // cell body
-        box("liquid", "tower", dcX, 4.75, tz, 3.0, 0.3, 3.2);  // fan deck
-        box("liquid", "fws", dcX, 0.35, tz, 3.8, 0.7, 4.0);    // cold-water basin
+        const tz = hallZC - ((towerShown - 1) * TWR_PITCH) / 2 + i * TWR_PITCH;
+        box("liquid", "tower", dcX, 2.3, tz, TWR_BODY.w, 4.6, TWR_BODY.d);   // cell body
+        box("liquid", "tower", dcX, 4.75, tz, TWR_DECK.w, 0.3, TWR_DECK.d);  // fan deck
+        box("liquid", "fws", dcX, 0.35, tz, TWR_BASIN.w, 0.7, TWR_BASIN.d);  // cold-water basin
       }
     } else {
       const dryMat = rej === "adiabatic" ? "adiabatic" : "drycooler";
@@ -173,16 +183,27 @@
         for (let k = 0; k < 3; k++) box("liquid", "fws", dcX, 2.46, dz - 1.7 + k * 1.7, 1.6, 0.12, 1.6);
       }
     }
-    const genZ = bz0 - 3.4;
+    // gensets on the north apron; the enclosure body is the element nearest the
+    // shell, so its north face is held GEN_CLEAR clear of the north wall (the
+    // shallower exhaust + day-tank blocks sit within that gap).
+    const GEN_CLEAR = 2.6;                                     // [A] genset body ↔ shell ground gap
+    const genZ = bz0 - (GEN_BODY.d / 2 + GEN_CLEAR);          // = bz0 - 3.4
     const genShown = min(nGenset, DISPLAY_CAPS.genset);
     for (let i = 0; i < genShown; i++) {
       const gx = bxc - ((genShown - 1) * 5.2) / 2 + i * 5.2;
-      box("power", "genset", gx, 1.25, genZ, 4.2, 2.5, 1.6);
+      box("power", "genset", gx, 1.25, genZ, GEN_BODY.w, 2.5, GEN_BODY.d);
       box("power", "genset", gx + 1.6, 3.4, genZ + 0.5, 0.35, 1.8, 0.35);
       box("power", "genset", gx - 2.9, 0.5, genZ, 1.2, 1.0, 1.2);
     }
+    // TES sphere: sits due WEST of the heat-rejection pad's widest west face, at
+    // the yard's z-center (hallZC), pushed out by its own radius + TES_CLEAR — so
+    // the sphere surface clears the westmost pad by >= TES_CLEAR in every mode and
+    // at every scale, and moves further out as the pad widens or the sphere grows
+    // (yard-relative, not a fixed literal). y unchanged (rests on the ground).
+    const TES_CLEAR = 1.7;                                    // [A] TES sphere ↔ heat-rejection pad ground gap
     const tesR = max(0.9, Math.cbrt((tesM3 || 1) / Math.PI) * 1.1);
-    box("liquid", "tes", bx0 - 1.9, tesR, bz1 + 1.4, tesR * 2, tesR * 2, tesR * 2);
+    const yardWestX = dcX - (rej === "tower" ? TWR_BASIN.w : 2.2) / 2;  // widest pad element's west edge
+    box("liquid", "tes", yardWestX - TES_CLEAR - tesR, tesR, hallZC, tesR * 2, tesR * 2, tesR * 2);
 
     // ---- ground: apron + parcel + fence (land model) -----------------------
     const apX0 = dcX - 2.4, apX1 = txX + 2.4;

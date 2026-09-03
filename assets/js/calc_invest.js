@@ -9,6 +9,7 @@
   const { q, result } = globalThis.AIDC.res;
 
   const HOURS_PER_YEAR = 8760.0;
+  const _DEF_IT_FRAC = 28.5 / 41.95325; // capex page 1 MW-IT: capex_it_m / capex_total_m
 
   const DEFAULTS = {
     gpus: q(529, "", "[D]",
@@ -31,12 +32,18 @@
                            "the rate you believe you can sell at. Published on-demand " +
                            "anchors: CoreWeave GB200 $10.50 / B200 $8.60 / H100 $6.16; " +
                            "Nebius B200 $7.15 / H100 $3.85; AWS Capacity Blocks GB200 " +
-                           "$10.58 (observed 2026-08-20). Committed contracts price " +
-                           "BELOW on-demand; rates decay over fleet life"),
+                           "$10.58 (observed 2026-08-20). Committed/reserved contracts " +
+                           "price BELOW on-demand — Nebius advertises 'up to 35%' off for " +
+                           "multi-month reservations (implying H100 ~$2.50 vs its $3.85 " +
+                           "list); AWS p5 8xH100 3-yr Reserved runs ~57% under on-demand " +
+                           "(nebius.com/prices, AWS Price List, observed 2026-09-02). " +
+                           "Rates decay over fleet life"),
     rate_decay_pct_yr: q(0.0, "%/yr", "[A]",
-                         "annual sell-rate decline. 0 = flat (optimistic); H100 street " +
-                         "history shows double-digit annual decay — underwrite your own " +
-                         "curve and read the sensitivity"),
+                         "annual sell-rate decline. 0 = flat (optimistic). H100 rentals " +
+                         "fell from a 2023 peak of ~$8-12/GPU-h to ~$2.29 in 2026 — down " +
+                         "~71-81%, roughly 34-42%/yr (Thunder Compute, reviewed " +
+                         "2026-09-01) — so double-digit annual decay is the base case; " +
+                         "underwrite your own curve and read the sensitivity"),
     util_y1: q(0.50, "frac", "[A]",
                "first-year billable share — fill/ramp assumption; steady state applies " +
                "from year 2"),
@@ -46,11 +53,23 @@
                    "0.70. Change cost basis and utilisation together or the model lies"),
     horizon_yr: q(5, "yr", "[A]",
                   "hold period; matches the TCO window and the 5-yr GPU book life"),
-    resale_frac_of_capex: q(0.10, "frac", "[A]",
-                            "terminal value at exit as a share of all-in capex. The TCO " +
-                            "page's resale-decline band (25-40 %/yr, floor 10%) puts a " +
-                            "5-yr fleet near its floor; facility residual ignored — " +
-                            "conservative vs the 20-yr shell life"),
+    resale_frac_of_fleet: q(0.10, "frac", "[A]",
+                            "fleet resale at exit as a share of IT-FLEET capex (not all-in). " +
+                            "TCO resale-decline band 25-40%/yr, floor 10% -> a 5-yr fleet near " +
+                            "its floor. Applies ONLY to the fleet share now (it_frac_of_capex) " +
+                            "— no longer taxes facility/spares/contingency with a GPU-resale " +
+                            "floor (v36 A-13 fix)."),
+    it_frac_of_capex: q(_DEF_IT_FRAC, "frac", "[D]",
+                        "IT-fleet share of all-in capex — the base the fleet-resale fraction " +
+                        "applies to; default = the capex page's 1 MW-IT outcome " +
+                        "(capex_it_m/capex_total_m ~= 0.68), derived live from your capex when " +
+                        "composed. The remaining (1-this) is facility + spares-float + " +
+                        "contingency, which takes facility_residual_frac."),
+    facility_residual_frac: q(0.0, "frac", "[A]",
+                              "facility/shell + contingency residual at exit as a share of " +
+                              "NON-fleet capex; default 0 = conservative (no facility sale " +
+                              "credited). A stabilised DC shell retains value over its 20-yr " +
+                              "life — set a positive fraction if you underwrite a facility exit."),
     ltc_pct: q(null, "%", "[A]",
                "optional LEVERAGE: loan-to-cost. Published SEC prints ladder from 65% " +
                "(IREN covenant ceiling) / 70% (APLD non-IG) / 80% (Galaxy Helios bank " +
@@ -111,6 +130,9 @@
     if (!(1 <= horizon && horizon <= 10)) throw new Error("horizon_yr must be 1..10");
     const decay = Number(p.rate_decay_pct_yr);
     if (!(0.0 <= decay && decay < 100.0)) throw new Error("rate_decay_pct_yr must be in [0, 100)");
+    if (!(0.0 <= Number(p.it_frac_of_capex) && Number(p.it_frac_of_capex) <= 1.0)) throw new Error("it_frac_of_capex must be in [0, 1]");
+    if (Number(p.resale_frac_of_fleet) < 0.0) throw new Error("resale_frac_of_fleet must be >= 0");
+    if (Number(p.facility_residual_frac) < 0.0) throw new Error("facility_residual_frac must be >= 0");
     if (p.ltc_pct !== null && p.debt_rate_pct === null) {
       throw new Error("debt_rate_pct is required when ltc_pct is set — all-in debt " +
                       "cost is a term-sheet fact, not a default we will guess");
@@ -119,7 +141,14 @@
     const rate = p.rate_usd_per_gpu_hr === null ? null : Number(p.rate_usd_per_gpu_hr);
     const opexFixed = Number(p.opex_fixed_m_yr);
     const energy = Number(p.energy_usd_per_gpu_hr);
-    const resaleM = Number(p.resale_frac_of_capex) * capex;
+    const itFrac = Number(p.it_frac_of_capex);
+    const resaleFracOfFleet = Number(p.resale_frac_of_fleet);
+    const facilityResidualFrac = Number(p.facility_residual_frac);
+    const fleetCapex = itFrac * capex;
+    const facilityCapex = (1.0 - itFrac) * capex;
+    const fleetResaleM = resaleFracOfFleet * fleetCapex;
+    const facilityResidualM = facilityResidualFrac * facilityCapex;
+    const resaleM = fleetResaleM + facilityResidualM;
 
     // ---- debt block (calc_colo's exact annuity) -----------------------------
     const levered = p.ltc_pct !== null;
@@ -239,7 +268,9 @@
       ebitda_y1_m: q(ebitda[0], "US$M", "[D]", "revenue - cash opex (year 1, ramp utilisation)"),
       ebitda_steady_m: q(ebitda.length > 1 ? ebitda[1] : ebitda[0], "US$M", "[D]",
                          "year-2+ EBITDA at util_steady (before rate decay compounds further)"),
-      terminal_value_m: q(resaleM, "US$M", "[D]", "resale_frac_of_capex x capex, year " + horizon),
+      terminal_value_m: q(resaleM, "US$M", "[D]", "resale_frac_of_fleet x (it_frac x capex) + facility_residual_frac x ((1-it_frac) x capex), year " + horizon),
+      fleet_resale_m: q(fleetResaleM, "US$M", "[D]", "fleet resale: resale_frac_of_fleet x (it_frac x capex)"),
+      facility_residual_m: q(facilityResidualM, "US$M", "[D]", "facility/contingency residual: facility_residual_frac x ((1-it_frac) x capex) — 0 by default"),
       cash_y1_m: yq(0, "equity cash flow, year 1" + (levered ? " (levered)" : "")),
       cash_y2_m: yq(1, "equity cash flow, year 2"),
       cash_y3_m: yq(2, "equity cash flow, year 3"),

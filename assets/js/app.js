@@ -291,10 +291,20 @@
         const td2 = document.createElement("td");
         td2.className = "num";
         if (typeof uv.v === "boolean") {
-          const b = document.createElement("span");
-          b.className = "verdict " + (uv.v ? "v-good" : "v-bad");
-          b.textContent = uv.v ? "✓ PASS" : "✕ FAIL";
-          td2.appendChild(b);
+          // Design-dial bools (e.g. fabric_non_blocking) are NOT pass/fail — an
+          // oversubscribed fabric is an intentional taper, not a failure. Render
+          // them neutrally so they don't read as a red "FAIL" beside a genuine
+          // verdict like channel_il_pass (queue #8 antagonist HIGH-1). Real
+          // verdicts (*_pass, *_ok, *_within_*, n_minus_1_ok, ...) keep the badge.
+          const NEUTRAL_BOOLS = new Set(["fabric_non_blocking"]);
+          if (NEUTRAL_BOOLS.has(k)) {
+            td2.textContent = uv.v ? "yes" : "no";
+          } else {
+            const b = document.createElement("span");
+            b.className = "verdict " + (uv.v ? "v-good" : "v-bad");
+            b.textContent = uv.v ? "✓ PASS" : "✕ FAIL";
+            td2.appendChild(b);
+          }
         } else {
           td2.textContent = disp()(uv.v);
         }
