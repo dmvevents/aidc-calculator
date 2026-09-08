@@ -753,9 +753,12 @@ font-variant-numeric: tabular-nums; }
       NVIDIA's public design guides and the DSX facilities reference-design overview; generated
       byte-identically on every run (<a href="sources.html#scene3d-method">method</a>). It is a
       DISCLOSED COMPOSITE: an air-cooled hall envelope carrying the liquid-loop overlay for
-      illustration — one facility would pick one cooling topology. Viewer is
-      self-hosted model-viewer, Apache-2.0
-      (<a href="sources.html#lic-modelviewer">license</a>). The fiber/tray layer's plan-view
+      illustration — one facility would pick one cooling topology. The interactive viewer is
+      a <strong>first-party WebGPU renderer</strong> (hand-authored WGSL shaders, no vendor
+      library, a few tens of KB) on browsers that grant a WebGPU adapter; where WebGPU is
+      unavailable it falls back to self-hosted model-viewer, Apache-2.0
+      (<a href="sources.html#lic-modelviewer">license</a>). Both render the same
+      deterministically generated GLB. The fiber/tray layer's plan-view
       counterpart — with live trunk and strand counts — is the
       <a href="fiber-layout.html">fiber layout page</a>; the hall plan itself is on the
       <a href="designs.html#plan">designs page</a>, generated from the same manifest math.</p>
@@ -923,6 +926,13 @@ font-variant-numeric: tabular-nums; }
   border: 1px solid var(--accent); display: grid; place-items: center; padding: 0; }
 .hs-dot:hover { background: var(--inset); }
 .hs-dot[hidden] { display: none !important; }  /* layer-off dots must vanish (antagonist A-02; UA [hidden] loses to display:grid) */
+/* first-party WebGPU renderer (primary path) — canvas fills the stage like
+   the model-viewer fallback; hotspot dots live in an HTML overlay that the
+   renderer positions by projecting the manifest hotspot positions */
+.twin-stage canvas { width: 100%; height: 100%; display: block; }
+.gpu-hs-layer { position: absolute; inset: 0; pointer-events: none; }
+.gpu-hs-layer .hs-dot { position: absolute; transform: translate(-50%, -50%);
+  pointer-events: auto; }
 /* rack detail studio (v3.1) */
 .anim-set { display: inline-flex; flex-wrap: wrap; gap: var(--sp-2); }
 .anim-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);

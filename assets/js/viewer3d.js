@@ -1,10 +1,15 @@
 // Building-scene viewer — presets, layer toggles, provenance hotspots.
 // Data comes from the GENERATED scene3d.js manifest (same math as the GLB);
-// this file is hand-written logic only. The self-hosted model-viewer bundle
-// (~1 MB, Apache-2.0) loads ONLY on the explicit button click; until then the
-// page is a static hero + a fully readable annotations grid, so every chipped
-// value is available without WebGL. View state lives in the page URL hash
-// (#view=<preset>&layers=<on,list>&variant=<rack-variant>) so a link
+// this file is hand-written logic only. PRIMARY renderer: the first-party
+// WebGPU module (assets/js/webgpu/, hand-authored WGSL) — probed and
+// dynamic-imported ONLY on the explicit button click. Graceful fallback:
+// when navigator.gpu is absent, no adapter is granted, or the WebGPU mount
+// fails for any reason, the click loads the self-hosted model-viewer bundle
+// (~1 MB, Apache-2.0) exactly as before — current behavior is preserved,
+// including on browsers with no WebGPU at all. Until either loads, the page
+// is a static hero + a fully readable annotations grid, so every chipped
+// value is available without any GPU API. View state lives in the page URL
+// hash (#view=<preset>&layers=<on,list>&variant=<rack-variant>) so a link
 // reproduces the exact view — same URLSearchParams convention as the
 // calculator pages' input state.
 "use strict";
@@ -25,6 +30,33 @@
     });
     return vendorPromise;
   }
+  // WebGPU probe + module loader (cached). Resolves to the renderer module
+  // when a real adapter is available, or null -> caller uses the model-viewer
+  // path. Never rejects. The probe reason is exposed for the smoke harness.
+  let gpuPromise = null;
+  function loadWebGPU() {
+    if (gpuPromise) return gpuPromise;
+    gpuPromise = (async () => {
+      try {
+        if (!navigator.gpu) {
+          window.__AIDC_WEBGPU_STATUS = "fallback: navigator.gpu absent";
+          return null;
+        }
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) {
+          window.__AIDC_WEBGPU_STATUS = "fallback: no WebGPU adapter";
+          return null;
+        }
+        const mod = await import("./webgpu/scene_webgpu.js");
+        window.__AIDC_WEBGPU_STATUS = "webgpu: adapter ready";
+        return mod;
+      } catch (e) {
+        window.__AIDC_WEBGPU_STATUS = "fallback: " + e;
+        return null;
+      }
+    })();
+    return gpuPromise;
+  }
   function hashGet(key) {
     const ps = new URLSearchParams((location.hash || "").replace(/^#/, ""));
     return ps.get(key);
@@ -38,7 +70,7 @@
     const s = ps.toString();
     history.replaceState(null, "", s ? "#" + s : location.pathname);
   }
-  globalThis.AIDC3D = { loadVendor, hashGet, hashSet };
+  globalThis.AIDC3D = { loadVendor, loadWebGPU, hashGet, hashSet, reducedMotion: RM };
 
   // ---- building-scene experience --------------------------------------------
   function init() {
@@ -51,7 +83,8 @@
     if (!S || !stage || !presetBar || !layerBar || !grid || !loadBtn) return;
 
     const CHIPNAME = { S: "stated", D: "derived", A: "assumed" };
-    let viewer = null;
+    let viewer = null;     // model-viewer element (fallback path)
+    let gpuViewer = null;  // first-party WebGPU handle (primary path)
     let activePreset = byId(S.presets, hashGet("view")) || byId(S.presets, "building") || S.presets[0];
     const layerState = {};
     for (const l of S.layers) layerState[l.id] = !!activePreset.layers[l.id];
@@ -156,32 +189,40 @@
     }
 
     function applyLayers() {
-      // look materials up LIVE on every apply and drive them from the
-      // manifest's authoritative factors — the renderer may rebuild its
-      // scene after load, which silently discards mutations made through
-      // stale scene-graph wrappers
-      const live = {};
-      if (viewer && viewer.model) {
-        for (const m of viewer.model.materials) live[m.name] = m;
+      if (gpuViewer) {
+        // the WebGPU handle drives material alphas AND its dot overlay from
+        // the same manifest semantics (layer off -> effective alpha 0)
+        gpuViewer.applyLayers(layerState);
+      } else {
+        // look materials up LIVE on every apply and drive them from the
+        // manifest's authoritative factors — the renderer may rebuild its
+        // scene after load, which silently discards mutations made through
+        // stale scene-graph wrappers
+        const live = {};
+        if (viewer && viewer.model) {
+          for (const m of viewer.model.materials) live[m.name] = m;
+        }
+        for (const l of S.layers) {
+          const on = layerState[l.id];
+          for (const name of l.mats) {
+            const mat = live[name];
+            const orig = S.materials[name];
+            if (!mat || !orig) continue;
+            const f = orig.factor.slice();
+            if (!on) { mat.setAlphaMode("BLEND"); f[3] = 0; }
+            else mat.setAlphaMode(orig.mode);
+            mat.pbrMetallicRoughness.setBaseColorFactor(f);
+          }
+        }
+        if (viewer) {
+          for (const b of viewer.querySelectorAll(".hs-dot")) {
+            const lid = b.dataset.layer;
+            b.hidden = !!lid && !layerState[lid];
+          }
+        }
       }
       for (const l of S.layers) {
-        const on = layerState[l.id];
-        for (const name of l.mats) {
-          const mat = live[name];
-          const orig = S.materials[name];
-          if (!mat || !orig) continue;
-          const f = orig.factor.slice();
-          if (!on) { mat.setAlphaMode("BLEND"); f[3] = 0; }
-          else mat.setAlphaMode(orig.mode);
-          mat.pbrMetallicRoughness.setBaseColorFactor(f);
-        }
-        if (layerInputs[l.id]) layerInputs[l.id].checked = on;
-      }
-      if (viewer) {
-        for (const b of viewer.querySelectorAll(".hs-dot")) {
-          const lid = b.dataset.layer;
-          b.hidden = !!lid && !layerState[lid];
-        }
+        if (layerInputs[l.id]) layerInputs[l.id].checked = layerState[l.id];
       }
     }
 
@@ -193,7 +234,10 @@
       if (resetLayers) {
         for (const l of S.layers) layerState[l.id] = !!p.layers[l.id];
       }
-      if (viewer) {
+      if (gpuViewer) {
+        gpuViewer.setPreset(p);
+        if (RM) gpuViewer.jumpToGoal();
+      } else if (viewer) {
         viewer.setAttribute("camera-orbit", p.orbit);
         viewer.setAttribute("camera-target", p.target);
         viewer.setAttribute("field-of-view", p.fov);
@@ -258,17 +302,55 @@
       applyLayers();
     }
 
+    // PRIMARY: first-party WebGPU renderer on the same GLB + manifest
+    function mountGPU(mod) {
+      return mod.mountScene(stage, {
+        glbUrl: S.glb,
+        materials: S.materials,
+        layers: S.layers,
+        layerState,
+        hotspots: S.hotspots,
+        onHotspotClick: focusCard,
+        camera: activePreset,
+        clampRadius: [1.5, 160],
+        clampPhiDeg: [0, 88],
+        reducedMotion: RM,
+        selfTestImage: hashGet("gputest") === "1",
+        registerGlobal: "__AIDC_WEBGPU",
+        ariaLabel: "Interactive 3D scene of a generic single-hall AI data center: " +
+          "four contained rack rows, mechanical gallery with CRAH and CDU units, " +
+          "electrical rooms, MV yard, genset pad and dry-cooler pad.",
+      }).then((h) => {
+        gpuViewer = h;
+        applyLayers();
+        return true;
+      }, (err) => {
+        window.__AIDC_WEBGPU_STATUS = "fallback: scene mount failed — " + err;
+        return false;
+      });
+    }
+
     loadBtn.addEventListener("click", () => {
       loadBtn.disabled = true;
       loadBtn.textContent = "Loading viewer…";
-      loadVendor().then(() => {
-        loadBtn.textContent = "Interactive 3D loaded";
-        loadBtn.hidden = true;
-        mount();
-      }).catch(() => {
-        loadBtn.textContent = "Viewer failed to load — retry";
-        loadBtn.disabled = false;
-      });
+      AIDC3D.loadWebGPU()
+        .then((mod) => (mod ? mountGPU(mod) : false))
+        .then((ok) => {
+          if (ok) {
+            loadBtn.textContent = "Interactive 3D loaded";
+            loadBtn.hidden = true;
+            return;
+          }
+          // graceful fallback: the existing self-hosted model-viewer path
+          loadVendor().then(() => {
+            loadBtn.textContent = "Interactive 3D loaded";
+            loadBtn.hidden = true;
+            mount();
+          }).catch(() => {
+            loadBtn.textContent = "Viewer failed to load — retry";
+            loadBtn.disabled = false;
+          });
+        });
     });
 
     // boot: reflect the (possibly hash-restored) state without loading 3D
