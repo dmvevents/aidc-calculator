@@ -558,6 +558,15 @@ globalThis.SCENE3D = {
   }
  ],
  "materials": {
+  "backdrop": {
+   "factor": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "mode": "OPAQUE"
+  },
   "busway": {
    "factor": [
     0.55,
@@ -569,9 +578,9 @@ globalThis.SCENE3D = {
   },
   "cdu": {
    "factor": [
-    0.13,
-    0.22,
-    0.38,
+    0.18,
+    0.2,
+    0.23,
     1.0
    ],
    "mode": "OPAQUE"
@@ -596,9 +605,9 @@ globalThis.SCENE3D = {
   },
   "door": {
    "factor": [
-    0.16,
-    0.35,
-    0.55,
+    0.18,
+    0.2,
+    0.23,
     1.0
    ],
    "mode": "OPAQUE"
@@ -614,9 +623,9 @@ globalThis.SCENE3D = {
   },
   "fabric": {
    "factor": [
-    0.3,
-    0.24,
-    0.42,
+    0.15,
+    0.16,
+    0.18,
     1.0
    ],
    "mode": "OPAQUE"
@@ -632,9 +641,9 @@ globalThis.SCENE3D = {
   },
   "floor": {
    "factor": [
-    0.045,
-    0.055,
-    0.075,
+    0.1,
+    0.12,
+    0.14,
     1.0
    ],
    "mode": "OPAQUE"
@@ -668,9 +677,9 @@ globalThis.SCENE3D = {
   },
   "rack": {
    "factor": [
-    0.075,
-    0.095,
-    0.13,
+    0.19,
+    0.21,
+    0.24,
     1.0
    ],
    "mode": "OPAQUE"
@@ -686,9 +695,9 @@ globalThis.SCENE3D = {
   },
   "site": {
    "factor": [
-    0.035,
-    0.045,
-    0.06,
+    0.08,
+    0.1,
+    0.13,
     1.0
    ],
    "mode": "OPAQUE"
@@ -705,8 +714,8 @@ globalThis.SCENE3D = {
   "system": {
    "factor": [
     0.22,
-    0.42,
-    0.6,
+    0.24,
+    0.27,
     1.0
    ],
    "mode": "OPAQUE"
@@ -731,18 +740,18 @@ globalThis.SCENE3D = {
   },
   "tray": {
    "factor": [
-    0.42,
-    0.38,
-    0.55,
+    0.18,
+    0.2,
+    0.24,
     1.0
    ],
    "mode": "OPAQUE"
   },
   "ups": {
    "factor": [
+    0.16,
     0.18,
-    0.3,
-    0.5,
+    0.22,
     1.0
    ],
    "mode": "OPAQUE"
@@ -834,8 +843,8 @@ globalThis.SCENE3D = {
     "racks": 1,
     "shell": 0
    },
-   "orbit": "188deg 72deg 4.2m",
-   "target": "1.825m 1.1m -4.6m"
+   "orbit": "188deg 50deg 6m",
+   "target": "1.825m 1.4m -4.6m"
   },
   {
    "desc": "Heat path west: CRAH row + CDU liquid provision in the gallery, FWS mains out to the dry-cooler pad.",

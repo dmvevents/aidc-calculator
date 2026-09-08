@@ -73,6 +73,11 @@
   }
 
   // cell: string | number | boolean | null | {v, s(tyle 0=body 1=bold 2=mono)}
+  //   | {f: "PMT(...)", v: cachedNumber, s}  -- a LIVE FORMULA cell. Emitted as
+  //     <c ...><f>formula</f><v>cached</v></c>; a leading "=" in f is stripped.
+  //     The cached v (deterministic, from the engine) keeps the file grep-able
+  //     and shows a value before recalc; fullCalcOnLoad (workbook.xml) makes
+  //     Excel/LibreOffice recompute f on open so an investor's edits propagate.
   function sheetXml(sheet) {
     const rows = sheet.rows || [];
     const widths = sheet.widths || [];
@@ -86,6 +91,11 @@
         const o = (cell !== null && typeof cell === "object") ? cell : { v: cell };
         const ref = colRef(ci) + (ri + 1);
         const st = o.s ? ' s="' + o.s + '"' : "";
+        if (typeof o.f === "string" && o.f.length) {
+          const f = xml(o.f.replace(/^=/, ""));
+          const cached = (typeof o.v === "number" && isFinite(o.v)) ? "<v>" + o.v + "</v>" : "";
+          return '<c r="' + ref + '"' + st + "><f>" + f + "</f>" + cached + "</c>";
+        }
         if (o.v === null || o.v === undefined) return "";
         if (typeof o.v === "number" && isFinite(o.v)) return '<c r="' + ref + '"' + st + "><v>" + o.v + "</v></c>";
         if (typeof o.v === "boolean") return '<c r="' + ref + '"' + st + ' t="b"><v>' + (o.v ? 1 : 0) + "</v></c>";
@@ -131,7 +141,9 @@
       'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
       sheets.map((s, i) => '<sheet name="' + xml(s.name.slice(0, 31)) + '" sheetId="' + (i + 1) +
         '" r:id="rId' + (i + 1) + '"/>').join("") +
-      "</sheets></workbook>";
+      // fullCalcOnLoad: force a recompute of every <f> on open so an investor's
+      // input edits propagate through the cash-flow sheet (Excel + LibreOffice).
+      '</sheets><calcPr calcId="0" fullCalcOnLoad="1"/></workbook>';
     const wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
       sheets.map((s, i) => '<Relationship Id="rId' + (i + 1) +

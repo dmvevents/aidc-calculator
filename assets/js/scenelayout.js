@@ -166,6 +166,23 @@
     const TWR_PITCH = max(TWR_BODY.d, TWR_BASIN.d) + 0.6;      // cell-to-cell pitch (=4.6) > deepest footprint
     // basin (widest tower element) sits YARD_CLEAR west of the shell west face
     const dcX = bx0 - (TWR_BASIN.w / 2 + YARD_CLEAR);          // = bx0 - 3.6
+    // Apron z-extent (genZ/apZ0/apZ1) — SINGLE SOURCE, computed once here so it
+    // dominates both use-sites: the dry/adiabatic cooler-pad clamp bounds (below,
+    // in the rej !== "tower" branch) and the rendered floor box (land model). One
+    // edit to these literals now moves the clamp and the drawn apron together, so
+    // they cannot drift (F-02 follow-up). Independent of the tower branch.
+    const GEN_CLEAR = 2.6;                                     // [A] genset body ↔ shell ground gap
+    const genZ = bz0 - (GEN_BODY.d / 2 + GEN_CLEAR);          // = bz0 - 3.4
+    const apZ0 = genZ - 2.4, apZ1 = bz1 + 3.4;                // apron z-extent shared by clamp + floor box
+    // Pitch-fit cap on the dry/adiabatic cooler pad — SINGLE SOURCE, computed once here so
+    // BOTH the render loop (rej !== "tower", below) and the stats label read ONE maxSafeCells;
+    // depends only on apZ0/apZ1 + literals (all in scope). One edit moves the drawn pad count
+    // and the label's shown count together, so the scene can't silently undercount (F-02 follow-up).
+    const cellHalfD = 2.5;
+    const apZSpan = apZ1 - apZ0;
+    const minPitch = 2 * cellHalfD;  // collision-free floor: pitch >= cell depth
+    // Max cells that fit with minPitch: (N-1)*minPitch + 2*cellHalfD <= apZSpan
+    const maxSafeCells = max(1, Math.floor(1 + (apZSpan - 2 * cellHalfD) / minPitch));
     if (rej === "tower") {
       const towerShown = min(nTower, DISPLAY_CAPS.tower);
       for (let i = 0; i < towerShown; i++) {
@@ -176,18 +193,39 @@
       }
     } else {
       const dryMat = rej === "adiabatic" ? "adiabatic" : "drycooler";
-      const dryShown = min(nDry, DISPLAY_CAPS.drycooler);
+      // Clamp cooler pad z-extent within apron bounds (F-02): each cell has depth d=5.0,
+      // so its z-extent is [dz-2.5, dz+2.5]. Cap shown count to what fits with collision-
+      // free pitch (>= cell depth), then compress pitch and recenter if still needed.
+      // cellHalfD/apZSpan/minPitch/maxSafeCells are the single shared source computed above
+      // the rej branch (so the stats label reads the SAME cap), tracking the floor box exactly.
+      const dryShown = min(nDry, DISPLAY_CAPS.drycooler, maxSafeCells);
+      const rawPitch = 5.4;
+      const rawSpan = dryShown > 1 ? (dryShown - 1) * rawPitch : 0;
+      const rawZ0 = hallZC - rawSpan / 2 - cellHalfD;
+      const rawZ1 = hallZC + rawSpan / 2 + cellHalfD;
+      const apZC = (apZ0 + apZ1) / 2;
+      const padRequiredZSpan = rawZ1 - rawZ0;
+      let pitch = rawPitch, padZC = hallZC;
+      if (padRequiredZSpan > apZSpan) {
+        // Compress pitch to fit within apron, but never below cell depth (collision-free floor)
+        const maxCellSpan = apZSpan - 2 * cellHalfD;  // available for (n-1) gaps
+        const minPitch = 2 * cellHalfD;  // cell depth: pad + fans extend ±cellHalfD from center
+        pitch = dryShown > 1 ? max(minPitch, maxCellSpan / (dryShown - 1)) : 0;
+        padZC = apZC;  // recenter on apron
+      } else if (rawZ0 < apZ0 || rawZ1 > apZ1) {
+        // Raw span fits but is off-center; recenter on apron
+        padZC = apZC;
+      }
       for (let i = 0; i < dryShown; i++) {
-        const dz = hallZC - ((dryShown - 1) * 5.4) / 2 + i * 5.4;
+        const dz = padZC - ((dryShown - 1) * pitch) / 2 + i * pitch;
         box("liquid", dryMat, dcX, 1.2, dz, 2.2, 2.4, 5.0);
         for (let k = 0; k < 3; k++) box("liquid", "fws", dcX, 2.46, dz - 1.7 + k * 1.7, 1.6, 0.12, 1.6);
       }
     }
     // gensets on the north apron; the enclosure body is the element nearest the
     // shell, so its north face is held GEN_CLEAR clear of the north wall (the
-    // shallower exhaust + day-tank blocks sit within that gap).
-    const GEN_CLEAR = 2.6;                                     // [A] genset body ↔ shell ground gap
-    const genZ = bz0 - (GEN_BODY.d / 2 + GEN_CLEAR);          // = bz0 - 3.4
+    // shallower exhaust + day-tank blocks sit within that gap). genZ/GEN_CLEAR are
+    // the single shared source computed above the rej branch.
     const genShown = min(nGenset, DISPLAY_CAPS.genset);
     for (let i = 0; i < genShown; i++) {
       const gx = bxc - ((genShown - 1) * 5.2) / 2 + i * 5.2;
@@ -207,7 +245,8 @@
 
     // ---- ground: apron + parcel + fence (land model) -----------------------
     const apX0 = dcX - 2.4, apX1 = txX + 2.4;
-    const apZ0 = genZ - 2.4, apZ1 = bz1 + 3.4;
+    // apZ0/apZ1 are the single shared apron z-extent computed above the rej branch;
+    // the clamp bounds (dry/adiabatic) read the same consts, so they cannot drift.
     box("site", "floor", (apX0 + apX1) / 2, -0.03, (apZ0 + apZ1) / 2, apX1 - apX0, 0.06, apZ1 - apZ0);
     const parcelM2 = land.parcel_m2.value;
     const pW = max(Math.sqrt(parcelM2 * 1.25), apX1 - apX0 + 6);
@@ -230,7 +269,7 @@
         (towerMakeup != null ? " · makeup " + Math.round(towerMakeup).toLocaleString("en-US") + " m³/day" : "") +
         " · " + verdict;
     } else {
-      const dryShown = min(nDry, DISPLAY_CAPS.drycooler);
+      const dryShown = min(nDry, DISPLAY_CAPS.drycooler, maxSafeCells);
       const dryLabel = rej === "adiabatic" ? " adiabatic-assist dry coolers [A class]" : " dry coolers [A class]";
       rejectStr = nDry + dryLabel + capNote(dryShown, nDry) + " · " + verdict;
     }

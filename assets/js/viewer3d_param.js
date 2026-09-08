@@ -5,6 +5,7 @@
 // shadows, subtle fog — no textures, no photorealism claim).
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 // palette mirrors the generated reference scene's material table
 const MATS = {
@@ -36,6 +37,17 @@ export function mount(host, layout, layerState) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0b111c);
   scene.fog = new THREE.Fog(0x0b111c, layout.camera.r * 1.6, layout.camera.r * 4.5);
+
+  // Deterministic image-based lighting (IBL): a PMREM-prefiltered RoomEnvironment
+  // gives the MeshStandardMaterial enclosures real specular reflections without any
+  // texture download, random, or time input — the shot stays byte-identical
+  // run-to-run (same env approach as the detail studio). This is what makes the
+  // metalness/roughness PBR read as realism rather than flat shading.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+  scene.environment = envRT.texture;
+  scene.environmentIntensity = 0.9;
+  pmrem.dispose();
 
   scene.add(new THREE.HemisphereLight(0xcfe0f5, 0x181c24, 2.1));
   const key = new THREE.DirectionalLight(0xfff3e0, 3.2);
@@ -114,12 +126,17 @@ export function mount(host, layout, layerState) {
   };
   addEventListener("resize", onResize);
 
+  // read-only scene-graph handle for the tracked param-scene visual smoke
+  // (tests/test_r1_param_materials.py) — mirrors the detail viewer's __AIDC_* hooks
+  globalThis.__AIDC_PARAM_SCENE = scene;
+
   return {
     applyLayers: applyLayers,
     dispose() {
       live = false;
       removeEventListener("resize", onResize);
       renderer.dispose();
+      envRT.dispose();
       unit.dispose();
     },
   };

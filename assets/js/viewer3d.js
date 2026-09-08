@@ -214,7 +214,16 @@
       mv.setAttribute("interaction-prompt", "none");
       mv.setAttribute("shadow-intensity", "0.95");
       mv.setAttribute("shadow-softness", "0.85");
-      mv.setAttribute("exposure", "1.08");
+      mv.setAttribute("exposure", "1.9");
+      // R1 slice 2: deterministic studio IBL (equirect HDR) — the model-viewer
+      // analog of the param scene's scene.environment. The GLB already bakes
+      // pbrMetallicRoughness; without an environment-image the metal read flat.
+      // ACES tone-mapping matches the param/detail viewers. Keep exposure/shadows.
+      mv.setAttribute("tone-mapping", "aces");
+      mv.setAttribute("environment-image", "assets/env/studio-ibl.hdr");
+      // R1 slice 4: skybox-image provides the VISIBLE backdrop (non-void background).
+      // Simple sky-ground gradient PNG — model-viewer skybox-image needs web format, not HDR.
+      mv.setAttribute("skybox-image", "assets/env/skybox.png");
       mv.setAttribute("interpolation-decay", "160");
       mv.setAttribute("min-camera-orbit", "auto 0deg 1.5m");
       mv.setAttribute("max-camera-orbit", "auto 88deg 160m");

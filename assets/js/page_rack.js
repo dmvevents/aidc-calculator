@@ -7,7 +7,21 @@
   A.SECTIONS = A.SECTIONS || [];
 
   // ----------------------------------------------------------------- RACK ----
-  const VARIANT_ORDER = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
+  // All variants in datacenter-design/rack-scale/variants/ (card #217): the
+  // ship-now platforms first, the roadmap platform LAST with a badge. The set
+  // must equal the YAML set — gen_rackdata.py refuses to regenerate on drift
+  // and tools/calc_regression.mjs asserts count + set equality (fails-if-removed).
+  const VARIANT_ORDER = [
+    "gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su",
+    "gb200-nvl36", "dgx-b200-hd", "hgx-b300", "dgx-h200", "dgx-h100",
+    "rubin-nvl144",  // availability:roadmap — badged, every number [A] by rule
+  ];
+  // roadmap platforms are labelled so a preliminary spec can't read as shipping
+  const optLabel = (v) =>
+    v.availability === "roadmap" ? v.platform + " — ROADMAP (preliminary, all [A])" : v.platform;
+  // variants with a shipped per-variant 3D row model on 3d.html (its viewer
+  // select + hero posters cover these; the rest link to the page, hash-free)
+  const D3_MODELED = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
   // R-H1/R-H2 (v3.1): pue_target + distribution_voltage_v now travel with the
   // platform pick instead of silently inheriting the GB200/calc_power defaults.
   const rackOf = (name) => {
@@ -39,7 +53,7 @@
     unitToggles: ["area"],
     fields: [
       { key: "platform", label: "rack platform", src: "variants", type: "select", value: "gb200-nvl72",
-        options: VARIANT_ORDER.map((n) => [n, globalThis.RACKDB[n].platform]) },
+        options: VARIANT_ORDER.map((n) => [n, optLabel(globalThis.RACKDB[n])]) },
       { key: "gpus", label: "target GPU count", src: "legend", step: 8, min: 1 },
       { key: "support_frac", label: "support-IT frac", src: "refdesign", step: 0.005, min: 0, advanced: true },
       { key: "pue", label: "PUE target", src: "dsx-kpi", step: 0.01, min: 1, advanced: true },
@@ -97,7 +111,9 @@
         ["Floor pressure (kPa)", (v) => v.floor_kpa, () => "[D]", null],
         ["Racks / MW", (v) => v.racks_per_mw, () => "[D]", null],
         ["GPUs / MW", (v) => v.gpus_per_mw, () => "[D]", null],
-        ["NVLink domain (GPUs)", (v) => v.nvlink_domain, (v) => v.nvlink_label, null],
+        ["NVLink domain (GPUs)", (v) => v.nvlink_domain, (v) => v.nvlink_label, "nvlink_domain"],
+        ["Tier · availability", (v) => v.tier + " · " + v.availability,
+          (v) => weakest(v.labels.tier, v.labels.availability), null],
         ["Scale-out rails", (v) => v.rails, (v) => v.labels.rails, "rails"],
         ["Fabric", (v) => v.scale_out, (v) => v.labels.scale_out, "scale_out"],
         ["Racks / SU", (v) => v.racks_per_su, (v) => v.labels.racks_per_su, "racks_per_su"],
@@ -116,7 +132,8 @@
       hr.appendChild(document.createElement("th"));
       for (const n of VARIANT_ORDER) {
         const th = document.createElement("th");
-        th.textContent = globalThis.RACKDB[n].platform;
+        const v = globalThis.RACKDB[n];
+        th.textContent = v.platform + (v.availability === "roadmap" ? " (ROADMAP)" : "");
         hr.appendChild(th);
       }
       thead.appendChild(hr);
@@ -160,9 +177,14 @@
       host.replaceChildren(tbl, notes);
     },
     after: () => {
-      // keep the 3D-page link pointed at the chosen variant (viewer is 3d.html)
+      // keep the 3D-page link pointed at the chosen variant (viewer is 3d.html).
+      // Variants without a shipped row model link to the page hash-free — the
+      // 3D viewer would silently ignore an unknown #variant= and show GB200,
+      // which would misrepresent the pick (follow-up card: model the 6 new ones).
       const link = document.getElementById("rack-3d-link");
-      if (link) link.href = "3d.html#variant=" + A.currentVariant();
+      if (!link) return;
+      const cur = A.currentVariant();
+      link.href = D3_MODELED.includes(cur) ? "3d.html#variant=" + cur : "3d.html";
     },
   });
 

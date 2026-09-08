@@ -12,6 +12,12 @@
   const DB = globalThis.RACKDB;
   if (!A || !DB || !A.sceneLayout) return;
 
+  // F-03: single-source GPU-clamp bounds (hoisted so clampGpuCount and the
+  // input-note both bind to ONE ceiling — they cannot drift)
+  const LOWER = 512;
+  const UPPER = 200000;
+  const UPPER_LABEL = UPPER.toLocaleString("en-US");  // en-US grouped label, derived from UPPER
+
   const PLATFORMS = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
   const $ = (id) => document.getElementById(id);
   let viewer = null, viewerMod = null, layerState = {};
@@ -34,6 +40,21 @@
     return Math.max(1, racks) * g;
   }
 
+  function clampGpuCount(n) {
+    // F-03: upper clamp to prevent heap-OOM on huge param-gpus values
+    // (LOWER/UPPER hoisted to IIFE scope — closed over here)
+    if (!(n > 0)) return LOWER;
+    if (n > UPPER) return UPPER;
+    return Math.round(n);
+  }
+  function inputNoteFor(gpus, rawNonEmpty) {
+    if (rawNonEmpty && !(gpus > 0)) return "GPU count must be ≥ 1 — using 512";               // A-11 (unchanged)
+    if (rawNonEmpty && gpus > UPPER) return "GPU count exceeds max (" + UPPER_LABEL + ") — using " + UPPER_LABEL; // F-03
+    return null;
+  }
+  // Expose for testing
+  if (typeof module !== "undefined" && module.exports) module.exports = { clampGpuCount, UPPER, LOWER, UPPER_LABEL, inputNoteFor };
+
   function currentInputs() {
     const scen = storedScenario();
     const platSel = $("param-platform"), gpuInp = $("param-gpus");
@@ -45,16 +66,14 @@
       if (!gpus) { gpus = g2; if (gpuInp) gpuInp.value = String(g2); }
     }
     if (!plat) plat = "gb200-nvl72";
-    let inputNote = null;
-    if (gpuInp && gpuInp.value.trim() !== "" && !(gpus > 0)) {
-      inputNote = "GPU count must be ≥ 1 — using 512";   // A-11: 0 is not a fleet
-    }
+    let inputNote = inputNoteFor(gpus, !!(gpuInp && gpuInp.value.trim() !== ""));
     if (!gpus || !(gpus > 0)) gpus = 512;
+    gpus = clampGpuCount(gpus);
     const rejSel = $("param-rejector");
     const REJ = (A.calcCooling && A.calcCooling.REJECTORS) || ["dry", "tower", "adiabatic"];
     let rej = rejSel && rejSel.value;
     if (REJ.indexOf(rej) < 0) rej = "dry";
-    return { plat: plat, gpus: Math.round(gpus), rej: rej, inputNote: inputNote };
+    return { plat: plat, gpus: gpus, rej: rej, inputNote: inputNote };
   }
 
   function renderStats(layout) {

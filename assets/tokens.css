@@ -20,6 +20,18 @@
   font-style: normal;
   font-display: optional;
 }
+/* Display face (card #215 B4): Space Grotesk Variable — a machined engineering grotesque,
+   self-hosted SIL-OFL latin subset (~22KB, wght 300-700), license in assets/fonts/ + on the
+   Sources page. Used ONLY for the masthead / h1 (the one signature move); falls back to Inter,
+   and font-display:optional means first paint never blocks on it. Body stays Inter, numerals
+   stay JetBrains Mono. */
+@font-face {
+  font-family: "Space Grotesk Var";
+  src: url("fonts/SpaceGrotesk-Variable.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: optional;
+}
 
 :root {
   color-scheme: dark;
@@ -51,26 +63,73 @@
   --warn:      #e8b13c;   /* shares the [A] amber family by design */
   --bad:       #ff7676;   /* 6.9:1 */
 
+  /* -- per-rail categorical (topology designer) ---------------------------- */
+  /* dataviz reference categorical slots 1-4 (blue/orange/aqua/yellow), dark-mode
+     steps, in FIXED order — rails are never re-hued when the rail count changes.
+     Color encodes RAIL identity ONLY; TIER is column position + label, never
+     color-alone. Validated on the --inset #0d1420 surface (dataviz
+     scripts/validate_palette.js --mode dark --surface #0d1420): the ADJACENT
+     pairlist passes all six checks (worst CVD ΔE 8.4 aqua↔yellow, normal-vision
+     19.8, all ≥3:1). Rails render as ordered stacked planes (only neighbours
+     touch) with mandatory direct "RAIL N" labels, so ADJACENT is the applicable
+     pairlist; this order keeps the one all-pairs clash (orange↔yellow) NON-
+     adjacent (separated by aqua). */
+  --rail-1:    #3987e5;   /* blue   */
+  --rail-2:    #d95926;   /* orange */
+  --rail-3:    #199e70;   /* aqua   */
+  --rail-4:    #c98500;   /* yellow */
+
   /* -- typography ----------------------------------------------------------- */
+  --font-display: "Space Grotesk Var", var(--font-ui);   /* masthead / h1 ONLY — the one signature face (B4) */
   --font-ui:   "Inter Var", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono Var", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  /* fluid scale, 360->1280px viewport */
-  --fs-xs:   0.6875rem;                                  /* 11px fixed — micro-labels */
-  --fs-sm:   clamp(0.8125rem, 0.79rem + 0.11vw, 0.875rem);
-  --fs-base: clamp(0.9375rem, 0.915rem + 0.11vw, 1rem);
-  --fs-md:   clamp(1.0625rem, 1.02rem + 0.22vw, 1.1875rem);
-  --fs-lg:   clamp(1.25rem, 1.16rem + 0.43vw, 1.5rem);
-  --fs-xl:   clamp(1.625rem, 1.44rem + 0.87vw, 2.125rem);
-  --fs-hero: clamp(1.875rem, 1.56rem + 1.52vw, 2.75rem);
+  /* Fluid modular scale (clamp min->max, 360->1280px viewport): ~minor-third in
+     the text range widening toward major-third at the display end (Utopia fluid
+     method [S], utopia.fyi). Named rungs — both surfaces (site.css + the deal
+     report's inline CSS) consume these; neither hardcodes px. Every NUMERAL still
+     renders --font-mono + tabular-nums regardless of rung (invariant). */
+  --fs-xs:      0.6875rem;                                    /* 11px FIXED — uppercase micro-labels only */
+  --fs-sm:      clamp(0.8125rem, 0.79rem + 0.11vw, 0.875rem); /* 13->14 — secondary / meta / dense tables */
+  --fs-base:    clamp(0.9375rem, 0.915rem + 0.11vw, 1rem);    /* 15->16 — reading floor: body, card copy */
+  --fs-md:      clamp(1.0625rem, 1.02rem + 0.22vw, 1.1875rem);/* 17->19 — lead / sub-heads */
+  --fs-lg:      clamp(1.25rem, 1.16rem + 0.43vw, 1.5rem);     /* 20->24 — h2 / h3 */
+  --fs-xl:      clamp(1.625rem, 1.44rem + 0.87vw, 2.0625rem); /* 26->33 — h1 / section titles */
+  --fs-hero:    clamp(2rem, 1.6rem + 1.8vw, 2.875rem);        /* 32->46 — the ONE hero stat per view */
+  --fs-display: clamp(2.5rem, 1.9rem + 2.6vw, 4rem);          /* 40->64 — landing masthead (display face lands with B4) */
 
-  --lh-tight: 1.2;
-  --lh-body:  1.55;
+  /* weights — explicit tokens so both surfaces align on the Inter wght axis */
+  --wt-body:     400;
+  --wt-medium:   500;
+  --wt-semibold: 600;
+  --wt-display:  700;
+
+  /* line-heights */
+  --lh-tight:   1.15;   /* display / hero */
+  --lh-snug:    1.3;    /* wrapping headings, dense table rows */
+  --lh-body:    1.55;   /* prose */
+  --lh-relaxed: 1.7;    /* long-form report prose (optional) */
+
+  /* tracking */
+  --track-tight: -0.01em;  /* display / h1 */
   --track-micro: 0.08em;   /* uppercase micro-label letter-spacing */
 
-  /* -- spacing (4/8px scale) ------------------------------------------------ */
+  /* -- spacing (4/8px scale + semantic density aliases) --------------------- */
+  --sp-0: 2px;                                          /* hairline-adjacent nudges */
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
   --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+  --sp-9: 80px; --sp-10: 96px;                          /* major section rhythm on long reports */
+
+  /* semantic density aliases — the density DIAL lives HERE; both surfaces inherit
+     it instead of hardcoding padding per component in two CSS files. */
+  --pad-card:           var(--sp-4);   /* comfortable card interior (16px) */
+  --pad-cell-y:         8px;           /* comfortable table cell (default) */
+  --pad-cell-x:         12px;
+  --pad-cell-y-compact: 4px;           /* opt-in reference-matrix density */
+  --pad-cell-x-compact: 8px;
+  --gap-grid:           var(--sp-4);
+  --stack:              var(--sp-4);   /* rhythm between blocks */
+  --stack-section:      var(--sp-7);   /* rhythm between major sections */
 
   /* -- geometry -------------------------------------------------------------- */
   --r-card: 4px;

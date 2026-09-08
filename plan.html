@@ -23,6 +23,13 @@ font-weight: 100 800;
 font-style: normal;
 font-display: optional;
 }
+@font-face {
+font-family: "Space Grotesk Var";
+src: url("assets/fonts/SpaceGrotesk-Variable.woff2") format("woff2");
+font-weight: 300 700;
+font-style: normal;
+font-display: optional;
+}
 :root {
 color-scheme: dark;
 --bg:        #0b111c;
@@ -42,20 +49,43 @@ color-scheme: dark;
 --good:      #3ecf8e;
 --warn:      #e8b13c;
 --bad:       #ff7676;
+--rail-1:    #3987e5;
+--rail-2:    #d95926;
+--rail-3:    #199e70;
+--rail-4:    #c98500;
+--font-display: "Space Grotesk Var", var(--font-ui);
 --font-ui:   "Inter Var", system-ui, -apple-system, "Segoe UI", sans-serif;
 --font-mono: "JetBrains Mono Var", ui-monospace, "SFMono-Regular", Menlo, monospace;
---fs-xs:   0.6875rem;
---fs-sm:   clamp(0.8125rem, 0.79rem + 0.11vw, 0.875rem);
---fs-base: clamp(0.9375rem, 0.915rem + 0.11vw, 1rem);
---fs-md:   clamp(1.0625rem, 1.02rem + 0.22vw, 1.1875rem);
---fs-lg:   clamp(1.25rem, 1.16rem + 0.43vw, 1.5rem);
---fs-xl:   clamp(1.625rem, 1.44rem + 0.87vw, 2.125rem);
---fs-hero: clamp(1.875rem, 1.56rem + 1.52vw, 2.75rem);
---lh-tight: 1.2;
---lh-body:  1.55;
+--fs-xs:      0.6875rem;
+--fs-sm:      clamp(0.8125rem, 0.79rem + 0.11vw, 0.875rem);
+--fs-base:    clamp(0.9375rem, 0.915rem + 0.11vw, 1rem);
+--fs-md:      clamp(1.0625rem, 1.02rem + 0.22vw, 1.1875rem);
+--fs-lg:      clamp(1.25rem, 1.16rem + 0.43vw, 1.5rem);
+--fs-xl:      clamp(1.625rem, 1.44rem + 0.87vw, 2.0625rem);
+--fs-hero:    clamp(2rem, 1.6rem + 1.8vw, 2.875rem);
+--fs-display: clamp(2.5rem, 1.9rem + 2.6vw, 4rem);
+--wt-body:     400;
+--wt-medium:   500;
+--wt-semibold: 600;
+--wt-display:  700;
+--lh-tight:   1.15;
+--lh-snug:    1.3;
+--lh-body:    1.55;
+--lh-relaxed: 1.7;
+--track-tight: -0.01em;
 --track-micro: 0.08em;
+--sp-0: 2px;
 --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
 --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+--sp-9: 80px; --sp-10: 96px;
+--pad-card:           var(--sp-4);
+--pad-cell-y:         8px;
+--pad-cell-x:         12px;
+--pad-cell-y-compact: 4px;
+--pad-cell-x-compact: 8px;
+--gap-grid:           var(--sp-4);
+--stack:              var(--sp-4);
+--stack-section:      var(--sp-7);
 --r-card: 4px;
 --r-ctl:  3px;
 --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.4);
@@ -93,7 +123,7 @@ font: 400 var(--fs-base)/var(--lh-body) var(--font-ui);
 -webkit-font-smoothing: antialiased;
 }
 h1, h2, h3 { color: var(--ink); line-height: var(--lh-tight); margin: 0 0 var(--sp-3); }
-h1 { font-size: var(--fs-xl); font-weight: 650; letter-spacing: -0.01em; }
+h1 { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 650; letter-spacing: var(--track-tight); }
 h2 { font-size: var(--fs-lg); font-weight: 600; }
 h3 { font-size: var(--fs-md); font-weight: 600; }
 p { margin: 0 0 var(--sp-4); max-width: 72ch; }
@@ -188,9 +218,9 @@ padding: 2px 8px; border-radius: 2px; cursor: pointer;
 .seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 1px; }
 .chip {
 display: inline-flex; align-items: center; justify-content: center;
-min-width: 16px; height: 16px; padding: 0 4px;
-font: 600 10px/1 var(--font-mono);
-border-radius: 3px; border: 1px solid; text-decoration: none;
+min-width: 1.5em; padding: 0 5px;
+font: 700 var(--fs-base)/1 var(--font-mono);
+border-radius: var(--r-ctl); border: 1px solid; text-decoration: none;
 transition: background var(--t-fast);
 }
 .chip:hover { text-decoration: none; }
@@ -656,9 +686,17 @@ font-variant-numeric: tabular-nums; }
     <a href="colo.html">Colo</a>
     <a href="neocloud.html">Neocloud</a>
     <a href="invest.html">Invest</a>
+    <a href="costctl.html">Cost control</a>
     <a href="land.html">Land</a>
+    <a href="landdev.html">Land dev</a>
+    <a href="stormwater.html">Stormwater</a>
+    <a href="geotech.html">Geotech</a>
+    <a href="entitlements.html">Entitlements</a>
+    <a href="interconnect.html">Interconnect</a>
+    <a href="sitescore.html">Site score</a>
     <a href="designs.html">Designs</a>
     <a href="fiber-layout.html">Fiber layout</a>
+    <a href="topology-designer.html">Topology</a>
     <a href="risks.html">Risks</a>
     <a href="3d.html">3D</a>
     <a href="sources.html">Sources</a>
@@ -681,6 +719,7 @@ font-variant-numeric: tabular-nums; }
 <main class="wrap">
   <section class="section section-calc" id="plan" aria-label="End-to-end planner">
     <div class="scen-slot" aria-hidden="true"></div>
+    <p class="journey-cta"><strong>New:</strong> <a href="journey.html">One-Click Guided Buyer Journey →</a> — walk the ordered path from GPUs to export with your scenario carried through every stage</p>
     <p class="preset-note">Basis mix, stated up front: the capex floor amortises at 0.85
     utilisation (build context), the TCO levelized at 0.70 (deliberately conservative), the
     colo view at 0.85 occupancy on the retail asking anchor, land at zero expansion reserve
@@ -724,7 +763,7 @@ font-variant-numeric: tabular-nums; }
 // setTimeout covers hidden tabs, where rAF never fires) — so the masthead text
 // LCP no longer shares the simulated mobile link with the script chain.
 // (Preloading the chain, the opposite move, measured WORSE — note in main().)
-(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v365","assets/js/app.js?v365","assets/js/rackdata.js?v365","assets/js/calc_power.js?v365","assets/js/calc_cooling.js?v365","assets/js/calc_rack.js?v365","assets/js/calc_capex.js?v365","assets/js/calc_fiber.js?v365","assets/js/calc_tco.js?v365","assets/js/calc_colo.js?v365","assets/js/calc_land.js?v365","assets/js/scenario.js?v365","assets/js/siteplan.js?v365","assets/js/page_plan.js?v365","assets/js/export_xlsx.js?v365","assets/js/export_pdf.js?v365","assets/js/export.js?v365"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
+(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v365","assets/js/app.js?v365","assets/js/rackdata.js?v365","assets/js/calc_power.js?v365","assets/js/calc_cooling.js?v365","assets/js/calc_rack.js?v365","assets/js/calc_capex.js?v365","assets/js/calc_fiber.js?v365","assets/js/calc_tco.js?v365","assets/js/calc_colo.js?v365","assets/js/calc_land.js?v365","assets/js/calc_schedule.js?v365","assets/js/scenario.js?v365","assets/js/siteplan.js?v365","assets/js/page_plan.js?v365","assets/js/export_xlsx.js?v365","assets/js/export_pdf.js?v365","assets/js/export.js?v365"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
 </script>
 </body>
 </html>

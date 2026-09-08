@@ -126,6 +126,36 @@
       return lines;
     },
     after: (r, kw) => {
+      // F3 fix: add dated anchor chips on the sell-rate input row
+      const rateInput = document.getElementById("inv.rate_usd_per_gpu_hr");
+      if (rateInput && !rateInput.dataset.chipsAdded) {
+        rateInput.dataset.chipsAdded = "1";
+        const anchors = [
+          ["CoreWeave H100", "6.16", "2026-08-20"],
+          ["Nebius H100", "3.85", "2026-08-20"],
+          ["AWS GB200", "10.58", "2026-08-20"],
+        ];
+        const row = rateInput.parentElement;
+        const chipWrap = document.createElement("span");
+        chipWrap.className = "rate-chips";
+        chipWrap.style.cssText = "display: inline-flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;";
+        for (const [label, rate, date] of anchors) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip chip-s";
+          btn.textContent = label + " $" + rate;
+          btn.title = label + " on-demand: $" + rate + "/GPU-h (observed " + date + ")";
+          btn.style.cssText = "cursor: pointer; padding: 0.25rem 0.5rem; font-size: 0.875rem;";
+          btn.addEventListener("click", () => {
+            rateInput.value = rate;
+            rateInput.dispatchEvent(new Event("input", { bubbles: true }));
+            rateInput.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+          chipWrap.appendChild(btn);
+        }
+        row.appendChild(chipWrap);
+      }
+
       const host = document.getElementById("inv-sens");
       if (!host) return;
       const rate = kw.rate_usd_per_gpu_hr;

@@ -62,12 +62,21 @@
       platform: plat, gpus_per_rack: v.gpus_per_rack, rack_kw: v.nameplate_kw,
       pue: v.pue_target, gpus: gpus,
     });
-    const colo = A.calcColo.costs({ it_mw: itMw });
+    // Colo unlevered + levered at standard construction financing terms for the financing card
+    const colo = A.calcColo.costs({
+      it_mw: itMw,
+      ltc_pct: 75.0,        // mid-point of 70-80% standard construction band
+      debt_rate_pct: 7.0,   // mid-range all-in rate (SOFR+spread)
+      amort_years: 25.0     // standard perm-loan tenor
+    });
     const land = A.calcLand.footprint({ it_mw: itMw });
+    // Critical-path schedule off a fixed NTP epoch (deterministic; never the
+    // wall clock). Lead-time bound, so it_mw is carried for context only.
+    const sched = A.calcSchedule.schedule({ ntp_date: "2026-09-01", it_mw: itMw });
 
     return { plat: plat, gpus: gpus, v: v, su: su, rps: rps, itMw: itMw,
              rack: rack, power: power, cooling: cooling, fiber: fiber,
-             capex: capex, tco: tco, colo: colo, land: land };
+             capex: capex, tco: tco, colo: colo, land: land, sched: sched };
   }
 
   function compute(kw) {
@@ -114,6 +123,14 @@
                     "parcel incl. setbacks (zero expansion reserve) — land page"),
       mw_it_per_acre: q(O(c.land, "mw_it_per_acre").value, "MW-IT/acre", "[D]",
                         "density at this parcel — land page"),
+      energize_date: q(O(c.sched, "energize_date").value, "date", "[D]",
+                       "facility power = NTP (2026-09-01) + " + O(c.sched, "energize_weeks").value +
+                       " critical-path wk (" + O(c.sched, "energize_critical_item").value +
+                       " long pole) — schedule model, commissioning page"),
+      gpus_live_date: q(O(c.sched, "gpus_live_date").value, "date", "[D]",
+                        "compute operational = NTP + " + O(c.sched, "gpus_live_weeks").value +
+                        " wk (" + O(c.sched, "gpus_live_critical_item").value +
+                        " overhang past energize) — the headline delivery date"),
     };
 
     const rem = O(c.rack, "racks").value - c.su * c.rps;
@@ -191,6 +208,12 @@
           d(O(c.land, "parcel_m2")) + " m² = " +
           d(O(c.land, "site_acres")) + " acres (" + d(O(c.land, "mw_it_per_acre")) +
           " MW-IT/acre)",
+        "schedule: NTP 2026-09-01 + " + d(O(c.sched, "energize_weeks")) +
+          " wk → energize " + O(c.sched, "energize_date") + " (" +
+          O(c.sched, "energize_critical_item") + ") + " +
+          d(O(c.sched, "gpus_live_weeks")) + " wk → GPUs live " +
+          O(c.sched, "gpus_live_date") + " (" + O(c.sched, "gpus_live_critical_item") +
+          ", " + d(O(c.sched, "long_lead_count")) + "-item long-lead register)",
       ];
     },
     after: (r, kw) => {
@@ -225,12 +248,22 @@
         ["Colo (lease the kW)", "colo.html", [
           ["floor " + O(c.colo, "cost_floor_usd_per_kw_month") + " $/kW·mo", O(c.colo, "yield_on_cost_pct") + "% yield-on-cost"],
           ["NOI " + O(c.colo, "noi_m_yr") + " US$M/yr", "@0.85 occupancy, retail anchor"]]],
+        ["Financing (levered colo)", "colo.html", [
+          ["DSCR " + O(c.colo, "dscr") + "x", "debt yield " + O(c.colo, "debt_yield_pct") + "%"],
+          ["75% LTC, 7% rate, 25-yr amort", "standard construction terms"]]],
         ["Neocloud (sell GPU-hours)", "neocloud.html", [
           ["break-even " + O(c.capex, "cost_floor_per_gpu_hr") + " $/GPU-h", "= the cost floor"],
           ["your sell rate prices margin + payback", "@0.85 utilisation basis"]]],
         ["Land", "land.html", [
           [O(c.land, "site_acres") + " acres", O(c.land, "site_hectares") + " ha"],
           [O(c.land, "mw_it_per_acre") + " MW-IT/acre", "zero reserve · compute-basis IT"]]],
+        ["Investor", "invest.html", [
+          [O(c.capex, "gpus") + " GPUs", O(c.capex, "capex_total_m") + " US$M all-in"],
+          ["enter your sell rate to see IRR & MOIC", "equity screen over 5-yr hold"]]],
+        ["Schedule (NTP → live)", "commissioning.html", [
+          ["energize " + O(c.sched, "energize_date"), "GPUs live " + O(c.sched, "gpus_live_date")],
+          [O(c.sched, "energize_weeks") + "/" + O(c.sched, "gpus_live_weeks") + " wk from NTP",
+           "critical: " + c.sched.outputs.gpus_live_critical_item.value]]],
       ];
       const host = document.getElementById("plan-cards");
       if (host) {

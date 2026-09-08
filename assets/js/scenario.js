@@ -187,6 +187,10 @@
     },
     colo: (d) => {
       setNum("colo", "it_mw", d.it_mw);
+      // Seed leverage params for financing deep-link round-trip
+      setNum("colo", "ltc_pct", 75.0);        // standard construction band mid-point
+      setNum("colo", "debt_rate_pct", 7.0);   // mid-range all-in rate
+      setNum("colo", "amort_years", 25.0);    // standard perm-loan tenor
       return [];
     },
     neo: (d, v, s) => {
@@ -199,9 +203,66 @@
       setNum("land", "it_mw", d.it_mw);
       return [];
     },
+    costctl: (d) => {
+      // baseline composes over capex from it_mw (gpus/kw_per_gpu/pue stay page
+      // defaults unless typed) — mirrors the colo/land it_mw-only feed
+      setNum("costctl", "it_mw", d.it_mw);
+      return [];
+    },
+    landdev: (d) => {
+      // disturbed parcel composes over calc_land from it_mw (grading-desk inputs
+      // — cut/fill depth, cut-area split, swell/shrink — stay page defaults unless
+      // typed) — mirrors the land/costctl it_mw-only feed
+      setNum("landdev", "it_mw", d.it_mw);
+      return [];
+    },
+    stormwater: (d) => {
+      // drainage parcel composes over calc_land from it_mw (hydrology-desk inputs
+      // — storm intensity/duration, impervious fraction, runoff C's, basin depth —
+      // stay page defaults unless typed) — mirrors the land/landdev it_mw-only feed
+      setNum("stormwater", "it_mw", d.it_mw);
+      return [];
+    },
+    geotech: (d) => {
+      // building pad composes over calc_land from it_mw (geotechnical-desk inputs
+      // — cohesion, tabulated N-factors, unit weight, foundation width/depth, FS,
+      // floor load, footing thickness — stay page defaults unless typed) — mirrors
+      // the land/landdev/stormwater it_mw-only feed
+      setNum("geotech", "it_mw", d.it_mw);
+      return [];
+    },
+    entitlements: (d) => {
+      // disturbed parcel composes over calc_land from it_mw (entitlement-desk inputs
+      // — phase durations, review thresholds/step, contingency — stay page defaults
+      // unless typed) — mirrors the land/landdev/stormwater/geotech it_mw-only feed
+      setNum("entitlements", "it_mw", d.it_mw);
+      return [];
+    },
+    interconnect: (d) => {
+      // interconnection MW composes over calc_power from it_mw (interconnection-desk
+      // inputs — phase durations, study thresholds/step, network-upgrade $/kW,
+      // contingency — stay page defaults unless typed) — the it_mw-only feed, here
+      // over the POWER core (facility_mw = it_mw x pue) rather than the land core
+      setNum("interconnect", "it_mw", d.it_mw);
+      return [];
+    },
+    sitescore: (d) => {
+      // the CAPSTONE: all five site domains compose over it_mw (calc_land parcel base +
+      // calc_power for the interconnection MW); the suitability weights, value-function
+      // anchors and per-domain drivers stay page defaults unless typed — the it_mw-only
+      // feed, mirroring the land/landdev/stormwater/geotech/entitlements/interconnect feeds
+      setNum("sitescore", "it_mw", d.it_mw);
+      return [];
+    },
     plan: (d, v, s) => {
       setSelect("plan", "platform", s.platform);
       setNum("plan", "gpus", d.gpus);
+      return [];
+    },
+    inv: (d, v, s) => {
+      setSelect("inv", "platform", s.platform);
+      setNum("inv", "it_mw", d.it_mw);
+      setNum("inv", "gpus", d.gpus);
       return [];
     },
     fiber: (d, v) => {
@@ -255,6 +316,12 @@
       }
       return n;
     },
+    journey: (d, v, s) => {
+      // Journey has no input fields (fields:[]), so setNum would have no DOM target.
+      // The compute() function reads directly from A.scenario.current().
+      // This FEEDS entry exists to document the mapping: s.target → compute gpus parameter.
+      return [];
+    },
   };
 
   function applyAll() {
@@ -279,8 +346,17 @@
                     colo: ["it_mw"],
                     neo: ["platform", "it_mw", "gpus"],
                     land: ["it_mw"],
+                    costctl: ["it_mw"],
+                    landdev: ["it_mw"],
+                    stormwater: ["it_mw"],
+                    geotech: ["it_mw"],
+                    entitlements: ["it_mw"],
+                    interconnect: ["it_mw"],
+                    sitescore: ["it_mw"],
                     plan: ["platform", "gpus"],
-                    tco: ["platform", "racks", "gpus"] }[sec.id] || [];
+                    inv: ["platform", "it_mw", "gpus"],
+                    tco: ["platform", "racks", "gpus"],
+                    journey: [] }[sec.id] || [];
       for (const k of ids) clearField(sec.id, k);
     }
   }
@@ -347,6 +423,28 @@
     st.restoring = was;
     renderNotes(notes);
   }
+  // Warm-state deep-link precedence (card [163]): app.js restoreHash only runs
+  // ONCE, on a full page load, so a FRESH deep-link is honoured. But when the
+  // page is ALREADY open (the "warm" state — localStorage populated from a prior
+  // view of the default scenario) and the URL hash THEN changes to an explicit
+  // scenario — opening/pasting a deep-link, editing the fragment, Back/Forward —
+  // nothing re-derived the scenario, so the stale localStorage value silently
+  // won over the hash. Re-run the same s.* hash-pass + feed re-application the
+  // boot path uses, then re-render every section so hero/derived numbers AND the
+  // cross-page open-links pick up the hash scenario. encodeHash persists via
+  // replaceState (which fires no hashchange), so this only answers real
+  // navigations, never the bar's own writes — no feedback loop.
+  if (typeof window !== "undefined") window.addEventListener("hashchange", () => {
+    const st = A.appState;
+    if (!st || st.restoring) return;
+    const before = JSON.stringify(scen);
+    restoreFromHash(new URLSearchParams(location.hash.slice(1)));
+    if (JSON.stringify(scen) === before) return;   // hash carried no new scenario
+    st.restoring = true;
+    renderNotes(applyAll());
+    st.restoring = false;
+    for (const sec of st.sections || []) if (A.rerender) A.rerender(sec.id);
+  });
 
   // ---- the bar ------------------------------------------------------------------
   function el(tag, cls, text) {
