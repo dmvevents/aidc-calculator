@@ -21,7 +21,13 @@
   if (!A || !DB) return;
 
   const LS_KEY = "aidc.scenario";
-  const PLATFORMS = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
+  // F3/DSX-25: the shared scenario bar rides on 20 calculator pages, so the
+  // four-entry array that used to sit here was the single biggest source of
+  // platform invisibility on the site. The list is now the variant set, read
+  // from RACKDB through AIDC.platforms — adding a variant YAML surfaces it on
+  // every one of those pages with no page edit.
+  const PLATFORMS = () =>
+    (A.platforms ? A.platforms.order() : Object.keys(DB).sort());
   const DRIVERS = [["gpus", "GPUs"], ["mw", "MW-IT"], ["racks", "racks"]];
 
   let scen = null;       // {platform, driver, target} or null
@@ -538,15 +544,22 @@
     const psel = document.createElement("select");
     psel.className = "scen-platform";
     psel.setAttribute("aria-label", "scenario platform");
-    const none = document.createElement("option");
-    none.value = "";
-    none.textContent = "(no scenario — page defaults)";
-    psel.appendChild(none);
-    for (const p of PLATFORMS) {
-      const o = document.createElement("option");
-      o.value = p;
-      o.textContent = DB[p].platform;
-      psel.appendChild(o);
+    if (A.platforms) {
+      A.platforms.populateSelect(psel, {
+        includeNone: true,
+        noneLabel: "(no scenario — page defaults)",
+      });
+    } else {
+      const none = document.createElement("option");
+      none.value = "";
+      none.textContent = "(no scenario — page defaults)";
+      psel.appendChild(none);
+      for (const p of PLATFORMS()) {
+        const o = document.createElement("option");
+        o.value = p;
+        o.textContent = DB[p].platform;
+        psel.appendChild(o);
+      }
     }
     const seg = document.createElement("fieldset");
     seg.className = "seg scen-seg";
@@ -615,6 +628,8 @@
     bootApply: bootApply,
     hashPairs: hashPairs,
     current: () => (scen ? Object.assign({}, scen) : null),
-    PLATFORMS: PLATFORMS,
+    // live view of the variant set (was a frozen 4-entry array before F3)
+    platforms: PLATFORMS,
+    get PLATFORMS() { return PLATFORMS(); },
   };
 })();

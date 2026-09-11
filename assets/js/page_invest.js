@@ -13,7 +13,8 @@
   const d = (v) => A.res.disp(v);
   A.SECTIONS = A.SECTIONS || [];
 
-  const PLATFORMS = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
+  // F3/DSX-25: platform options come from the variant set (RACKDB via
+  // AIDC.platforms), never a hand-written array — see assets/js/platforms.js.
 
   function chain(kw) {
     const ck = {};
@@ -70,7 +71,7 @@
     heroSrc: "invest-model",
     fields: [
       { key: "platform", label: "GPU platform (sets kW/GPU + PUE)", src: "variants", type: "select", value: "",
-        options: [["", "(none — GB200 basis)"]].concat(PLATFORMS.map((n) => [n, DB[n].platform])) },
+        options: A.platforms.optionPairs({ includeNone: true, noneLabel: "(none — GB200 basis)" }) },
       { key: "it_mw", label: "critical IT", src: "legend", step: 0.5, min: 0.1 },
       { key: "gpus", label: "GPU count (else derived)", src: "legend", step: 8, min: 1, placeholder: "derived" },
       { key: "rate_usd_per_gpu_hr", label: "your sell rate $/GPU-h (anchors below)",

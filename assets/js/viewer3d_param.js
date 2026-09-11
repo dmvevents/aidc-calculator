@@ -21,6 +21,14 @@ const MATS = {
   tes: [0x1f6166, 0.40, 0.45], fence: [0x242b38, 0.30, 0.60],
   shell: [0x6b85a8, 0.10, 0.35, 0.14],
   floor: [0x161b24, 0.05, 0.90], site: [0x0e1119, 0.05, 0.95],
+  // F4: service connection materials [A]
+  drop: [0x8c6b2e, 0.60, 0.45],                    // power drops (copper-like)
+  tcs_supply: [0x3a7d7a, 0.50, 0.40],              // tech cooling supply (teal)
+  tcs_return: [0x5a4d8a, 0.50, 0.40],              // tech cooling return (purple)
+  header: [0x2a5a66, 0.50, 0.40],                  // facility water headers (dark teal)
+  gridline: [0x2a3547, 0.05, 0.90],                // ground grid (subtle)
+  dimline: [0x6b7a8f, 0.30, 0.60],                 // dimension lines
+  human: [0x8ca6bf, 0.20, 0.55],                   // human reference figure
 };
 
 export function mount(host, layout, layerState) {

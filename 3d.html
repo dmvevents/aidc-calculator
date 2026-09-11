@@ -794,6 +794,8 @@ font-weight: 400;
 .out-table tr.out-group th { display: block; }
 }
 </style>
+<link rel="stylesheet" href="assets/nav.css">
+<link rel="stylesheet" href="assets/ux.css">
 </head>
 <body>
 <a href="#main" class="skip-link">Skip to content</a>
@@ -940,12 +942,14 @@ font-weight: 400;
     <div class="twin">
       <div class="twin-bar">
         <label class="micro" for="twin-variant">platform&nbsp;
-          <select id="twin-variant">
-            <option value="gb200-nvl72">GB200 NVL72</option>
-            <option value="gb300-nvl72">GB300 NVL72</option>
-            <option value="b200-liquid">HGX B200 DLC</option>
-            <option value="dgx-b200-aircooled-2su">DGX B200 (air)</option>
-          </select>
+          <!-- Options come from RACKDB via AIDC.platforms (page_3d.js populateSelect),
+               NEVER typed here. This markup used to name four of the eleven variants:
+               a second source of truth that had already drifted — it omitted DGX
+               B300/H100/H200/B200-HD, GB200 NVL36, HGX B300 and Rubin NVL144, and it
+               carried no lifecycle badge, so a superseded part read as a shipping SKU
+               the moment the registry failed to load (DSX-85). #param-platform below
+               has always been JS-filled with no static options; this now matches it. -->
+          <select id="twin-variant"></select>
         </label>
         <button class="btn" id="load3d" type="button">Load interactive 3D</button>
       </div>
@@ -969,12 +973,13 @@ font-weight: 400;
     <div class="twin">
       <div class="twin-bar" role="group" aria-label="Detail platform and animations">
         <label class="micro" for="detail-variant">platform&nbsp;
-          <select id="detail-variant">
-            <option value="gb200-nvl72">GB200 NVL72</option>
-            <option value="gb300-nvl72">GB300 NVL72</option>
-            <option value="b200-liquid">HGX B200 DLC</option>
-            <option value="dgx-b200-aircooled-2su">DGX B200 (air)</option>
-          </select>
+          <!-- Filled by page_detail3d.js from AIDC.platforms with detailOnly:true —
+               the DETAILRACKS subset, argued and asserted in
+               tests/test_platform_coverage.py SELECTOR_EXEMPTIONS. The four names
+               that used to be typed here happened to equal that subset TODAY, which
+               is exactly the coincidence that makes a hardcoded copy dangerous: add
+               one *-detail.glb and the markup silently keeps offering four (DSX-85). -->
+          <select id="detail-variant"></select>
         </label>
         <span id="detail-anims" class="anim-set" role="group" aria-label="Animation toggles">
           <button class="btn anim-btn" type="button" data-anim="dx" aria-pressed="false">Exploded view</button>
@@ -1123,16 +1128,18 @@ font-weight: 400;
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-09 (per-entry dates on Sources) · site v3.7.0 · updated 2026-09-11</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-09 (per-entry dates on Sources) · site v3.8.0 · updated 2026-09-11</p>
   </div>
 </footer>
+<script src="assets/nav.js?v380"></script>
+<script src="assets/ux.js?v380"></script>
 <script>
 // progressive boot: the page is readable static HTML first; the calculator
 // engine loads AFTER the first frame paints (double-rAF past DOMContentLoaded;
 // setTimeout covers hidden tabs, where rAF never fires) — so the masthead text
 // LCP no longer shares the simulated mobile link with the script chain.
 // (Preloading the chain, the opposite move, measured WORSE — note in main().)
-(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v370","assets/js/rackdata.js?v370","assets/js/calc_power.js?v370","assets/js/calc_cooling.js?v370","assets/js/calc_land.js?v370","assets/js/scenelayout.js?v370","assets/js/scene3d.js?v370","assets/js/viewer3d.js?v370","assets/js/page_3d.js?v370","assets/js/param_boot.js?v370","assets/js/detailracks.js?v370","assets/js/page_detail3d.js?v370"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
+(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v380","assets/js/rackdata.js?v380","assets/js/platforms.js?v380","assets/js/calc_power.js?v380","assets/js/calc_cooling.js?v380","assets/js/calc_land.js?v380","assets/js/scenelayout.js?v380","assets/js/scene3d.js?v380","assets/js/viewer3d.js?v380","assets/js/page_3d.js?v380","assets/js/param_boot.js?v380","assets/js/detailracks.js?v380","assets/js/page_detail3d.js?v380"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
 </script>
 </body>
 </html>

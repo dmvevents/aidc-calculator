@@ -32,9 +32,11 @@
     hero: "cost_floor_per_gpu_hr", heroLabel: "cost floor (not a price)", heroSrc: "jll",
     fields: [
       { key: "platform", label: "GPU platform (sets kW/GPU + PUE)", src: "variants", type: "select", value: "",
-        options: [["", "(none — set kW/GPU directly)"]].concat(
-          ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"]
-            .map((n) => [n, globalThis.RACKDB[n].platform])) },
+        // F3/DSX-25: the variant set through AIDC.platforms, not a hand-written
+        // four-entry array (this page's capex basis needs only kW/GPU + PUE,
+        // both of which every variant carries, so nothing gates the list)
+        options: A.platforms.optionPairs({ includeNone: true,
+                                           noneLabel: "(none — set kW/GPU directly)" }) },
       { key: "it_mw", label: "critical IT", src: "legend", step: 0.5, min: 0.1 },
       { key: "power_usd_per_kwh", label: "power price", src: "eia", step: 0.005, min: 0 },
       { key: "utilisation", label: "billable utilisation (build basis — tco plans at 0.70)", src: "legend", step: 0.05, min: 0.05, max: 1 },

@@ -11,8 +11,16 @@
   A.SECTIONS = A.SECTIONS || [];
 
   const NS = "http://www.w3.org/2000/svg";
-  const VARIANT_ORDER = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
   const M$ = (x) => d(x / 1e6) + " M";
+
+  // F3/DSX-25: every variant is offered (list comes from AIDC.platforms, never a
+  // hand-written array). The TCO stack needs one input the variant YAMLs do NOT
+  // carry — a GPU acquisition price — and calc_tco only holds published estimate
+  // bands for four platforms. Rather than HIDE the other seven (which is how the
+  // four-entry array got here) or carry a GB200 price across generations as if it
+  // were theirs (a fabricated [A]), those platforms are offered and ask for the
+  // user's quote in the "GPU acquisition" field.
+  const priceBand = (name) => A.calcTco.GPU_PRICE_USD[name] || null;
 
   // Platform resolution mirrors the cli wrapper: --platform pulls GPUs/rack and
   // kW/rack from the rack matrix unless the user overrides them.
@@ -40,7 +48,11 @@
       if (kw[k] !== null && kw[k] !== undefined) p[k] = kw[k];
     }
     if (p.gpu_price_usd === null || p.gpu_price_usd === undefined) {
-      p.gpu_price_usd = T.GPU_PRICE_USD[p.platform].value;
+      // a platform without a published band never reaches here (compute throws
+      // first), but the lookup is guarded so the chart path cannot TypeError if
+      // the call order ever changes
+      const band = priceBand(p.platform);
+      if (band) p.gpu_price_usd = band.value;
     }
     if (p.opex_usd_per_kw_yr === null || p.opex_usd_per_kw_yr === undefined) {
       p.opex_usd_per_kw_yr = T.OPEX_DEFAULT[p.mode].value;
@@ -212,7 +224,22 @@
   A.SECTIONS.push({
     id: "tco",
     defaults: A.calcTco.DEFAULTS,
-    compute: (kw) => A.calcTco.tco(withPlatform(kw)),
+    compute: (kw) => {
+      const k2 = withPlatform(kw);
+      // an unpriced platform gets an ACTIONABLE message, not the engine's
+      // "pass gpu_price_usd" API wording (the hero renders whatever we throw)
+      if ((k2.gpu_price_usd === null || k2.gpu_price_usd === undefined) &&
+          !priceBand(k2.platform)) {
+        const v = globalThis.RACKDB[k2.platform];
+        throw new Error("no published GPU acquisition estimate exists for " +
+          ((v && v.platform) || k2.platform) + " — enter your quoted US$/GPU in " +
+          "“GPU acquisition (all-in IT)” to model it. Only " +
+          Object.keys(A.calcTco.GPU_PRICE_USD).length + " platforms have a citable " +
+          "public price band and they prefill automatically; reusing one of those " +
+          "prices here would be an invented figure, so the model asks instead.");
+      }
+      return A.calcTco.tco(k2);
+    },
     hero: "levelized_usd_per_gpu_hr",
     heroLabel: "levelized cost per delivered GPU-hour — an estimate, not a price",
     heroSrc: "tco-model",
@@ -220,7 +247,7 @@
       { key: "mode", label: "deployment mode", src: "tco-model", type: "select",
         options: [["build", "BUILD — own the facility"], ["lease", "LEASE — colo space"]] },
       { key: "platform", label: "GPU platform", src: "variants", type: "select",
-        options: VARIANT_ORDER.map((n) => [n, globalThis.RACKDB[n].platform]) },
+        options: A.platforms.optionPairs() },
       { key: "racks", label: "fleet size (racks)", src: "legend", step: 1, min: 1 },
       { key: "gpus", label: "fleet size (GPUs — wins over racks)", src: "legend", step: 8, min: 1,
         placeholder: "optional" },
@@ -330,7 +357,12 @@
       holder("gpus_per_rack", v.gpus_per_rack);
       holder("rack_kw", v.nameplate_kw);
       holder("pue", v.pue_target);
-      holder("gpu_price_usd", A.calcTco.GPU_PRICE_USD[p.platform].value);
+      const band = priceBand(p.platform);
+      if (band) holder("gpu_price_usd", band.value);
+      else {
+        const ctl = document.getElementById("tco.gpu_price_usd");
+        if (ctl) ctl.placeholder = "your quote — no public band for this platform";
+      }
       holder("lease_usd_per_kw_month", A.calcTco.LEASE_DEFAULT[p.lease_tier].value);
       holder("opex_usd_per_kw_yr", A.calcTco.OPEX_DEFAULT[p.mode].value);
       const curve = document.getElementById("tco-curve");

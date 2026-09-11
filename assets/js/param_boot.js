@@ -18,7 +18,10 @@
   const UPPER = 200000;
   const UPPER_LABEL = UPPER.toLocaleString("en-US");  // en-US grouped label, derived from UPPER
 
-  const PLATFORMS = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
+  // F3/DSX-25: the platform list is the variant set, read from RACKDB through
+  // AIDC.platforms — NOT a hand-written array. The four-entry array that used
+  // to live here hid six of the eleven modelled platforms from this selector.
+  const DEFAULT_PLAT = "gb200-nvl72";
   const $ = (id) => document.getElementById(id);
   let viewer = null, viewerMod = null, layerState = {};
 
@@ -65,15 +68,19 @@
       if (!plat) { plat = scen.platform; if (platSel) platSel.value = plat; }
       if (!gpus) { gpus = g2; if (gpuInp) gpuInp.value = String(g2); }
     }
-    if (!plat) plat = "gb200-nvl72";
+    if (!plat || !DB[plat]) plat = DEFAULT_PLAT;
     let inputNote = inputNoteFor(gpus, !!(gpuInp && gpuInp.value.trim() !== ""));
     if (!gpus || !(gpus > 0)) gpus = 512;
     gpus = clampGpuCount(gpus);
+    const shapeSel = $("param-shape");
+    const SHAPES = ["auto", "square", "rect-2:1", "rect-3:1", "L", "T"];
+    let shape = shapeSel && shapeSel.value;
+    if (SHAPES.indexOf(shape) < 0) shape = "auto";
     const rejSel = $("param-rejector");
     const REJ = (A.calcCooling && A.calcCooling.REJECTORS) || ["dry", "tower", "adiabatic"];
     let rej = rejSel && rejSel.value;
     if (REJ.indexOf(rej) < 0) rej = "dry";
-    return { plat: plat, gpus: gpus, rej: rej, inputNote: inputNote };
+    return { plat: plat, gpus: gpus, shape: shape, rej: rej, inputNote: inputNote };
   }
 
   function renderStats(layout) {
@@ -102,8 +109,8 @@
   }
 
   function recompute() {
-    const { plat, gpus, rej, inputNote } = currentInputs();
-    const layout = A.sceneLayout.solve(plat, gpus, rej);
+    const { plat, gpus, shape, rej, inputNote } = currentInputs();
+    const layout = A.sceneLayout.solve(plat, gpus, rej, shape);
     renderStats(layout);
     const host = $("param-stats");
     if (host && inputNote) {
@@ -135,7 +142,7 @@
       // URL (the documented trap) — sibling path, not page-relative
       viewerMod = await import("./viewer3d_param.js" + (VTAG ? "?" + VTAG : ""));
       const ci = currentInputs();
-      const layout = A.sceneLayout.solve(ci.plat, ci.gpus, ci.rej);
+      const layout = A.sceneLayout.solve(ci.plat, ci.gpus, ci.rej, ci.shape);
       viewer = viewerMod.mount($("param-stage"), layout, layerState);
       if (btn) { btn.textContent = "Recompute"; btn.disabled = false; }
       $("param-stage").classList.add("is-live");
@@ -146,12 +153,23 @@
 
   function boot() {
     const platSel = $("param-platform");
-    if (platSel && !platSel.options.length) {
-      for (const n of PLATFORMS) {
+    if (platSel && !platSel.options.length && A.platforms) {
+      // every variant, ordered + availability-badged by the registry; the
+      // pre-selection is pinned so widening the list cannot move the default
+      A.platforms.populateSelect(platSel, { selectedKey: DEFAULT_PLAT });
+    }
+    const shapeSel = $("param-shape");
+    if (shapeSel && !shapeSel.options.length) {
+      for (const [val, label] of [["auto", "auto (default)"],
+                                  ["square", "square"],
+                                  ["rect-2:1", "rect 2:1"],
+                                  ["rect-3:1", "rect 3:1"],
+                                  ["L", "L-shape"],
+                                  ["T", "T-shape"]]) {
         const o = document.createElement("option");
-        o.value = n;
-        o.textContent = DB[n].platform;
-        platSel.appendChild(o);
+        o.value = val;
+        o.textContent = label;
+        shapeSel.appendChild(o);
       }
     }
     const rejSel = $("param-rejector");
@@ -169,6 +187,7 @@
     if (platSel) platSel.addEventListener("change", recompute);
     const gpuInp = $("param-gpus");
     if (gpuInp) gpuInp.addEventListener("change", recompute);
+    if (shapeSel) shapeSel.addEventListener("change", recompute);
     if (rejSel) rejSel.addEventListener("change", recompute);
     const btn = $("param-load");
     if (btn) btn.addEventListener("click", () => (viewer ? recompute() : load3d()));

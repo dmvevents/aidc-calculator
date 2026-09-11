@@ -20,8 +20,22 @@
 
     const CHIPNAME = { S: "stated", D: "derived", A: "assumed" };
     let viewer = null;
+
+    // Populate selector with platforms that have detail models
+    if (globalThis.AIDC?.platforms) {
+      globalThis.AIDC.platforms.populateSelect(sel, {
+        detailOnly: true,
+        shortLabels: true
+      });
+    }
+
+    // Restore or default variant
     let variant = AIDC3D.hashGet("detail");
-    if (!variant || !D[variant]) variant = "gb200-nvl72";
+    if (!variant || !D[variant]) {
+      // Default to first available platform with detail model
+      const keys = Object.keys(D);
+      variant = keys.length > 0 ? keys[0] : "gb200-nvl72";
+    }
     sel.value = variant;
 
     const T = { dx: 0, fl: 0, pn: 0, lb: 1 };

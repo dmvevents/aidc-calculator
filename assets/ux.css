@@ -1,0 +1,239 @@
+/* ============================================================================
+   ux.css — DSX-17 visual-audit fixes
+   Truth document: workstations/site-ux/audit-findings.md (DSX-16)
+
+   WHY A SEPARATE FILE: every page inlines an assembled <style> block of
+   tokens.css + site.css, and the assembler that produces it runs on the remote
+   instance, not in this repo — editing site.css alone changes nothing on
+   screen. This file is linked AFTER that inline block so it wins the cascade.
+   The same rules are mirrored verbatim at the end of assets/site.css so a
+   regeneration from source keeps them instead of silently reverting.
+
+   Applied by tools/patch_ux.py (idempotent), alongside assets/ux.js.
+   ========================================================================== */
+
+/* ---- D5 · skip-to-content link (WCAG 2.4.1 Bypass Blocks) -----------------
+   probe.py reported skipLink:false on all 27 pages. The anchor is injected
+   statically as the first child of <body> by patch_ux.py — first in DOM order,
+   therefore first in tab order, which a JS-injected node could not guarantee. */
+.skip-link {
+  position: absolute;
+  left: var(--sp-3);
+  top: -4rem;
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--raised);
+  color: var(--ink);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-ctl);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  transition: top var(--t-fast);
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: var(--sp-3);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* the landmark the link targets must be able to receive focus */
+#main:focus { outline: none; }
+
+/* ---- D1 · diagrams render below authored size, on desktop too -------------
+   The SVGs are authored at 860–980 viewBox units and were trapped in a 726px
+   results column (74–84% scale, so a 10px label painted at 7.4–8.4px).
+
+   The left side is not available: .panel-inputs is position:sticky from 921px
+   up, so a negative left margin would slide the diagram under a live panel.
+   Everything to the RIGHT is free — panel padding (16px), .wrap padding (24px),
+   and the centring margin (100px at a 1440px viewport) — so the mount bleeds
+   into it, spending the 16px panel padding as the outer gutter.
+
+   Arithmetic at 1440px: 726 + 24 + 100 + 1 (panel border) = 851px.
+   That is 0.99 of the 860-unit diagrams and 0.87 of the 980-unit ones; a full
+   1.0 for 980 units is geometrically unreachable beside a 400px input column
+   at this viewport (980 + 400 + 32 gap = 1412 needs the whole 1440 window), so
+   the authored label floor below carries the rest of the fix. */
+@media (min-width: 921px) {
+  .panel-outputs > div:has(> svg.dg),
+  .panel-outputs > .plan-stage,
+  .panel-outputs > .siteplan {
+    margin-right: calc(-1 * (max(0px, (100vw - var(--w-content)) / 2) + var(--sp-5) + 1px));
+    /* nothing on the site is authored wider than 980 units — stop growing a
+       little past that instead of running to the edge of a 4K window */
+    max-width: 1040px;
+  }
+}
+
+/* the bled mount leaves the results card, so it carries its own surface — the
+   same treatment .plan-stage already uses, so the wider box reads as deliberate
+   rather than as a diagram spilling out of a panel */
+.panel-outputs > div:has(> svg.dg) {
+  background: var(--inset);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+}
+
+/* ---- D1 · authored label sizes are DELIBERATELY LEFT ALONE ---------------
+   Raising the label font-size in viewBox units looked like a cheap way to buy
+   back the residual downscale on the 980-unit diagrams. It is not: the label
+   positions are authored for the authored sizes, so bigger type collides.
+   Measured with workstations/site-ux/fontcheck.py, at 1440 and 390, counting
+   text nodes that leave their own <svg> box and text pairs whose boxes overlap:
+
+     config                       clipped   new overlaps
+     authored (10/10/10/8.5/11)         0              0
+     hp-lbl-dim 8.5 -> 11               0              6  (designs-plan, fl-physical)
+     all labels -> 12                   3              6  (+tp-legend prose, tp-dials)
+
+   (fl-physical's 22 left-edge hp-lbl overshoots and 4 tp-diagram/plan-siteplan
+   label-vs-number touches are present in ALL THREE configs — authored, not new.)
+   .dg-symtxt at 11 also ran TRANSFORMER into the next legend glyph. So the size
+   fix is the bleed above and nothing else: 10 units now paint at 9.9px on the
+   860-unit diagrams and 8.7px on the 980-unit ones (was 8.4 / 7.4), and at
+   exactly 10.0px on mobile, where the diagram is no longer squeezed at all. */
+
+/* ---- D2 · mobile diagrams were clipped AND shrunk ------------------------
+   At 390px the wrappers carried a flat min-width of 560/640px inside a 342px
+   column: the diagram overflowed *and* stayed narrower than its viewBox, so
+   labels fell to 5.7–7.1px and formula lines were severed mid-token.
+   ux.js publishes each SVG's own viewBox width as --ux-vbw, so the diagram
+   renders at authored size and the container scrolls — one failure mode
+   instead of two, with the measured affordance below to make it discoverable. */
+@media (max-width: 720px) {
+  svg.dg { min-width: var(--ux-vbw, 560px); }
+  .plan-stage svg, .siteplan svg { min-width: var(--ux-vbw, 640px); }
+}
+
+/* ---- D2 + D4 · scroll affordance ----------------------------------------
+   probe.py found maskOrShadow:false on every overflowing container, including
+   the rack matrix hiding 1231px at a 1440px viewport.
+
+   State comes from ux.js measuring, never from a media query — site.css:582
+   records why (a static mask erased the last nav link's glyphs on wide screens
+   with nothing to scroll). Two treatments because the content differs: a fade
+   for diagrams, an edge shadow for .matrix-scroll, which also holds the
+   provenance footnote prose that must not be faded away. */
+.ux-ovf-l, .ux-ovf-r {
+  box-shadow: var(--ux-sh-l, 0 0 0 transparent), var(--ux-sh-r, 0 0 0 transparent);
+}
+.ux-ovf-l { --ux-sh-l: inset 18px 0 14px -14px rgba(2, 6, 14, 0.92); }
+.ux-ovf-r { --ux-sh-r: inset -18px 0 14px -14px rgba(2, 6, 14, 0.92); }
+
+div:has(> svg.dg).ux-ovf-r,
+.plan-stage.ux-ovf-r,
+.siteplan.ux-ovf-r {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
+
+/* ---- D4 · rack variant matrix: sticky row labels ------------------------
+   2423px of table against 1192px of column — the hidden part is the comparison
+   columns, i.e. the whole point of a variant matrix. Anchor the row labels so
+   what a scrolled-away column belongs to stays readable. */
+.matrix-scroll .matrix th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--surface);
+  box-shadow: 1px 0 0 var(--hairline);
+}
+.matrix-scroll .matrix thead th:first-child { z-index: 3; }
+
+/* ---- D3 · measure cap on JS-populated footnote lists --------------------
+   .notes had grid, gap, size and colour but no max-width, so rack's 22 items
+   ran to 133ch — the widest text on the site, against a 90ch convention the
+   rest of the stylesheet applies carefully (.footer .disclaimer, .src-detail,
+   .risk-dl dd). Long unbroken vendor/product strings break rather than push
+   the column wider. */
+.notes li {
+  max-width: 90ch;
+  overflow-wrap: anywhere;
+}
+
+/* ---- D6 · ≥44px touch targets (WCAG 2.5.5 / Apple HIG) ------------------
+   37 sub-44px targets in the drawer: 27 items at 36px, group toggles at 32px,
+   close 36px, filter input 34px. The rules live here rather than in nav.css so
+   the DSX-14 nav lane keeps sole ownership of that file. */
+.nav-drawer-item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-3);
+}
+.nav-drawer-group-toggle { min-height: 44px; }
+.nav-hamburger { min-width: 44px; min-height: 44px; }
+.nav-drawer-close { width: 44px; height: 44px; }
+.nav-drawer-filter-input { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+/* the collapsible groups animate to a max-height ceiling — taller rows need a
+   taller ceiling or the last item of a big group would be clipped */
+.nav-drawer-group-items.is-expanded { max-height: 1600px; }
+
+/* form controls and actions: inputs and selects were 36px, .btn 30px */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.field input:not([type="checkbox"]),
+.field select { min-height: 44px; }
+/* checkboxes keep an 18px box — the whole <label class="field"> is the control,
+   so the effective target is the field block, well over 44px. Guarantee the
+   row itself clears 44px. */
+.field-row { min-height: 44px; display: flex; align-items: center; gap: var(--sp-2); }
+.seg label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  /* unit toggles are two-glyph ("kW"/"MW"), so they were 29-42px WIDE at 44 tall */
+  min-width: 44px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+/* summaries keep display:list-item — flexing them drops the disclosure marker */
+details.adv > summary,
+details.chain > summary {
+  min-height: 44px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.hp-toggle { min-height: 44px; }
+/* the "parity: calc_power.py" section-head link is 165x20 and standalone (not
+   inline in a sentence, so no WCAG 2.5.5 exemption). Grow the HIT AREA, not the
+   type — the same ::after trick .chip already uses, so nothing reflows. */
+.fid { position: relative; }
+.fid::after { content: ""; position: absolute; inset: -12px; }
+.risk-toggle, .risk-mx-btn { min-height: 44px; }
+.scen-platform, .scen-target { min-height: 44px; }
+
+/* ---- I1 · formula-family bands in the result tables ---------------------
+   279 result rows across ten pages with zero group headings; power alone is 50
+   rows / 2911px of visually identical lines. app.js now bands rows by the
+   formula tag their own provenance string already carries. */
+.out-table tr.out-group th {
+  background: var(--inset);
+  color: var(--accent);
+  font: 600 var(--fs-xs)/1.6 var(--font-mono);
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  text-align: left;
+  padding: var(--sp-2);
+  border-top: 1px solid var(--rule);
+}
+.out-table tr.out-group th .out-group-n {
+  color: var(--muted);
+  font-weight: 400;
+}
+/* the 640px breakpoint turns rows into flex blocks — bands stay full-width */
+@media (max-width: 640px) {
+  .out-table tr.out-group { display: block; padding: 0; border-top: none; }
+  .out-table tr.out-group th { display: block; }
+}

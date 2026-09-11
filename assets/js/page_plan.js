@@ -12,7 +12,8 @@
   const d = (v) => A.res.disp(v);
   A.SECTIONS = A.SECTIONS || [];
 
-  const PLATFORMS = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
+  // F3/DSX-25: platform options come from the variant set (RACKDB via
+  // AIDC.platforms), never a hand-written array — see assets/js/platforms.js.
 
   // ONE chain used by compute() and after() — the single-resolution rule
   // (antagonist A-04 class): hero, table and cards can never diverge.
@@ -58,10 +59,18 @@
     const capex = A.calcCapex.costs({
       it_mw: itMw, kw_per_gpu: v.nameplate_kw / v.gpus_per_rack, pue: v.pue_target,
     });
-    const tco = A.calcTco.tco({
+    // F3/DSX-25: the TCO stack needs one input no variant YAML carries — a GPU
+    // acquisition price — and calc_tco holds published bands for only four
+    // platforms. The other seven are still PLANNED IN FULL (racks, power,
+    // cooling, fabric, capex, colo, land, schedule all come from their own
+    // published figures); only the levelized $/GPU-h row is withheld, because
+    // computing it off another platform's price would put an invented number in
+    // a [D] row. tco.html takes the user's quote for exactly this reason.
+    const priced = !!A.calcTco.GPU_PRICE_USD[plat];
+    const tco = priced ? A.calcTco.tco({
       platform: plat, gpus_per_rack: v.gpus_per_rack, rack_kw: v.nameplate_kw,
       pue: v.pue_target, gpus: gpus,
-    });
+    }) : null;
     // Colo unlevered + levered at standard construction financing terms for the financing card
     const colo = A.calcColo.costs({
       it_mw: itMw,
@@ -112,8 +121,14 @@
                        "shell + IT + spares + contingency — capex page"),
       cost_floor_per_gpu_hr: q(O(c.capex, "cost_floor_per_gpu_hr").value, "US$/GPU-h", "[D]",
                                "amortisation + opex + energy — capex page (0.85 basis)"),
-      tco_levelized_usd_per_gpu_hr: q(O(c.tco, "levelized_usd_per_gpu_hr").value, "US$/GPU-h", "[D]",
-                                      "5-yr build-mode levelized — TCO page (0.70 basis)"),
+      // present only when a published GPU acquisition band exists (see chain) —
+      // an absent row plus the note below is honest; a row filled from another
+      // platform's price would not be
+      ...(c.tco ? {
+        tco_levelized_usd_per_gpu_hr: q(O(c.tco, "levelized_usd_per_gpu_hr").value,
+                                        "US$/GPU-h", "[D]",
+                                        "5-yr build-mode levelized — TCO page (0.70 basis)"),
+      } : {}),
       colo_cost_floor_usd_per_kw_month: q(O(c.colo, "cost_floor_usd_per_kw_month").value,
                                           "US$/kW/mo", "[D]",
                                           "landlord cost floor at 0.85 occupancy — colo page"),
@@ -152,6 +167,16 @@
       "The cooling rows use the platform's liquid split at the generic climate defaults; " +
       "the cooling page carries the site-climate feasibility verdict (dry / wetted / " +
       "infeasible) — run it with your design temperatures before believing any PUE.",
+      (c.tco
+        ? "TCO levelizes against a published GPU acquisition band for this platform; " +
+          "override it with your own quote on the TCO page."
+        : "NO levelized $/GPU-h row here: no published GPU acquisition price band exists " +
+          "for " + (c.v.platform || c.plat) + ", and only " +
+          Object.keys(A.calcTco.GPU_PRICE_USD).length + " platforms have one (they " +
+          "prefill automatically). Every other row on this page still comes from this " +
+          "variant's own published figures — open the TCO card and enter your quoted " +
+          "US$/GPU to get the levelized cost. Carrying another platform's price across " +
+          "generations would put an invented number in a derived row, so the model asks."),
       "For the buildable-vs-buy decision at these numbers: TCO page (GPU owner) vs colo " +
       "page (landlord). For a certified engineering package (USD digital twin, drawing " +
       "set, network configs) these same parameters drive the private toolkit's " +
@@ -181,7 +206,7 @@
     fields: [
       { key: "platform", label: "GPU platform", src: "variants", type: "select",
         value: "gb200-nvl72",
-        options: PLATFORMS.map((n) => [n, DB[n].platform]) },
+        options: A.platforms.optionPairs() },
       { key: "gpus", label: "target GPU count", src: "legend", step: 8, min: 1 },
     ],
     derive: (r, kw) => {
@@ -202,7 +227,10 @@
           " fabric links, " + d(O(c.fiber, "pluggables_total")) + " pluggables",
         "cost: capex " + d(O(c.capex, "capex_total_m")) + " US$M → floor " +
           d(O(c.capex, "cost_floor_per_gpu_hr")) + " $/GPU-h (0.85) · TCO levelized " +
-          d(O(c.tco, "levelized_usd_per_gpu_hr")) + " $/GPU-h (0.70, 5-yr build)",
+          (c.tco
+            ? d(O(c.tco, "levelized_usd_per_gpu_hr")) + " $/GPU-h (0.70, 5-yr build)"
+            : "needs your GPU quote (no published price band for " +
+              (c.v.platform || c.plat) + " — enter US$/GPU on the TCO page)"),
         "land: " + d(O(c.land, "developed_m2")) + " m² developed × " +
           d(c.land.inputs.circulation_setback_factor.value) + " = " +
           d(O(c.land, "parcel_m2")) + " m² = " +
@@ -242,9 +270,13 @@
         ["Capex", "capex.html", [
           [O(c.capex, "capex_total_m") + " US$M total", O(c.capex, "capex_per_gpu_usd") + " $/GPU"],
           ["floor " + O(c.capex, "cost_floor_per_gpu_hr") + " $/GPU-h", "@0.85 utilisation"]]],
-        ["TCO (own the GPUs)", "tco.html", [
-          ["levelized " + O(c.tco, "levelized_usd_per_gpu_hr") + " $/GPU-h", "5-yr build mode"],
-          ["upfront " + O(c.tco, "upfront_usd") + " US$", "@0.70 utilisation"]]],
+        // no published GPU price band for this platform → the card states what
+        // the page needs instead of a number computed off someone else's price
+        ["TCO (own the GPUs)", "tco.html", c.tco
+          ? [["levelized " + O(c.tco, "levelized_usd_per_gpu_hr") + " $/GPU-h", "5-yr build mode"],
+             ["upfront " + O(c.tco, "upfront_usd") + " US$", "@0.70 utilisation"]]
+          : [["needs your GPU acquisition quote", "no published US$/GPU band for this platform"],
+             ["open the TCO page and enter US$/GPU", "5-yr build mode, @0.70 utilisation"]]],
         ["Colo (lease the kW)", "colo.html", [
           ["floor " + O(c.colo, "cost_floor_usd_per_kw_month") + " $/kW·mo", O(c.colo, "yield_on_cost_pct") + "% yield-on-cost"],
           ["NOI " + O(c.colo, "noi_m_yr") + " US$M/yr", "@0.85 occupancy, retail anchor"]]],

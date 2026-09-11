@@ -7,40 +7,25 @@
   A.SECTIONS = A.SECTIONS || [];
 
   // ----------------------------------------------------------------- RACK ----
-  // All variants in datacenter-design/rack-scale/variants/ (card #217): the
-  // ship-now platforms first, the roadmap platform LAST with a badge. The set
-  // must equal the YAML set — gen_rackdata.py refuses to regenerate on drift
-  // and tools/calc_regression.mjs asserts count + set equality (fails-if-removed).
-  const VARIANT_ORDER = [
-    // availability:shipping — in production and orderable now (DSX-29)
-    // dgx-b300 added by DSX-31 (F7) 2026-09-09: shipping per a public NVIDIA
-    // page, and the only Blackwell Ultra rack kW the customer-facing lane can
-    // cite publicly (4 nodes x ~14 kW/node).
-    // NOTE: keep comments OUT of the list body below. gen_rackdata.py strips
-    // line comments before reading the entries, but tools/calc_regression.mjs
-    // does NOT — a quoted phrase inside an inline comment is parsed as a
-    // phantom variant name and silently displaces real entries (hit 2026-09-09).
-    "gb300-nvl72", "gb200-nvl72", "b200-liquid", "hgx-b300", "dgx-b300",
-    "dgx-b200-aircooled-2su", "gb200-nvl36", "dgx-b200-hd",
-    "rubin-nvl144",  // availability:roadmap — badged, every number [A] by rule
-    // availability:superseded — LAST and badged. Kept in the list because the
-    // set must equal the YAML set (calc_regression.mjs asserts it) and because
-    // "why is there no H100 option?" deserves an answer on the page rather than
-    // a silent omission. The badge is what stops it reading as a live choice.
-    "dgx-h200", "dgx-h100",
-  ];
-  // Lifecycle badge: a preliminary spec must not read as shipping, and a
-  // superseded part must not read as procurable. Both states are sourced in
-  // datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md; each variant carries
-  // its dated evidence in v.lifecycle_source.
-  const LIFECYCLE_BADGE = {
-    roadmap: " — ROADMAP (preliminary, all [A])",
-    superseded: " — SUPERSEDED, not procurable 2026 (reference only)",
-  };
-  const optLabel = (v) => v.platform + (LIFECYCLE_BADGE[v.availability] || "");
-  // variants with a shipped per-variant 3D row model on 3d.html (its viewer
-  // select + hero posters cover these; the rest link to the page, hash-free)
-  const D3_MODELED = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
+  // Platform presentation driven by platforms.js — the single canonical ordering
+  // and lifecycle-badging layer shared across the site. VARIANT_ORDER still exists
+  // in platforms.js for gen_rackdata.py to read (it refuses to regenerate on drift),
+  // but selectors call AIDC.platforms rather than hand-writing the list here.
+  // DSX-81 (W3): consolidated from the per-page duplicates that shipped dgx-b300 on
+  // some pages and not others (DSX-31 regression).
+  // DSX-85: this file named a global that does not exist, in THREE places —
+  // `globalThis.PLATFORMS` (platforms.js exports globalThis.AIDC.platforms), with
+  // the wrong shapes on top of it: order() returns KEYS, not {key,label} objects,
+  // and the accessor is getWithDetailModels(), not withDetailModels().
+  //   1. the option list (`.order().map(p => [p.key, p.label])`) threw at MODULE
+  //      scope, so A.SECTIONS.push never ran and rack.html rendered no rack
+  //      planner, no platform selector and no scenario bar at all;
+  //   2. the variant-matrix <thead> builder in init() threw, and app.js runs
+  //      sec.init() BEFORE A.scenario.buildScenarioBar() — so even with (1) fixed
+  //      the shared scenario bar (.scen-platform) still never mounted;
+  //   3. the 3d.html deep link in after() threw once a variant was picked.
+  // optionPairs() is the one accessor that returns [value, label] pairs WITH the
+  // lifecycle badge in the label, which is what every other page's selector uses.
   // R-H1/R-H2 (v3.1): pue_target + distribution_voltage_v now travel with the
   // platform pick instead of silently inheriting the GB200/calc_power defaults.
   const rackOf = (name) => {
@@ -72,7 +57,7 @@
     unitToggles: ["area"],
     fields: [
       { key: "platform", label: "rack platform", src: "variants", type: "select", value: "gb200-nvl72",
-        options: VARIANT_ORDER.map((n) => [n, optLabel(globalThis.RACKDB[n])]) },
+        options: A.platforms.optionPairs() },
       { key: "gpus", label: "target GPU count", src: "legend", step: 8, min: 1 },
       { key: "support_frac", label: "support-IT frac", src: "refdesign", step: 0.005, min: 0, advanced: true },
       { key: "pue", label: "PUE target", src: "dsx-kpi", step: 0.01, min: 1, advanced: true },
@@ -149,7 +134,8 @@
       const thead = document.createElement("thead");
       const hr = document.createElement("tr");
       hr.appendChild(document.createElement("th"));
-      for (const n of VARIANT_ORDER) {
+      const platformKeys = A.platforms.order();   // keys, in registry order
+      for (const n of platformKeys) {
         const th = document.createElement("th");
         const v = globalThis.RACKDB[n];
         th.textContent = v.platform +
@@ -165,7 +151,7 @@
         const th = document.createElement("th");
         th.textContent = label;
         tr.appendChild(th);
-        for (const n of VARIANT_ORDER) {
+        for (const n of platformKeys) {
           const v = globalThis.RACKDB[n];
           const td = document.createElement("td");
           td.className = "num";
@@ -185,7 +171,7 @@
       // provenance footnotes (†) — the caveats the YAML labels carry, per variant
       const notes = document.createElement("ul");
       notes.className = "notes";
-      for (const n of VARIANT_ORDER) {
+      for (const n of platformKeys) {
         const v = globalThis.RACKDB[n];
         for (const [field, text] of v.matrix_notes || []) {
           const li = document.createElement("li");
@@ -209,7 +195,7 @@
       life.appendChild(lifeSum);
       const lifeList = document.createElement("ul");
       lifeList.className = "notes";
-      for (const n of VARIANT_ORDER) {
+      for (const n of platformKeys) {
         const v = globalThis.RACKDB[n];
         const li = document.createElement("li");
         const b = document.createElement("strong");
@@ -228,7 +214,7 @@
       const link = document.getElementById("rack-3d-link");
       if (!link) return;
       const cur = A.currentVariant();
-      link.href = D3_MODELED.includes(cur) ? "3d.html#variant=" + cur : "3d.html";
+      link.href = A.platforms.getWithDetailModels().includes(cur) ? "3d.html#variant=" + cur : "3d.html";
     },
   });
 

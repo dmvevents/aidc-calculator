@@ -116,15 +116,56 @@
       zCur += bd + zGap;
     });
 
-    // scale bar (bottom-left, under the parcel)
+    // scale bar (bottom-left, under the parcel) — metric + imperial
     const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000];
     const target = Wt / 5;
     const bar = nice.reduce((a, b) => (Math.abs(b - target) < Math.abs(a - target) ? b : a));
+    const barFt = Math.round(bar * 3.28084);  // 1 m = 3.28084 ft
     const by = Y(H) + 16;
     svg.appendChild(el("line", { x1: X(0), y1: by, x2: X(0) + bar * s, y2: by, class: "sp-scale" }));
     svg.appendChild(el("line", { x1: X(0), y1: by - 4, x2: X(0), y2: by + 4, class: "sp-scale" }));
     svg.appendChild(el("line", { x1: X(0) + bar * s, y1: by - 4, x2: X(0) + bar * s, y2: by + 4, class: "sp-scale" }));
-    svg.appendChild(el("text", { x: X(0) + bar * s + 8, y: by + 4, class: "sp-val" }, bar + " m"));
+    svg.appendChild(el("text", { x: X(0) + bar * s / 2, y: by - 7, class: "sp-val sp-mid" }, bar + " m"));
+    svg.appendChild(el("text", { x: X(0) + bar * s / 2, y: by + 14, class: "sp-sub-l sp-mid" }, barFt + " ft"));
+
+    // parcel dimension lines with witness marks (width and depth)
+    const dimGap = 10;  // gap from parcel edge to dimension line
+    const witLen = 6;   // witness mark length
+    // width dimension (below parcel)
+    const dimY = Y(H) + 38;
+    const wm = Wt;  // width in meters (phase-1 + reserve)
+    const wft = Math.round(wm * 3.28084);
+    svg.appendChild(el("line", { x1: X(0), y1: dimY - witLen, x2: X(0), y2: dimY + witLen, class: "hp-dim" }));
+    svg.appendChild(el("line", { x1: X(0), y1: dimY, x2: X(Wt), y2: dimY, class: "hp-dim" }));
+    svg.appendChild(el("line", { x1: X(Wt), y1: dimY - witLen, x2: X(Wt), y2: dimY + witLen, class: "hp-dim" }));
+    svg.appendChild(el("text", { x: X(Wt / 2), y: dimY - 3, class: "sp-val sp-mid" }, wm.toFixed(1) + " m"));
+    svg.appendChild(el("text", { x: X(Wt / 2), y: dimY + 11, class: "sp-sub-l sp-mid" }, wft + " ft"));
+    // depth dimension (right of parcel)
+    const dimX = X(Wt) + 14;
+    const dm = H;  // depth in meters
+    const dft = Math.round(dm * 3.28084);
+    svg.appendChild(el("line", { x1: dimX - witLen, y1: Y(0), x2: dimX + witLen, y2: Y(0), class: "hp-dim" }));
+    svg.appendChild(el("line", { x1: dimX, y1: Y(0), x2: dimX, y2: Y(H), class: "hp-dim" }));
+    svg.appendChild(el("line", { x1: dimX - witLen, y1: Y(H), x2: dimX + witLen, y2: Y(H), class: "hp-dim" }));
+    // depth labels rotated 90° (horizontal text reads better on narrow viewports)
+    const g = el("g", { transform: "translate(" + dimX + "," + Y(H / 2) + ") rotate(-90)" });
+    g.appendChild(el("text", { x: 0, y: 4, class: "sp-val sp-mid" }, dm.toFixed(1) + " m"));
+    g.appendChild(el("text", { x: 0, y: 14, class: "sp-sub-l sp-mid" }, dft + " ft"));
+    svg.appendChild(g);
+
+    // area callout (top-right, over parcel)
+    const areaM2 = total;
+    const areaFt2 = areaM2 * 10.7639;
+    const areaAc = o.site_acres.value;
+    const acX = X(Wt) - 8, acY = Y(0) + 18;
+    const areaG = el("g", { class: "sp-area-callout" });
+    areaG.appendChild(el("text", { x: acX, y: acY, class: "sp-head-l sp-end" },
+                        areaAc.toFixed(areaAc >= 100 ? 0 : 2) + " ac"));
+    areaG.appendChild(el("text", { x: acX, y: acY + 14, class: "sp-sub-l sp-end" },
+                        fmtM2(areaM2)));
+    areaG.appendChild(el("text", { x: acX, y: acY + 26, class: "sp-sub-l sp-end" },
+                        Math.round(areaFt2).toLocaleString("en-US") + " ft²"));
+    svg.appendChild(areaG);
 
     // ---- legend column: headline + one row per pad + reserve + totals ------
     let ly = 22;
