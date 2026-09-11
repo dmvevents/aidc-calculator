@@ -668,9 +668,135 @@ font-variant-numeric: tabular-nums; }
 #plan-cards { min-height: 760px; }
 #plan-dsx { min-height: 450px; }
 }
+.skip-link {
+position: absolute;
+left: var(--sp-3);
+top: -4rem;
+z-index: 200;
+display: inline-flex;
+align-items: center;
+min-height: 44px;
+padding: var(--sp-2) var(--sp-4);
+background: var(--raised);
+color: var(--ink);
+border: 1px solid var(--accent);
+border-radius: var(--r-ctl);
+font-size: var(--fs-sm);
+text-decoration: none;
+transition: top var(--t-fast);
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+top: var(--sp-3);
+outline: 2px solid var(--accent);
+outline-offset: 2px;
+}
+#main:focus { outline: none; }
+@media (min-width: 921px) {
+.panel-outputs > div:has(> svg.dg),
+.panel-outputs > .plan-stage,
+.panel-outputs > .siteplan {
+margin-right: calc(-1 * (max(0px, (100vw - var(--w-content)) / 2) + var(--sp-5) + 1px));
+max-width: 1040px;
+}
+}
+.panel-outputs > div:has(> svg.dg) {
+background: var(--inset);
+border: 1px solid var(--hairline);
+border-radius: var(--r-card);
+}
+@media (max-width: 720px) {
+svg.dg { min-width: var(--ux-vbw, 560px); }
+.plan-stage svg, .siteplan svg { min-width: var(--ux-vbw, 640px); }
+}
+.ux-ovf-l, .ux-ovf-r {
+box-shadow: var(--ux-sh-l, 0 0 0 transparent), var(--ux-sh-r, 0 0 0 transparent);
+}
+.ux-ovf-l { --ux-sh-l: inset 18px 0 14px -14px rgba(2, 6, 14, 0.92); }
+.ux-ovf-r { --ux-sh-r: inset -18px 0 14px -14px rgba(2, 6, 14, 0.92); }
+div:has(> svg.dg).ux-ovf-r,
+.plan-stage.ux-ovf-r,
+.siteplan.ux-ovf-r {
+-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
+.matrix-scroll .matrix th:first-child {
+position: sticky;
+left: 0;
+z-index: 2;
+background: var(--surface);
+box-shadow: 1px 0 0 var(--hairline);
+}
+.matrix-scroll .matrix thead th:first-child { z-index: 3; }
+.notes li {
+max-width: 90ch;
+overflow-wrap: anywhere;
+}
+.nav-drawer-item {
+display: flex;
+align-items: center;
+min-height: 44px;
+padding-top: var(--sp-3);
+padding-bottom: var(--sp-3);
+}
+.nav-drawer-group-toggle { min-height: 44px; }
+.nav-hamburger { min-width: 44px; min-height: 44px; }
+.nav-drawer-close { width: 44px; height: 44px; }
+.nav-drawer-filter-input { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+.nav-drawer-group-items.is-expanded { max-height: 1600px; }
+.btn {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-height: 44px;
+padding-top: 10px;
+padding-bottom: 10px;
+}
+.field input:not([type="checkbox"]),
+.field select { min-height: 44px; }
+.field-row { min-height: 44px; display: flex; align-items: center; gap: var(--sp-2); }
+.seg label {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-height: 44px;
+min-width: 44px;
+padding-top: 10px;
+padding-bottom: 10px;
+}
+details.adv > summary,
+details.chain > summary {
+min-height: 44px;
+padding-top: 12px;
+padding-bottom: 12px;
+}
+.hp-toggle { min-height: 44px; }
+.fid { position: relative; }
+.fid::after { content: ""; position: absolute; inset: -12px; }
+.risk-toggle, .risk-mx-btn { min-height: 44px; }
+.scen-platform, .scen-target { min-height: 44px; }
+.out-table tr.out-group th {
+background: var(--inset);
+color: var(--accent);
+font: 600 var(--fs-xs)/1.6 var(--font-mono);
+letter-spacing: var(--track-micro);
+text-transform: uppercase;
+text-align: left;
+padding: var(--sp-2);
+border-top: 1px solid var(--rule);
+}
+.out-table tr.out-group th .out-group-n {
+color: var(--muted);
+font-weight: 400;
+}
+@media (max-width: 640px) {
+.out-table tr.out-group { display: block; padding: 0; border-top: none; }
+.out-table tr.out-group th { display: block; }
+}
 </style>
 </head>
 <body>
+<a href="#main" class="skip-link">Skip to content</a>
 
 <nav class="nav" aria-label="Pages">
   <div class="nav-inner">
@@ -722,7 +848,7 @@ font-variant-numeric: tabular-nums; }
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap" id="main">
   <section class="section section-calc" id="stormwater" aria-label="Stormwater calculator">
     <div class="scen-slot" aria-hidden="true"></div>
     <p class="preset-note">Basis notes: the drainage area is the <a href="land.html">land
@@ -759,7 +885,7 @@ font-variant-numeric: tabular-nums; }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.5 · updated 2026-09-03</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-09 (per-entry dates on Sources) · site v3.7.0 · updated 2026-09-11</p>
   </div>
 </footer>
 <script>
@@ -768,7 +894,7 @@ font-variant-numeric: tabular-nums; }
 // setTimeout covers hidden tabs, where rAF never fires) — so the masthead text
 // LCP no longer shares the simulated mobile link with the script chain.
 // (Preloading the chain, the opposite move, measured WORSE — note in main().)
-(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v365","assets/js/app.js?v365","assets/js/rackdata.js?v365","assets/js/calc_land.js?v365","assets/js/calc_stormwater.js?v365","assets/js/scenario.js?v365","assets/js/page_stormwater.js?v365","assets/js/export_xlsx.js?v365","assets/js/export_pdf.js?v365","assets/js/export.js?v365"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
+(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v370","assets/js/app.js?v370","assets/js/rackdata.js?v370","assets/js/calc_land.js?v370","assets/js/calc_stormwater.js?v370","assets/js/scenario.js?v370","assets/js/page_stormwater.js?v370","assets/js/export_xlsx.js?v370","assets/js/export_pdf.js?v370","assets/js/export.js?v370"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
 </script>
 </body>
 </html>

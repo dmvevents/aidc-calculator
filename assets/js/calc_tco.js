@@ -16,7 +16,11 @@
 //   T7 cumulative cash out the door: C0 + running costs, NO terminal credit
 //   T8 break-even first month where market_rate x delivered hours >= T7
 // Defaults are GENERIC and published or reference-derived — no site, tariff or
-// deal values. This is a COST estimator: no ROI, no IRR, no payback promises.
+// deal values. EVERY rack-matrix variant carries its own GPU acquisition band
+// (card #220: no platform silently falls back to the GB200 basis); where no
+// platform-specific public figure exists (GB300, NVL36, H200, Rubin) the row
+// says so and PRICE_WARNINGS appends a per-run warning instead of inventing
+// one. This is a COST estimator: no ROI, no IRR, no payback promises.
 "use strict";
 (function () {
   const { q, result } = globalThis.AIDC.res;
@@ -27,7 +31,10 @@
   const DEPRECIATION = ["straight", "resale"];
 
   // GPU acquisition, US$/GPU ALL-IN IT (rack content + scale-out fabric/storage
-  // share). Published estimate bands; each row states its provenance honestly.
+  // share) — EVERY rack-matrix variant is priced (card #220): an unknown
+  // platform throws, it never falls back to the GB200 basis. Published
+  // estimate bands; each row states its provenance honestly, and the
+  // placeholder/proxy rows also warn per run via PRICE_WARNINGS below.
   const GPU_PRICE_USD = {
     "gb200-nvl72": q(
       47700.0, "US$/GPU", "[D]",
@@ -36,6 +43,15 @@
       "($5.8bn/200MW): at the adopted 136/72 density 1.889 kW/GPU the 8-K spreads to " +
       "$54.8k (~15% above); the 120 kW-rack reading 1.667 gives $48.3k, ~1.3% above " +
       "(see the Sources page; v3.1 TCO-H2)"),
+    "gb200-nvl36": q(
+      61600.0, "US$/GPU", "[A]",
+      "GB200 rack band US$2-3M per server/rack (TrendForce 2024-07-26, via " +
+      "Wccftech industry sources; the article names NVL36 as the 'more " +
+      "financially feasible' config but publishes no split) — the band's " +
+      "$2.0M low end read as the 36-GPU single-rack config: 2.0M / 36 = " +
+      "$55,556 + $6,000 fabric+storage share. Per-GPU sits ABOVE NVL72 " +
+      "because the 9 NVLink switch trays amortise over half the GPUs. No " +
+      "NVL36-specific public price exists — quote before relying"),
     "gb300-nvl72": q(
       47700.0, "US$/GPU", "[A]",
       "NO public GB300 NVL72 price estimate exists — " +
@@ -50,6 +66,88 @@
       "DGX B200 8-GPU system reseller list ~$515k widely cited (Mar-2024, " +
       "original listing unreachable) / 8 — DGX premium includes the " +
       "fabric-ready networking share"),
+    "dgx-b200-hd": q(
+      64400.0, "US$/GPU", "[A]",
+      "identical DGX B200 node SKU to dgx-b200-aircooled-2su (4 systems/rack " +
+      "vs 2 is a density delta only) — same ~$515k/8-GPU system reseller-list " +
+      "basis (Mar-2024, original listing unreachable); DGX premium includes " +
+      "the fabric-ready networking share"),
+    "hgx-b300": q(
+      64750.0, "US$/GPU", "[D]",
+      "HGX B300 8-GPU server US$470,000 [S: third-party generic GPU-economics " +
+      "workbook, B300 production model, 2026-09, sheet 'Core Calculations and " +
+      "Assumptio' cell H15 — not a public URL] / 8 = $58,750 + $6,000 " +
+      "fabric+storage share (HGX B200 convention: the 8x CX-8 in-node NICs " +
+      "sit inside the server price, switches/optics/storage do not). " +
+      "Cross-check: AWS Capacity Blocks B300 $14.04 vs B200 $12.355 per GPU-h " +
+      "= 1.14x (observed 2026-08-20; see the Sources page)"),
+    "dgx-b300": q(
+      64750.0, "US$/GPU", "[A]",
+      "SAME-SILICON CARRY from hgx-b300 (identical 8x Blackwell Ultra SXM " +
+      "baseboard; DGX B300 is NVIDIA's own 10U build of it): HGX B300 8-GPU " +
+      "server US$470,000 / 8 = $58,750 + $6,000 fabric+storage share. " +
+      "NO public DGX B300 price was retrieved (2026-09-09 sweep: the DGX B300 " +
+      "product page states specs and availability but no price, and quotes " +
+      "are partner-gated). A DGX-branded premium over HGX almost certainly " +
+      "applies — at the B200 generation the DGX list basis ran well above the " +
+      "HGX one — but NO public figure exists to size it for B300, so none is " +
+      "invented here. This therefore errs LOW; quote before relying. " +
+      "Downgraded to [A] versus hgx-b300's [D] precisely because the " +
+      "DGX-vs-HGX delta is unquantified, not because the anchor is weaker"),
+    "dgx-h100": q(
+      40000.0, "US$/GPU", "[D]",
+      "8x H100 SXM node build-up: H100 SXM5 $27,500 (mid of Raymond James' " +
+      "$25-30k/unit, Jan-2024, CNBC via Wikipedia Hopper — re-verified live " +
+      "2026-09-09) + $8,750 balance of server + $2,500 scale-out fabric share " +
+      "+ $1,250 storage/head-node/rack [A]; converges with the AWS-implied " +
+      "~$290k 8-GPU server: 290k / 8 + 3,750 = $40,000. Upper anchor: DGX " +
+      "H100 launch list GBP 379k ~ US$482k (2022; Wikipedia 'Nvidia DGX') = " +
+      "$60,250/GPU — the DGX-branded launch premium a 2026 Hopper buyer no " +
+      "longer pays; override via gpu_price_usd"),
+    "dgx-h200": q(
+      45400.0, "US$/GPU", "[A]",
+      "PROXY — no public H200 purchase price retrieved (2026-09-09 sweep: " +
+      "NVIDIA H200 page, Wikipedia Hopper/DGX, TrendForce archive): H100 " +
+      "build-up $40,000 x AWS 3-yr Reserved p5en (H200) $3.372 / p5 (H100) " +
+      "$2.972 per GPU-h = 1.135 (committed-vs-committed, same provider; " +
+      "observed 2026-08-20) = $45,384 -> $45,400. Neocloud on-demand " +
+      "H200/H100 ratios span 1.02 (CoreWeave) to 1.50 (Together), median " +
+      "~1.2 -> ~$48k; same GH100 die with 141 GB vs 80 GB HBM3e, so a " +
+      "memory-driven 10-25% premium is the expected shape. Quote before " +
+      "relying"),
+    "rubin-nvl144": q(
+      47700.0, "US$/GPU", "[A]",
+      "ROADMAP PLACEHOLDER: NO public Vera Rubin NVL144 price exists (pre-GA; " +
+      "every Rubin number is [A] by rule) — GB200 basis carried, labelled and " +
+      "warned; next-generation racks launch above the prior generation's ASP, " +
+      "so this errs LOW. Replace with a vendor quote"),
+  };
+
+  // Per-run warnings for the price rows above that carry a placeholder, proxy
+  // or band reading instead of a platform-specific public figure. Appended to
+  // the notes ONLY when the default band was actually resolved — a
+  // user-supplied gpu_price_usd silences the warning (the caveat is about the
+  // DEFAULT, not their number). Generalises the original GB300-only branch;
+  // the GB300 text is unchanged.
+  const PRICE_WARNINGS = {
+    "gb300-nvl72":
+      "GB300 WARNING: no public GB300 NVL72 price estimate exists. " +
+      "The default is the GB200 basis carried as a " +
+      "PLACEHOLDER — treat every $ output as provisional until quoted.",
+    "gb200-nvl36":
+      "NVL36 PRICE BAND: no NVL36-specific public price exists; the default " +
+      "reads the low end of the published US$2-3M GB200 rack band as the " +
+      "36-GPU config. Quote before relying on any $ output.",
+    "dgx-h200":
+      "H200 PRICE PROXY: no public H200 purchase price was retrievable; the " +
+      "default scales the H100 build-up by the AWS 3-yr Reserved H200/H100 " +
+      "rate ratio (1.135). Quote before relying on any $ output.",
+    "rubin-nvl144":
+      "RUBIN ROADMAP WARNING: Vera Rubin NVL144 is pre-GA — no public price " +
+      "exists and every Rubin number is [A] by rule. The default is the " +
+      "GB200 basis carried as a PLACEHOLDER (errs LOW for a next-generation " +
+      "rack); the 227 kW rack is likewise preliminary. Every $ output is " +
+      "provisional.",
   };
 
   const DEFAULTS = {
@@ -474,11 +572,8 @@
         "multi-MW rates are quote-only — no public benchmark exists, so the " +
         "wholesale default is an [A] band anchored on the CBRE regional low end.");
     }
-    if (p.platform === "gb300-nvl72" && "gpu_price_usd" in resolved) {
-      notes.push(
-        "GB300 WARNING: no public GB300 NVL72 price estimate exists. " +
-        "The default is the GB200 basis carried as a " +
-        "PLACEHOLDER — treat every $ output as provisional until quoted.");
+    if (p.platform in PRICE_WARNINGS && "gpu_price_usd" in resolved) {
+      notes.push(PRICE_WARNINGS[p.platform]);
     }
     if (p.depreciation === "straight" && months > Number(p.gpu_life_years) * 12.0) {
       notes.push(
@@ -578,7 +673,8 @@
 
   globalThis.AIDC = globalThis.AIDC || {};
   globalThis.AIDC.calcTco = {
-    DEFAULTS: DEFAULTS, GPU_PRICE_USD: GPU_PRICE_USD, OPEX_DEFAULT: OPEX_DEFAULT,
+    DEFAULTS: DEFAULTS, GPU_PRICE_USD: GPU_PRICE_USD,
+    PRICE_WARNINGS: PRICE_WARNINGS, OPEX_DEFAULT: OPEX_DEFAULT,
     LEASE_DEFAULT: LEASE_DEFAULT, HOURS_PER_MONTH: HOURS_PER_MONTH,
     MODES: MODES, LEASE_TIERS: LEASE_TIERS, DEPRECIATION: DEPRECIATION,
     gpuValueFrac: gpuValueFrac, ledger: ledger, tco: tco,

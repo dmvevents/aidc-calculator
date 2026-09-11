@@ -12,13 +12,32 @@
   // must equal the YAML set — gen_rackdata.py refuses to regenerate on drift
   // and tools/calc_regression.mjs asserts count + set equality (fails-if-removed).
   const VARIANT_ORDER = [
-    "gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su",
-    "gb200-nvl36", "dgx-b200-hd", "hgx-b300", "dgx-h200", "dgx-h100",
+    // availability:shipping — in production and orderable now (DSX-29)
+    // dgx-b300 added by DSX-31 (F7) 2026-09-09: shipping per a public NVIDIA
+    // page, and the only Blackwell Ultra rack kW the customer-facing lane can
+    // cite publicly (4 nodes x ~14 kW/node).
+    // NOTE: keep comments OUT of the list body below. gen_rackdata.py strips
+    // line comments before reading the entries, but tools/calc_regression.mjs
+    // does NOT — a quoted phrase inside an inline comment is parsed as a
+    // phantom variant name and silently displaces real entries (hit 2026-09-09).
+    "gb300-nvl72", "gb200-nvl72", "b200-liquid", "hgx-b300", "dgx-b300",
+    "dgx-b200-aircooled-2su", "gb200-nvl36", "dgx-b200-hd",
     "rubin-nvl144",  // availability:roadmap — badged, every number [A] by rule
+    // availability:superseded — LAST and badged. Kept in the list because the
+    // set must equal the YAML set (calc_regression.mjs asserts it) and because
+    // "why is there no H100 option?" deserves an answer on the page rather than
+    // a silent omission. The badge is what stops it reading as a live choice.
+    "dgx-h200", "dgx-h100",
   ];
-  // roadmap platforms are labelled so a preliminary spec can't read as shipping
-  const optLabel = (v) =>
-    v.availability === "roadmap" ? v.platform + " — ROADMAP (preliminary, all [A])" : v.platform;
+  // Lifecycle badge: a preliminary spec must not read as shipping, and a
+  // superseded part must not read as procurable. Both states are sourced in
+  // datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md; each variant carries
+  // its dated evidence in v.lifecycle_source.
+  const LIFECYCLE_BADGE = {
+    roadmap: " — ROADMAP (preliminary, all [A])",
+    superseded: " — SUPERSEDED, not procurable 2026 (reference only)",
+  };
+  const optLabel = (v) => v.platform + (LIFECYCLE_BADGE[v.availability] || "");
   // variants with a shipped per-variant 3D row model on 3d.html (its viewer
   // select + hero posters cover these; the rest link to the page, hash-free)
   const D3_MODELED = ["gb200-nvl72", "gb300-nvl72", "b200-liquid", "dgx-b200-aircooled-2su"];
@@ -133,7 +152,9 @@
       for (const n of VARIANT_ORDER) {
         const th = document.createElement("th");
         const v = globalThis.RACKDB[n];
-        th.textContent = v.platform + (v.availability === "roadmap" ? " (ROADMAP)" : "");
+        th.textContent = v.platform +
+          (v.availability === "roadmap" ? " (ROADMAP)"
+            : v.availability === "superseded" ? " (SUPERSEDED)" : "");
         hr.appendChild(th);
       }
       thead.appendChild(hr);
@@ -174,7 +195,30 @@
           notes.appendChild(li);
         }
       }
-      host.replaceChildren(tbl, notes);
+      // DSX-29: the lifecycle evidence, on the page. Every availability value
+      // used to be sourced only in a YAML comment, which yaml.safe_load drops —
+      // so a 2023 GA date reached the reader as the bare word "shipping" with
+      // nothing to check it against. design.lifecycle_source is now a real
+      // field, and this is where it surfaces. Collapsed because it is long, not
+      // because it is optional.
+      const life = document.createElement("details");
+      life.className = "lifecycle-evidence";
+      const lifeSum = document.createElement("summary");
+      lifeSum.textContent = "platform lifecycle evidence — what makes each of " +
+        "these procurable (or not), with retrieval dates";
+      life.appendChild(lifeSum);
+      const lifeList = document.createElement("ul");
+      lifeList.className = "notes";
+      for (const n of VARIANT_ORDER) {
+        const v = globalThis.RACKDB[n];
+        const li = document.createElement("li");
+        const b = document.createElement("strong");
+        b.textContent = v.platform + " · " + v.availability + ": ";
+        li.append(b, v.lifecycle_source || "(no lifecycle_source — regenerate)");
+        lifeList.appendChild(li);
+      }
+      life.appendChild(lifeList);
+      host.replaceChildren(tbl, notes, life);
     },
     after: () => {
       // keep the 3D-page link pointed at the chosen variant (viewer is 3d.html).

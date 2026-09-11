@@ -516,7 +516,8 @@ globalThis.SCENE3D = {
     "door",
     "system",
     "fabric",
-    "containment"
+    "containment",
+    "led"
    ]
   },
   {
@@ -528,7 +529,8 @@ globalThis.SCENE3D = {
     "pipe",
     "fws",
     "drycooler",
-    "tes"
+    "tes",
+    "grille"
    ]
   },
   {
@@ -662,6 +664,24 @@ globalThis.SCENE3D = {
     0.3,
     0.28,
     0.2,
+    1.0
+   ],
+   "mode": "OPAQUE"
+  },
+  "grille": {
+   "factor": [
+    0.05,
+    0.06,
+    0.075,
+    1.0
+   ],
+   "mode": "OPAQUE"
+  },
+  "led": {
+   "factor": [
+    0.03,
+    0.08,
+    0.1,
     1.0
    ],
    "mode": "OPAQUE"

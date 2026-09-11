@@ -45,6 +45,7 @@ globalThis.RACKDB = {
       "trays_per_rack": null,
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] IN PRODUCTION. https://www.nvidia.com/en-us/data-center/hgx/ lists B200 (7 standalone mentions, word-boundary counted); https://www.nvidia.com/en-us/data-center/dgx-b200/ returns HTTP 200. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E2/E3.",
     "liquid_flow_curve": null,
     "liquid_kw": 73.9,
     "liquid_pct": 70,
@@ -126,6 +127,7 @@ globalThis.RACKDB = {
       "trays_per_rack": null,
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] IN PRODUCTION. https://www.nvidia.com/en-us/data-center/dgx-b200/ returns HTTP 200; 10-Q fiscal Q2 2027: Blackwell is the majority of system shipments. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E1/E2. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": null,
     "liquid_kw": 0,
     "liquid_pct": 0,
@@ -201,6 +203,7 @@ globalThis.RACKDB = {
       "trays_per_rack": null,
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] IN PRODUCTION. Same DGX B200 SKU as the air-cooled 2/rack variant; https://www.nvidia.com/en-us/data-center/dgx-b200/ returns HTTP 200; 10-Q fiscal Q2 2027: Blackwell is the majority of system shipments. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E1/E2. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": null,
     "liquid_kw": 0,
     "liquid_pct": 0,
@@ -244,10 +247,99 @@ globalThis.RACKDB = {
     "width_mm": 600,
     "yaml": "datacenter-design/rack-scale/variants/dgx-b200-hd.yaml"
   },
+  "dgx-b300": {
+    "air_cfm": 8792,
+    "air_kw": 56,
+    "availability": "shipping",
+    "cdu_dims_mm": null,
+    "cdu_model": null,
+    "cdu_nominal_kw": null,
+    "cdus_per_su": 0,
+    "cooling": "air (CRAH)",
+    "depth_mm": 1200,
+    "design_inlet_c": null,
+    "distribution_voltage_v": 415,
+    "edpp2_kw": null,
+    "floor_kpa": 16.4,
+    "footprint_m2": 0.72,
+    "gpu_sku": "B300",
+    "gpus_per_mw": 571,
+    "gpus_per_rack": 32,
+    "height_mm": 2337,
+    "idle_kw": null,
+    "labels": {
+      "air_kw": "[D]",
+      "availability": "[S]",
+      "edpp2_kw": null,
+      "gpus_per_rack": "[D]",
+      "height_mm": "[A]",
+      "liquid_kw": "[D]",
+      "liquid_pct": "[A]",
+      "nameplate_kw": "[D]",
+      "nvlink_domain": "[S]",
+      "racks_per_su": "[D]",
+      "rails": "[S]",
+      "scale_out": "[A]",
+      "tier": "[S]",
+      "trays_per_rack": null,
+      "weight_kg": "[A]"
+    },
+    "lifecycle_source": "[S] IN PRODUCTION AND ORDERABLE. https://www.nvidia.com/en-us/data-center/dgx-b300/ returns HTTP/2 200 (no redirect, 547,744 bytes, verified twice) and states, twice independently: \"NVIDIA DGX B300 Systems Are Shipping Now\" and \"NVIDIA DGX B300 is Available Now - Deploy NVIDIA DGX B300 today on premises, in a colocation facility, or in the cloud through one of our partners.\" Retrieved 2026-09-09. 10-Q fiscal Q2 2027 reports the Blackwell Ultra ramp driving Data Center revenue. This is the strongest availability language of any platform page probed in the DSX-31 sweep -- contrast the DGX H100/H200 pages, which 301-redirect to dgx-platform/ (now availability: superseded). See datacenter-design/rack-scale/PURCHASABLE-CATALOGUE.md sec2.2. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
+    "liquid_flow_curve": null,
+    "liquid_kw": 0,
+    "liquid_pct": 0,
+    "matrix_notes": [
+      [
+        "nameplate_kw",
+        "56 kW is derived [D] as 4 nodes x the ~14 kW/node NVIDIA states publicly [S] \u2014 this is the ONLY Blackwell Ultra rack figure in the matrix with a PUBLIC citation. The hgx-b300 sibling's 50 kW rests on an RA-internal '>50 kW busbar floor' that may not be quoted in customer-facing artifacts, so this row is what the customer-facing lane can cite. Independently consistent with the shipping dgx-b200-hd analog (4 x 14.3 = 57.2 kW)."
+      ],
+      [
+        "nodes_per_rack",
+        "4/rack is an operator fit [A]: NVIDIA states the node is 10U, not how many the operator racks. 4 x 10U = 40U in a 42U/48U rack."
+      ],
+      [
+        "liquid_pct",
+        "0% (air) is an ASSUMPTION [A] following the dgx-b200-hd precedent. The DGX B300 page states NOTHING about cooling \u2014 a boundary-matched sweep for 'cooling'/'cooled' over its visible text returns ZERO hits. A DLC option is the operator's call at DD."
+      ],
+      [
+        "weight_kg",
+        "No NVIDIA rack-level mass is published for any DGX system; 1,200 kg assembled from system + rack + PDU masses [A] \u2014 assumption, verify."
+      ]
+    ],
+    "nameplate_kw": 56,
+    "nvlink_domain": 8,
+    "nvlink_label": "[S]",
+    "platform": "DGX B300 (4 systems/rack, high-density air)",
+    "pue_target": 1.35,
+    "racks_per_mw": 17.9,
+    "racks_per_su": 8,
+    "rails": 8,
+    "ramp_w_per_sec_per_gpu": null,
+    "row_plan": {
+      "cdu": 0,
+      "cold_aisle_m": 1.8,
+      "compute": 8,
+      "fabric": 0,
+      "hot_aisle_m": 1.2
+    },
+    "scale_out": "infiniband-xdr",
+    "sources": [
+      "nvidia.com DGX B300 product page (HTTP 200, 547,744 bytes, retrieved 2026-09-09; verified byte-identical on re-fetch): 8x Blackwell Ultra SXM, ~14 kW/node, 10U, AC and DC power options",
+      "NVIDIA Form 10-Q fiscal Q2 2027 (Blackwell Ultra ramp)"
+    ],
+    "tier": "node-scale",
+    "trays_label": "[D]",
+    "trays_per_rack": 4,
+    "u_class": "48U-class [A]",
+    "variant": "dgx-b300",
+    "weight_kg": 1200,
+    "width_mm": 600,
+    "yaml": "datacenter-design/rack-scale/variants/dgx-b300.yaml"
+  },
   "dgx-h100": {
     "air_cfm": 6280,
     "air_kw": 40,
-    "availability": "shipping",
+    "availability": "superseded",
     "cdu_dims_mm": null,
     "cdu_model": null,
     "cdu_nominal_kw": null,
@@ -281,6 +373,7 @@ globalThis.RACKDB = {
       "trays_per_rack": null,
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] SUPERSEDED \u2014 MUST NOT be offered as a live procurement choice. https://www.nvidia.com/en-us/data-center/dgx-h100/ returns HTTP 301 to dgx-h200/, which returns HTTP 301 to dgx-platform/: the DGX H100 SYSTEM page is retired. Absent from https://www.nvidia.com/en-us/data-center/products/ (0 standalone H100 mentions). 10-Q fiscal Q2 2027 mentions Hopper exactly ONCE in the whole filing, at \"less than 1% of Data Center revenue\" (China). COUNTERVAILING, recorded not hidden: the component page /h100/ still returns 200 and Dell's PowerEdge XE9680 page still specs \"H100 80GB 700W SXM5 GPUs\" with no end-of-sale language \u2014 so whether a datacenter-quantity order can still be PLACED is GATED on an OEM quote, and that gate does not change the recommendation. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E1/E2/E3/E4 + G1. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": null,
     "liquid_kw": 0,
     "liquid_pct": 0,
@@ -328,7 +421,7 @@ globalThis.RACKDB = {
   "dgx-h200": {
     "air_cfm": 3925,
     "air_kw": 25,
-    "availability": "shipping",
+    "availability": "superseded",
     "cdu_dims_mm": null,
     "cdu_model": null,
     "cdu_nominal_kw": null,
@@ -362,6 +455,7 @@ globalThis.RACKDB = {
       "trays_per_rack": null,
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] SUPERSEDED \u2014 MUST NOT be offered as a live procurement choice. https://www.nvidia.com/en-us/data-center/dgx-h200/ returns HTTP 301 to dgx-platform/. 10-Q fiscal Q2 2027 records a \"$0.4 billion charge associated with H200 for excess inventory and purchase obligations, as the demand for H200 products diminished\" \u2014 the issuer's own words. Absent from the data-center product index. Dell still specs H200 141GB SXM5 (G1 gate). Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E1/E2/E3/E4. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": null,
     "liquid_kw": 0,
     "liquid_pct": 0,
@@ -442,6 +536,7 @@ globalThis.RACKDB = {
       "trays_per_rack": "[D]",
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] Blackwell generation is in production (10-Q fiscal Q2 2027, majority of system shipments). GATED at the NVL36 level: no NVL36-specific public NVIDIA or OEM page was retrieved, so \"orderable new as NVL36\" is unproven \u2014 settle with an NVL36 product/OEM page before quoting it. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md G6. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": [
       [
         25.0,
@@ -552,6 +647,7 @@ globalThis.RACKDB = {
       "trays_per_rack": "[S]",
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] IN PRODUCTION. 10-Q fiscal Q2 2027: \"Blackwell continued to account for the majority of our system shipments.\" Listed on https://www.nvidia.com/en-us/data-center/products/ (GB200 x8). PLATFORM-LIFECYCLE.md names this the ALTERNATE platform of record. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E1/E3. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": [
       [
         25.0,
@@ -671,6 +767,7 @@ globalThis.RACKDB = {
       "trays_per_rack": "[S]",
       "weight_kg": "[S]"
     },
+    "lifecycle_source": "[S] IN VOLUME RAMP. NVIDIA Form 10-Q for fiscal Q2 2027 (quarter ended 2026-07-26): Data Center revenue \"driven by the ramp of our Blackwell Ultra infrastructure\". Listed on https://www.nvidia.com/en-us/data-center/products/ ; https://www.nvidia.com/en-us/data-center/gb300-nvl72/ returns HTTP 200. PLATFORM-LIFECYCLE.md names this the PRIMARY platform of record. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E1/E2/E3. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": [
       [
         25.0,
@@ -778,13 +875,14 @@ globalThis.RACKDB = {
       "trays_per_rack": null,
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] IN PRODUCTION. https://www.nvidia.com/en-us/data-center/hgx/ lists B300 (3 standalone mentions); 10-Q fiscal Q2 2027 reports the Blackwell Ultra ramp driving Data Center revenue. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E1/E3. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": null,
     "liquid_kw": 35,
     "liquid_pct": 70,
     "matrix_notes": [
       [
         "nameplate_kw",
-        "HGX B300 per-rack power is an OPERATOR INPUT \u2014 NVIDIA states none (servers per rack depend on available rack power). 50 kW models 4 nodes/rack against the DGX B300 busbar 'exceeds 50 kW' stated minimum [A on S-floor anchor]; actual B300 racks can run higher \u2014 set at detailed design."
+        "HGX B300 per-rack power is an OPERATOR INPUT \u2014 NVIDIA states none (servers per rack depend on available rack power). 50 kW models 4 nodes/rack against the DGX B300 busbar 'exceeds 50 kW' stated minimum [A on S-floor anchor]; actual B300 racks can run higher \u2014 set at detailed design. Since 2026-09-09 this floor also has a PUBLIC corroborator: the DGX B300 page's ~14 kW/node gives 4 x 14 = ~56 kW, and the shipping dgx-b200-hd analog gives 4 x 14.3 = 57.2 kW independently. The 50 kW is unchanged and stays an operator input \u2014 what changed is that it can now be cited without quoting an RA."
       ],
       [
         "liquid_pct",
@@ -810,7 +908,8 @@ globalThis.RACKDB = {
     "scale_out": "ethernet-spectrum-x",
     "sources": [
       "NVIDIA Enterprise Reference Architecture RA1 \u2014 HGX B300 AI Factory (2-8-9-800: 8x B300 SXM, 8x ConnectX-8 800G + BlueField-3 per node)",
-      "NVIDIA DGX B300 rack power ladder (busbar 'exceeds 50 kW' \u2014 the [S] sibling anchor; HGX per-rack power is operator-set)"
+      "NVIDIA DGX B300 rack power ladder (busbar 'exceeds 50 kW' \u2014 the [S] sibling anchor; HGX per-rack power is operator-set)",
+      "NVIDIA DGX B300 product page \u2014 'Power Consumption ~14 kW' per 10U 8-GPU node, retrieved 2026-09-09 (the PUBLIC corroborator: 4 nodes x ~14 kW = ~56 kW)"
     ],
     "tier": "node-scale",
     "trays_label": "[D]",
@@ -858,6 +957,7 @@ globalThis.RACKDB = {
       "trays_per_rack": null,
       "weight_kg": "[A]"
     },
+    "lifecycle_source": "[S] 10-Q fiscal Q2 2027: \"Vera Rubin, began production shipments in the third quarter of fiscal year 2027\" and NVIDIA is \"currently experiencing certain supply constraints\"; https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/ returns HTTP 200. So the PLATFORM is past roadmap. availability is DELIBERATELY left at \"roadmap\" anyway: this field is wired to the roadmap => every-number-[A] guard, and our 227 kW rack envelope is still unsourced (DocID 1148853 gated). Downgrading the guard to match the market would silently promote [A] numbers to sourced. Forward-watch only, not a tenant commitment. Retrieved 2026-09-09. See datacenter-design/rack-scale/PLATFORM-LIFECYCLE.md E1 + G7 + sec5. Filing: https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm",
     "liquid_flow_curve": null,
     "liquid_kw": 227,
     "liquid_pct": 100,

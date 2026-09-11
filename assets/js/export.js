@@ -216,6 +216,10 @@
 
   // exposed for the smoke harness (bytes without touching the DOM/download)
   A.exportBytes = function (secId, kind) {
+    // composite exports that are not a single section's result (the journey's
+    // proposal pack, proposal_pack.js) register a provider under their own id
+    const prov = A.exportProviders && A.exportProviders[secId];
+    if (prov) return prov(kind);
     const st = A.appState.results[secId];
     if (!st) return null;
     return kind === "pdf" ? buildPdf(st.res) : buildXlsx(st.res);

@@ -668,9 +668,135 @@ font-variant-numeric: tabular-nums; }
 #plan-cards { min-height: 760px; }
 #plan-dsx { min-height: 450px; }
 }
+.skip-link {
+position: absolute;
+left: var(--sp-3);
+top: -4rem;
+z-index: 200;
+display: inline-flex;
+align-items: center;
+min-height: 44px;
+padding: var(--sp-2) var(--sp-4);
+background: var(--raised);
+color: var(--ink);
+border: 1px solid var(--accent);
+border-radius: var(--r-ctl);
+font-size: var(--fs-sm);
+text-decoration: none;
+transition: top var(--t-fast);
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+top: var(--sp-3);
+outline: 2px solid var(--accent);
+outline-offset: 2px;
+}
+#main:focus { outline: none; }
+@media (min-width: 921px) {
+.panel-outputs > div:has(> svg.dg),
+.panel-outputs > .plan-stage,
+.panel-outputs > .siteplan {
+margin-right: calc(-1 * (max(0px, (100vw - var(--w-content)) / 2) + var(--sp-5) + 1px));
+max-width: 1040px;
+}
+}
+.panel-outputs > div:has(> svg.dg) {
+background: var(--inset);
+border: 1px solid var(--hairline);
+border-radius: var(--r-card);
+}
+@media (max-width: 720px) {
+svg.dg { min-width: var(--ux-vbw, 560px); }
+.plan-stage svg, .siteplan svg { min-width: var(--ux-vbw, 640px); }
+}
+.ux-ovf-l, .ux-ovf-r {
+box-shadow: var(--ux-sh-l, 0 0 0 transparent), var(--ux-sh-r, 0 0 0 transparent);
+}
+.ux-ovf-l { --ux-sh-l: inset 18px 0 14px -14px rgba(2, 6, 14, 0.92); }
+.ux-ovf-r { --ux-sh-r: inset -18px 0 14px -14px rgba(2, 6, 14, 0.92); }
+div:has(> svg.dg).ux-ovf-r,
+.plan-stage.ux-ovf-r,
+.siteplan.ux-ovf-r {
+-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
+.matrix-scroll .matrix th:first-child {
+position: sticky;
+left: 0;
+z-index: 2;
+background: var(--surface);
+box-shadow: 1px 0 0 var(--hairline);
+}
+.matrix-scroll .matrix thead th:first-child { z-index: 3; }
+.notes li {
+max-width: 90ch;
+overflow-wrap: anywhere;
+}
+.nav-drawer-item {
+display: flex;
+align-items: center;
+min-height: 44px;
+padding-top: var(--sp-3);
+padding-bottom: var(--sp-3);
+}
+.nav-drawer-group-toggle { min-height: 44px; }
+.nav-hamburger { min-width: 44px; min-height: 44px; }
+.nav-drawer-close { width: 44px; height: 44px; }
+.nav-drawer-filter-input { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+.nav-drawer-group-items.is-expanded { max-height: 1600px; }
+.btn {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-height: 44px;
+padding-top: 10px;
+padding-bottom: 10px;
+}
+.field input:not([type="checkbox"]),
+.field select { min-height: 44px; }
+.field-row { min-height: 44px; display: flex; align-items: center; gap: var(--sp-2); }
+.seg label {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-height: 44px;
+min-width: 44px;
+padding-top: 10px;
+padding-bottom: 10px;
+}
+details.adv > summary,
+details.chain > summary {
+min-height: 44px;
+padding-top: 12px;
+padding-bottom: 12px;
+}
+.hp-toggle { min-height: 44px; }
+.fid { position: relative; }
+.fid::after { content: ""; position: absolute; inset: -12px; }
+.risk-toggle, .risk-mx-btn { min-height: 44px; }
+.scen-platform, .scen-target { min-height: 44px; }
+.out-table tr.out-group th {
+background: var(--inset);
+color: var(--accent);
+font: 600 var(--fs-xs)/1.6 var(--font-mono);
+letter-spacing: var(--track-micro);
+text-transform: uppercase;
+text-align: left;
+padding: var(--sp-2);
+border-top: 1px solid var(--rule);
+}
+.out-table tr.out-group th .out-group-n {
+color: var(--muted);
+font-weight: 400;
+}
+@media (max-width: 640px) {
+.out-table tr.out-group { display: block; padding: 0; border-top: none; }
+.out-table tr.out-group th { display: block; }
+}
 </style>
 </head>
 <body>
+<a href="#main" class="skip-link">Skip to content</a>
 
 <nav class="nav" aria-label="Pages">
   <div class="nav-inner">
@@ -715,7 +841,7 @@ font-variant-numeric: tabular-nums; }
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap" id="main">
   <section class="section section-calc" id="power" aria-label="Power calculator">
     <div class="scen-slot" aria-hidden="true"></div>
     <p class="preset-note">Voltage convention: F17 (busway) prices distribution at
@@ -743,6 +869,77 @@ font-variant-numeric: tabular-nums; }
       </div>
     </div>
   </section>
+
+  <section class="section" id="bess" aria-label="Battery energy storage (BESS) reference data">
+    <div class="section-head">
+      <h2>Battery energy storage (BESS) — the facility-side battery layer</h2>
+      <span class="fid">reference data · no inputs</span>
+    </div>
+    <p>The calculator above sizes the <strong>bridging</strong> batteries inside the UPS (F14
+    ride-through, core-only branch) and prices GB200-class <strong>power smoothing</strong> at the
+    rack power shelves (the MPF input). At facility scale the same AI-transient problem is
+    increasingly answered by a grid-interactive <strong>battery energy storage system</strong> on
+    the medium-voltage bus: NVIDIA&rsquo;s public DSX facilities reference design places BESS on the
+    campus 34.5&nbsp;kV main-switchgear bus with four named functions — facility-level buffering of
+    AI load transients, abnormal-event response, bridge power (source transfer + black start) and
+    grid dispatchability — applicability and sizing case-by-case
+    <a class="chip chip-s" href="sources.html#dsx-bess" aria-label="stated — NVIDIA DSX facilities BESS pages">S</a>.
+    NVIDIA qualifies BESS <em>behavior</em> (partner-run tests at the AC terminals, PCS inclusive);
+    battery sizing, DC-block topology and cell chemistry sit outside that qualification, and the
+    DSX marketplace lists no BESS category — so unit ratings come from vendor datasheets
+    <a class="chip chip-s" href="sources.html#dsx-bess" aria-label="stated — NVIDIA BESS self-qualification scope">S</a>.
+    The table below carries one shipping reference unit, spec-for-spec from its datasheet.</p>
+    <div class="matrix-scroll">
+      <table class="matrix" aria-label="BESS reference-unit datasheet specifications">
+        <caption>reference unit — Supermicro containerized BESS (vendor datasheet, PDF dated 2026-05-27; spec table p.2)</caption>
+        <thead><tr><th scope="col">quantity</th><th scope="col">value</th><th scope="col">provenance</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Power rating</th><td>1.5 MW</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.2">S</a></td></tr>
+          <tr><th scope="row">Energy rating</th><td>3.1 MWh</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.2">S</a></td></tr>
+          <tr><th scope="row">Chemistry · cooling</th><td>Lithium iron phosphate (LFP) · liquid-cooled</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.2">S</a></td></tr>
+          <tr><th scope="row">Duration at rated power</th><td>3.1 MWh ÷ 1.5 MW ≈ 2.07 h — a ≈0.48C system</td>
+            <td><a class="chip chip-d" href="sources.html#smc-bess" aria-label="derived from the two datasheet ratings">D</a></td></tr>
+          <tr><th scope="row">DC voltage</th><td>1,382 VDC nominal · 1,080–1,500 VDC window</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.2">S</a></td></tr>
+          <tr><th scope="row">Charge / discharge</th><td>1,120 A / 1,120 A at 25 °C</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.2">S</a></td></tr>
+          <tr><th scope="row">DC sanity check</th><td>1,382 V × 1,120 A ≈ 1.55 MW DC — closes on the 1.5 MW rating</td>
+            <td><a class="chip chip-d" href="sources.html#smc-bess" aria-label="derived — product of the stated voltage and current">D</a></td></tr>
+          <tr><th scope="row">Enclosure</th><td>8,980 × 2,100 × 2,750 mm · 34 metric tons (75,000 lb)</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.2">S</a></td></tr>
+          <tr><th scope="row">Pad density</th><td>8.98 × 2.10 m ≈ 18.9 m² → ≈164 kWh/m² · ≈80 kW/m²</td>
+            <td><a class="chip chip-d" href="sources.html#smc-bess" aria-label="derived from the stated footprint and ratings">D</a></td></tr>
+          <tr><th scope="row">Environment · life</th><td>−30 to 45 °C operating · up to 20 years</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.2">S</a></td></tr>
+          <tr><th scope="row">Safety stack</th><td>cell-level management w/ propagation mitigation · multi-layer fire
+            barriers · FK 5-1-12 clean agent + dry-pipe sprinkler · gas detection w/ NFPA 69 explosion prevention</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.1–2">S</a></td></tr>
+          <tr><th scope="row">Interfaces · certification</th><td>auxiliary power 480 VAC 3-phase &amp; 120 VAC 1-phase ·
+            EMS management software · certified UN / RoHS / UL / IEEE / NFPA</td>
+            <td><a class="chip chip-s" href="sources.html#smc-bess" aria-label="stated — Supermicro BESS datasheet p.2">S</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="notes">
+      <li><strong>Round-trip efficiency is not stated on the datasheet.</strong> No value is assumed
+      here — carry AC-AC round-trip efficiency as an RFP line item and get it in writing at the
+      operating temperature and C-rate you will run.</li>
+      <li>This table is cited reference data, <strong>not an estimator</strong>: BESS applicability
+      and fleet sizing are case-by-case per the NVIDIA reference design
+      <a class="chip chip-s" href="sources.html#dsx-bess" aria-label="stated — NVIDIA DSX facilities BESS pages">S</a>,
+      and no BESS term enters the calculator&rsquo;s formulas above.</li>
+      <li>Keep the three battery layers distinct: rack power-shelf capacitors + BBU (seconds of
+      ride-through for checkpointing)
+      <a class="chip chip-s" href="sources.html#smc-shelf" aria-label="stated — Supermicro 33 kW power shelf and BBU datasheet">S</a>
+      · UPS bridging batteries on the core-only branch (F14 above) · facility BESS on the MV bus
+      (this table) — the reference design backs GPU compute with none of the first two at facility
+      scale
+      <a class="chip chip-s" href="sources.html#dsx-rd" aria-label="stated — NVIDIA DSX facilities reference-design overview">S</a>.</li>
+    </ul>
+  </section>
 </main>
 
 <footer class="footer">
@@ -754,7 +951,7 @@ font-variant-numeric: tabular-nums; }
     stated · <a class="chip chip-d" href="sources.html#legend">D</a> derived ·
     <a class="chip chip-a" href="sources.html#legend">A</a> assumed</span> —
     every default's citation is on the <a href="sources.html">Sources page</a>.</p>
-    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-01 (per-entry dates on Sources) · site v3.6.5 · updated 2026-09-03</p>
+    <p class="micro">Static client-side estimator · your inputs live in this page's URL fragment, so a link reproduces your exact scenario · built from public sources accessed 2026-08-22 → 2026-09-09 (per-entry dates on Sources) · site v3.7.0 · updated 2026-09-11</p>
   </div>
 </footer>
 <script>
@@ -763,7 +960,7 @@ font-variant-numeric: tabular-nums; }
 // setTimeout covers hidden tabs, where rAF never fires) — so the masthead text
 // LCP no longer shares the simulated mobile link with the script chain.
 // (Preloading the chain, the opposite move, measured WORSE — note in main().)
-(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v365","assets/js/app.js?v365","assets/js/rackdata.js?v365","assets/js/calc_power.js?v365","assets/js/scenario.js?v365","assets/js/diagrams.js?v365","assets/js/page_power.js?v365","assets/js/export_xlsx.js?v365","assets/js/export_pdf.js?v365","assets/js/export.js?v365"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
+(function(){var d=false;function go(){if(d)return;d=true;["assets/js/result.js?v370","assets/js/app.js?v370","assets/js/rackdata.js?v370","assets/js/calc_power.js?v370","assets/js/scenario.js?v370","assets/js/diagrams.js?v370","assets/js/page_power.js?v370","assets/js/export_xlsx.js?v370","assets/js/export_pdf.js?v370","assets/js/export.js?v370"].forEach(function(f){var s=document.createElement("script");s.src=f;s.async=false;document.body.appendChild(s);});}function fp(){requestAnimationFrame(function(){requestAnimationFrame(go);});setTimeout(go,400);}document.readyState==="loading"?addEventListener("DOMContentLoaded",fp):fp();})();
 </script>
 </body>
 </html>

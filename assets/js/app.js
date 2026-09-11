@@ -30,6 +30,68 @@
     return a;
   }
 
+  // ---- I1: formula-family bands in the result tables ------------------------
+  // The tables run to 50 visually identical rows (power: 2911px of them) with
+  // no grouping at all — DSX-16 finding I1. Every output already carries its
+  // formula tag in its own provenance string ("F16: rack_edpp_kw / rack_kw"),
+  // so the headings are READ OUT OF THE DATA, never invented, and no row is
+  // moved: the order the engine emits is the derivation order.
+  function formulaTag(src) {
+    const m = /^([A-Z]{1,3}\d+)\b/.exec(String(src || "").trim());
+    return m ? m[1] : null;
+  }
+
+  // A band is a run of rows sharing an OWNER tag: a row's own tag when it has
+  // one, else the tag of the nearest tagged row above it. Because a differently
+  // tagged row always opens a new run, no heading can span a row whose own
+  // provenance contradicts it — the first cut of this banded by first-use and
+  // shipped an "F2 · 10 outputs" heading over a row tagged F1 on cooling.
+  // Carry-forward is only a defensible claim where most rows are tagged, so a
+  // table below COVERAGE renders exactly as before: of the 25 result tables, 15
+  // carry no formula tag at all, tco tags 12 of 42 rows and rack 6 of 27.
+  const BAND_COVERAGE = 0.5;
+
+  function bandStarts(rows) {
+    const tags = rows.map(([, qv]) => formulaTag(qv.source));
+    const tagged = tags.filter(Boolean).length;
+    if (!tags.length || tagged / tags.length < BAND_COVERAGE) return new Map();
+    const owner = [];
+    let cur = null;
+    for (let i = 0; i < tags.length; i++) {
+      if (tags[i]) cur = tags[i];
+      owner[i] = cur;
+    }
+    const starts = new Map(); // row index -> {tag, n, cont}
+    const seen = new Set();
+    for (let i = 0; i < owner.length; i++) {
+      if (!owner[i] || (i > 0 && owner[i] === owner[i - 1])) continue;
+      let n = 1;
+      while (i + n < owner.length && owner[i + n] === owner[i]) n++;
+      // cooling's derivation interleaves families (F2, F1, F2, F1, F3, …), so a
+      // label legitimately recurs; say "cont." rather than merge distant runs,
+      // which would put rows under a heading they do not belong to
+      starts.set(i, { tag: owner[i], n: n, cont: seen.has(owner[i]) });
+      seen.add(owner[i]);
+    }
+    // one band is not a grouping; leading untagged rows stay outside every band
+    return starts.size < 2 ? new Map() : starts;
+  }
+
+  function bandRow(band) {
+    const tr = document.createElement("tr");
+    tr.className = "out-group";
+    const th = document.createElement("th");
+    th.scope = "rowgroup";
+    th.colSpan = 4;
+    th.append(band.tag + (band.cont ? " cont." : ""));
+    const n = document.createElement("span");
+    n.className = "out-group-n";
+    n.textContent = " · " + band.n + (band.n === 1 ? " output" : " outputs");
+    th.appendChild(n);
+    tr.appendChild(th);
+    return tr;
+  }
+
   // ---- field factory --------------------------------------------------------
   function buildField(sec, f) {
     const wrap = document.createElement("label");
@@ -276,8 +338,12 @@
           row.appendChild(c);
         }
       }
-      for (const [k, qv] of Object.entries(res.outputs)) {
-        if (qv.value === null || qv.value === undefined) continue;
+      const outRows = Object.entries(res.outputs).filter(
+        ([, qv]) => qv.value !== null && qv.value !== undefined);
+      const bands = bandStarts(outRows);
+      for (let ri = 0; ri < outRows.length; ri++) {
+        const [k, qv] = outRows[ri];
+        if (bands.has(ri)) tbl.appendChild(bandRow(bands.get(ri)));
         const uv = unitView(sec, qv);
         const tr = document.createElement("tr");
         const td1 = document.createElement("td");

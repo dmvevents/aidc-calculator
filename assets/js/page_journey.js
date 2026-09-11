@@ -118,6 +118,8 @@
 
       // Calculate derived values for far-end pins
       const su = Math.max(1, Math.floor(racks / (v.racks_per_su || 8)));
+      const packLoaded = !!(A.proposalPack && A.proposalPack.bytes);
+      const packStageCount = packLoaded ? A.proposalPack.STAGES.length : 0;
 
       const steps = [
         {
@@ -165,10 +167,30 @@
         {
           num: null,
           title: "Export",
-          desc: "Download the pack: Excel + PDF with this scenario",
+          desc: "Summary sheet: Excel + PDF of this scenario's sizing (the integrated document is the Proposal Pack below)",
           page: null,  // handled by buttons
           live: true,
           isExport: true
+        },
+        // S4 (card AIDC#160): the integrated proposal pack — ONE workbook / ONE
+        // PDF over every stage, composed by proposal_pack.js from the same
+        // engines the stage pages run. Live only when that module is loaded;
+        // otherwise the honest stub renders (gates reported, never faked).
+        packLoaded ? {
+          num: 7,
+          title: "Proposal Pack",
+          desc: "Integrated proposal document: " + packStageCount + " sections (sizing, land, hall power + cooling, " +
+                "network, TCO, risk, capex + schedule appendices) in one workbook and one PDF for this scenario",
+          page: null,  // handled by buttons
+          live: true,
+          isPack: true
+        } : {
+          num: null,
+          title: "Proposal Pack",
+          desc: "Integrated proposal document",
+          page: null,
+          live: false,
+          badge: "Coming in S4 — per-page Excel/PDF ships today"
         },
         {
           num: null,
@@ -177,14 +199,6 @@
           page: null,
           live: false,
           badge: "Coming in S5"
-        },
-        {
-          num: null,
-          title: "Proposal Pack",
-          desc: "Integrated proposal document",
-          page: null,
-          live: false,
-          badge: "Coming in S4 — per-page Excel/PDF ships today"
         },
       ];
 
@@ -254,6 +268,25 @@
           exportDiv.appendChild(xlsxBtn);
           exportDiv.appendChild(pdfBtn);
           content.appendChild(exportDiv);
+        } else if (step.isPack) {
+          const packDiv = document.createElement("div");
+          packDiv.className = "journey-export journey-pack";
+          const mk = (label, kind, mime) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.textContent = label;
+            b.className = "btn journey-export-btn journey-pack-btn";
+            b.id = "journey-pack-" + kind;
+            b.onclick = () => {
+              const bytes = A.exportBytes && A.exportBytes("journey-pack", kind);
+              if (bytes && A.download) A.download(bytes, A.proposalPack.fileName(kind), mime);
+            };
+            return b;
+          };
+          packDiv.appendChild(mk("Proposal pack .xlsx", "xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+          packDiv.appendChild(mk("Proposal pack .pdf", "pdf", "application/pdf"));
+          content.appendChild(packDiv);
         }
 
         div.appendChild(content);

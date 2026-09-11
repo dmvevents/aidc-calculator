@@ -244,6 +244,29 @@ export async function mountScene(stage, opts) {
   const { json, bin } = parseGLB(await res.arrayBuffer());
   const geo = bakeGeometry(json, bin);
 
+  // ---- asset census (#229 fails-if-removed hook): structural truth of what
+  // this mount actually wired — node/mesh/material/draw/triangle counts plus
+  // the named detail classes the fidelity pass added (generator name suffixes
+  // are the contract). The smoke asserts floors on these; reverting the
+  // procedural detail (or the generators) makes the census fall and the
+  // smoke fail.
+  const census = (() => {
+    const names = (json.nodes || []).map((n) => n.name || "");
+    const tag = (re) => names.reduce((k, n) => k + (re.test(n) ? 1 : 0), 0);
+    return {
+      nodes: names.length,
+      meshes: (json.meshes || []).length,
+      materials: (json.materials || []).length,
+      draws: geo.draws.length,
+      triangles: geo.ibuf.length / 3,
+      detail: {
+        leds: tag(/-led$/), taps: tag(/-tap\d+$/), hangers: tag(/-hanger\d+$/),
+        frames: tag(/-frame\d+$/), cowls: tag(/-cowl$/), grilles: tag(/-grille$/),
+        vents: tag(/-vent$/), risers: tag(/-riser\d+$/), hubs: tag(/-hub$/),
+      },
+    };
+  })();
+
   // ---- validation-scoped GPU object creation (fail -> caller falls back) --
   const useScopes = !anyCanvasConfigured;   // see anyCanvasConfigured note
   if (useScopes) device.pushErrorScope("validation");
@@ -370,20 +393,28 @@ export async function mountScene(stage, opts) {
   json.materials.forEach((gm, i) => {
     const name = gm.name || ("mat" + i);
     const manifest = opts.materials && opts.materials[name];
+    const pbr = gm.pbrMetallicRoughness || {};
     const factor = (manifest && manifest.factor) ||
-      (gm.pbrMetallicRoughness && gm.pbrMetallicRoughness.baseColorFactor) || [1, 1, 1, 1];
+      pbr.baseColorFactor || [1, 1, 1, 1];
     const mode = (manifest && manifest.mode) || gm.alphaMode || "OPAQUE";
-    const bct = gm.pbrMetallicRoughness && gm.pbrMetallicRoughness.baseColorTexture;
+    const bct = pbr.baseColorTexture;
     const src = bct && json.textures ? json.textures[bct.index].source : undefined;
     const tex = src !== undefined && imageTex.has(src) ? imageTex.get(src) : whiteTex;
     const unlit = name === "backdrop" ? 1 : 0;
     const rec = {
       name, index: i, factor: factor.slice(), mode,
       effAlpha: factor[3], hasTex: tex !== whiteTex ? 1 : 0, unlit,
+      // #229 material response: the generators author these per material —
+      // metal/rough drive the WGSL specular + env-reflection terms, emissive
+      // carries the LED band, isBlend enables the grazing-angle alpha lift
+      metallic: pbr.metallicFactor !== undefined ? pbr.metallicFactor : 1,
+      roughness: pbr.roughnessFactor !== undefined ? pbr.roughnessFactor : 1,
+      emissive: (gm.emissiveFactor || [0, 0, 0]).slice(),
+      isBlend: mode === "BLEND" ? 1 : 0,
       bindGroup: device.createBindGroup({
         layout: bgl1,
         entries: [
-          { binding: 0, resource: { buffer: matBuf, offset: i * MAT_STRIDE, size: 32 } },
+          { binding: 0, resource: { buffer: matBuf, offset: i * MAT_STRIDE, size: 48 } },
           { binding: 1, resource: tex.createView() },
           { binding: 2, resource: sampler },
         ],
@@ -392,13 +423,18 @@ export async function mountScene(stage, opts) {
     mats.push(rec);
     byName.set(name, rec);
   });
-  const matScratch = new Float32Array(8);
+  const matScratch = new Float32Array(12);
   function writeMat(rec) {
     matScratch[0] = srgb2lin(rec.factor[0]); // factors are authored as display-ish values;
     matScratch[1] = srgb2lin(rec.factor[1]); // linearize so lighting operates in linear space
     matScratch[2] = srgb2lin(rec.factor[2]);
     matScratch[3] = rec.effAlpha;
-    matScratch[4] = rec.hasTex; matScratch[5] = rec.unlit; matScratch[6] = 0; matScratch[7] = 0;
+    matScratch[4] = rec.hasTex; matScratch[5] = rec.unlit;
+    matScratch[6] = rec.metallic; matScratch[7] = rec.roughness;
+    matScratch[8] = srgb2lin(rec.emissive[0]);
+    matScratch[9] = srgb2lin(rec.emissive[1]);
+    matScratch[10] = srgb2lin(rec.emissive[2]);
+    matScratch[11] = rec.isBlend;
     device.queue.writeBuffer(matBuf, rec.index * MAT_STRIDE, matScratch);
   }
   mats.forEach(writeMat);
@@ -750,6 +786,7 @@ export async function mountScene(stage, opts) {
     device,
     contextConfigured: false,
     selfTest: null,
+    census,
     applyLayers,
     setPreset(p) { setFromPreset(p, false); },
     jumpToGoal,

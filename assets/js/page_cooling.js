@@ -80,13 +80,67 @@
              ")⌉ = " + o.cdu_units_required.value + " (+1) at " + d(o.cdu_loading_pct.value) + "% loading");
       L.push("F9 · residual air = " + d(o.air_load_kw.value) + " kW × " + d(i.cfm_per_kw.value) + " = " +
              d(o.air_flow_cfm.value) + " CFM");
+      // F7b tower fleet (tower mode only — the engine nulls the block otherwise) + the
+      // vendor sanity check (card #63): engine outputs beside the [S] single-cell ratings
+      // quoted on the Sources rows bac-towers / evapco-towers / spx-marley / smc-tower.
+      // No arithmetic of its own — engine numbers + quoted vendor figures, nothing else.
+      if (o.tower_cells_installed && o.tower_cells_installed.value !== null && o.tower_cells_installed.value !== undefined) {
+        L.push("F7b · tower duty = IT × (1 + L_cool) = " + d(i.it_kw.value) + " × (1 + " + d(o.pue_l_cool_design_hour.value) +
+               ") = " + d(o.tower_duty_kw_th.value) + " kW_th → cells = ⌈" + d(o.tower_duty_kw_th.value) + " ÷ " +
+               d(i.tower_cell_kw.value) + "⌉ + " + i.tower_spare_cells.value + " spare = " + o.tower_cells_installed.value);
+        L.push("F7b vendor sanity · cell duty " + d(i.tower_cell_kw.value) + " kW_th vs published single-cell ratings — " +
+               "BAC Series 3000 171–1,446 nominal tons (≈0.75–6.4 MW_th), EVAPCO Atlas 1,484–2,386 nominal tons (≈6.5–10.5 MW_th), " +
+               "SPX Marley MH 150–3,570 kW; Supermicro containerized tower module 1–50 MW " +
+               "(Sources › Vendor product data: bac-towers, evapco-towers, spx-marley, smc-tower)");
+        L.push("F7b vendor sanity · fan estimate " + d(o.tower_fan_kw_est.value) + " kW = " + d(i.tower_fan_frac.value) +
+               " × duty [A band 0.008–0.02] vs vendor-published 6.2 kW per MW of cooling = 0.0062 (smc-tower); " +
+               "evaporation on the 1.47 L/kWh_th latent basis vs vendor-published 6.2 GPM/MW ≈ 1.41 L/kWh_th (smc-tower)");
+      }
       return L;
     },
     after: (r) => {
       const c = document.getElementById("cool-ladder");
       if (c) A.diagrams.coolingLadder(c, r);
+      towerVendorNote(r);
     },
   });
+
+  // F7b vendor sanity paragraph (card #63): rendered under the approach ladder in tower
+  // mode only, naming the vendor datasheets / product pages the tower-fleet sizing is
+  // checked against and deep-linking their Sources rows (relative URL — project-page
+  // safe). Removed again when the rejector is dry/adiabatic (F7b block is null then).
+  // The figures are the [S] values quoted on those rows — no arithmetic lives here.
+  const TOWER_VENDOR_ROWS = [
+    ["bac-towers", "BAC Series 3000 171–1,446 nominal tons/cell (≈0.75–6.4 MW_th)"],
+    ["evapco-towers", "EVAPCO Atlas 1,484–2,386 nominal tons/cell (≈6.5–10.5 MW_th)"],
+    ["spx-marley", "SPX Marley MH 150–3,570 kW/cell"],
+    ["smc-tower", "Supermicro tower module 1–50 MW · 6.2 kW/MW · 6.2 GPM/MW"],
+    ["smc-drycooler", "Supermicro dry-cooler module 1–50 MW (dry/adiabatic modes)"],
+    ["dsx-marketplace", "NVIDIA DSX marketplace lists no heat-rejection category — vendor datasheets govern"],
+  ];
+  function towerVendorNote(r) {
+    const anchor = document.getElementById("cool-ladder");
+    if (!anchor) return;
+    let p = document.getElementById("cool-tower-vendor");
+    const cells = r.outputs.tower_cells_installed;
+    const tower = cells && cells.value !== null && cells.value !== undefined;
+    if (!tower) { if (p) p.remove(); return; }
+    if (!p) {
+      p = document.createElement("p");
+      p.id = "cool-tower-vendor";
+      p.className = "vendor-sanity";
+      anchor.insertAdjacentElement("afterend", p);
+    }
+    p.replaceChildren();
+    p.append("F7b vendor sanity — " + cells.value + " cells at " + d(r.inputs.tower_cell_kw.value) +
+             " kW_th each, checked against published vendor ratings: ");
+    TOWER_VENDOR_ROWS.forEach(([id, label], n) => {
+      const a = document.createElement("a");
+      a.href = "sources.html#" + id;
+      a.textContent = label;
+      p.append(a, n < TOWER_VENDOR_ROWS.length - 1 ? " · " : ".");
+    });
+  }
 
   A.boot();
 })();
